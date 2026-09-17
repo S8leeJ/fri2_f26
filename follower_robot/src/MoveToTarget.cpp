@@ -1,5 +1,8 @@
 #include "follower_robot/MoveToTarget.h"
 
+#include <Eigen/Geometry>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
 //I have implemented the entire constructor for you.
 MoveToTarget::MoveToTarget(rclcpp::Node *node) :
     node_(node),
@@ -58,6 +61,20 @@ void MoveToTarget::copyToGoalPoseAndSend(
     ) {
     RCLCPP_INFO(node_->get_logger(), "Sending goal!");
     geometry_msgs::msg::PoseStamped goal_pose;
+    goal_pose.header.frame_id = "base_link";
+    goal_pose.header.stamp = node_->get_clock()->now();
+    goal_pose.pose.position.x = goal_pose_relative_to_base_link(0, 3);
+    goal_pose.pose.position.y = goal_pose_relative_to_base_link(1, 3);
+    goal_pose.pose.position.z = goal_pose_relative_to_base_link(2, 3);
+
+    Eigen::Matrix3d rotation = goal_pose_relative_to_base_link.block<3, 3>(0, 0);
+    Eigen::Quaterniond q(rotation);
+    goal_pose.pose.orientation.x = q.x();
+    goal_pose.pose.orientation.y = q.y();
+    goal_pose.pose.orientation.z = q.z();
+    goal_pose.pose.orientation.w = q.w();
+
     nav2_msgs::action::NavigateToPose::Goal goal_msg = nav2_msgs::action::NavigateToPose::Goal();
+    goal_msg.pose = goal_pose;
     client_->async_send_goal(goal_msg, send_goal_options_);
 }
