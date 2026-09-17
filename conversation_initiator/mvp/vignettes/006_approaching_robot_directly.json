@@ -1,0 +1,23 @@
+{
+  "id": "006",
+  "expect": "greet",
+  "note": "Strong invitation: sustained gaze, closing distance, quiet. Should be high confidence.",
+  "context": {
+    "person": {
+      "distance_m": 1.5,
+      "facing_robot": true,
+      "gaze_at_robot_s": 3.2,
+      "is_moving": true,
+      "in_conversation": false,
+      "activity": "approaching_robot"
+    },
+    "ambient": {
+      "noise_db": 40,
+      "other_speech_active": false
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}

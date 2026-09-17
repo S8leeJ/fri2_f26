@@ -1,0 +1,23 @@
+{
+  "id": "005",
+  "expect": "remain_silent",
+  "note": "R2 overriding R5. Geometry is identical to 001; only the history differs.",
+  "context": {
+    "person": {
+      "distance_m": 2.0,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.1,
+      "is_moving": false,
+      "in_conversation": false,
+      "activity": "standing_idle"
+    },
+    "ambient": {
+      "noise_db": 43,
+      "other_speech_active": false
+    },
+    "robot": {
+      "greeted_recently": true,
+      "consecutive_no_response": 2
+    }
+  }
+}

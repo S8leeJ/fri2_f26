@@ -1,0 +1,23 @@
+{
+  "id": "004",
+  "expect": "remain_silent",
+  "note": "R3. Close and quiet, but in transit. Proximity alone must not trigger speech.",
+  "context": {
+    "person": {
+      "distance_m": 1.2,
+      "facing_robot": false,
+      "gaze_at_robot_s": 0.0,
+      "is_moving": true,
+      "in_conversation": false,
+      "activity": "walking_past"
+    },
+    "ambient": {
+      "noise_db": 45,
+      "other_speech_active": false
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}

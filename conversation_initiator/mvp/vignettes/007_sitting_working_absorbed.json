@@ -1,0 +1,23 @@
+{
+  "id": "007",
+  "expect": "remain_silent",
+  "note": "R4. Very quiet room tempts high ambient_fit; interruption cost should dominate.",
+  "context": {
+    "person": {
+      "distance_m": 2.4,
+      "facing_robot": false,
+      "gaze_at_robot_s": 0.0,
+      "is_moving": false,
+      "in_conversation": false,
+      "activity": "seated_typing"
+    },
+    "ambient": {
+      "noise_db": 34,
+      "other_speech_active": false
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "008",
+  "expect": "remain_silent",
+  "note": "Hardest case. Person looks right at the robot while talking to someone else. R1 beats R5.",
+  "context": {
+    "person": {
+      "distance_m": 1.9,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.8,
+      "is_moving": false,
+      "in_conversation": true,
+      "activity": "talking_with_bystander_glancing_at_robot"
+    },
+    "ambient": {
+      "noise_db": 55,
+      "other_speech_active": true
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}

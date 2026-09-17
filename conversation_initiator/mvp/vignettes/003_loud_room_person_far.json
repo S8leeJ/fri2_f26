@@ -1,0 +1,23 @@
+{
+  "id": "003",
+  "expect": "wait",
+  "note": "Interested but out of range in a noisy space. Tests the wait/silent boundary.",
+  "context": {
+    "person": {
+      "distance_m": 5.6,
+      "facing_robot": true,
+      "gaze_at_robot_s": 0.9,
+      "is_moving": true,
+      "in_conversation": false,
+      "activity": "walking_toward_robot"
+    },
+    "ambient": {
+      "noise_db": 71,
+      "other_speech_active": true
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}

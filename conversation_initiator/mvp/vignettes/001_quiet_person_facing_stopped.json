@@ -1,0 +1,23 @@
+{
+  "id": "001",
+  "expect": "greet",
+  "note": "Clearest possible yes. If the model misses this, the prompt is broken.",
+  "context": {
+    "person": {
+      "distance_m": 2.1,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.4,
+      "is_moving": false,
+      "in_conversation": false,
+      "activity": "standing_idle"
+    },
+    "ambient": {
+      "noise_db": 42,
+      "other_speech_active": false
+    },
+    "robot": {
+      "greeted_recently": false,
+      "consecutive_no_response": 0
+    }
+  }
+}
