@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/S8leeJ/fri2_f26/conversation_initiator/schema/social_context.schema.json",
+  "title": "SocialContext",
+  "description": "One decision moment. The JSON payload of the /social_context topic, published by the fusion node at 2-5 Hz. See SCHEMA.md for field rationale and the migration mapping from the two earlier shapes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ambient"],
+  "properties": {
+    "schema_version": {
+      "description": "Increment on any breaking change. Consumers reject a major they do not know.",
+      "type": "string",
+      "const": "1.0"
+    },
+    "t": {
+      "description": "Unix timestamp of the sensor observation, not of publication.",
+      "type": ["number", "null"]
+    },
+    "since_last_decision_s": {
+      "description": "Seconds since the initiator last produced a decision. Written by the initiator, not the fusion node.",
+      "type": ["number", "null"]
+    },
+
+    "ambient": {
+      "description": "Owned by the audio node.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["noise_db"],
+      "properties": {
+        "noise_db": {
+          "description": "A-weighted sound level. The only field in this schema with no default; a publisher that cannot measure it should not publish.",
+          "type": "number"
+        },
+        "other_speech_active": {
+          "description": "Someone other than the robot is speaking. Default false.",
+          "type": "boolean",
+          "default": false
+        },
+        "noise_trend": {
+          "type": "string",
+          "enum": ["rising", "steady", "falling"],
+          "default": "steady"
+        },
+        "speech_sources_estimated": {
+          "description": "Concurrent speakers. Null means the audio node cannot count them.",
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "reverberance": {
+          "type": ["string", "null"],
+          "enum": ["low", "medium", "high", null],
+          "default": null
+        }
+      }
+    },
+
+    "target": {
+      "description": "The one person the robot would address. Null when nobody is present -- the gate keys off this and suppresses without an LLM call. Owned by the vision node.",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["distance_m", "facing_robot"],
+      "properties": {
+        "distance_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "facing_robot": {
+          "type": "boolean"
+        },
+        "gaze_at_robot_s": {
+          "description": "Seconds of sustained gaze on the robot. 0 means not looking. Duration rather than a boolean: a bool is derivable as (gaze_at_robot_s > 0), the reverse is not.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "motion": {
+          "description": "Four-way, not a moving/not-moving bool. 'passing' and 'approaching' are both movement and imply opposite actions.",
+          "type": ["string", "null"],
+          "enum": ["approaching", "leaving", "passing", "stationary", null],
+          "default": null
+        },
+        "in_conversation": {
+          "description": "This person is talking with someone else. Drives R1, the highest-priority rule. Present on the target, not only on bystanders.",
+          "type": "boolean",
+          "default": false
+        },
+        "activity": {
+          "description": "Controlled vocabulary, not free text. 'working' is what R4 keys off.",
+          "type": "string",
+          "enum": ["idle", "working", "socializing", "transiting", "unknown"],
+          "default": "unknown"
+        },
+        "bearing_deg": {
+          "description": "Signed angle from robot forward. Negative is left.",
+          "type": ["number", "null"],
+          "default": null
+        },
+        "dwell_s": {
+          "description": "Seconds this person has been in view.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "speech": {
+          "description": "Null until the audio node emits transcripts. Required for the 'respond' action; without it the robot can only initiate.",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "default": null,
+          "properties": {
+            "detected": { "type": "boolean", "default": false },
+            "partial_transcript": { "type": ["string", "null"], "default": null },
+            "syntactically_complete": {
+              "description": "Cheap stand-in for a turn-taking model. A part-of-speech heuristic captures most of the value.",
+              "type": ["boolean", "null"],
+              "default": null
+            },
+            "prosody": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "default": null,
+              "properties": {
+                "pitch_semitones_rel": { "type": ["number", "null"] },
+                "energy_rel": { "type": ["number", "null"] },
+                "rate_wpm": { "type": ["number", "null"] }
+              }
+            },
+            "tone_estimate": { "type": ["string", "null"], "default": null },
+            "tone_confidence": {
+              "type": ["number", "null"],
+              "minimum": 0, "maximum": 1,
+              "default": null
+            }
+          }
+        }
+      }
+    },
+
+    "bystanders": {
+      "description": "Everyone else visible. Empty list means nobody else, which is different from the vision node being unable to tell.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["distance_m"],
+        "properties": {
+          "distance_m": { "type": "number", "minimum": 0 },
+          "facing_robot": { "type": "boolean", "default": false },
+          "in_conversation": { "type": "boolean", "default": false }
+        }
+      }
+    },
+
+    "robot": {
+      "description": "Owned by the initiator node. No other node writes these.",
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "is_speaking": { "type": "boolean", "default": false },
+        "last_spoke_s_ago": {
+          "description": "Null means never. Canonical source for 'greeted recently' -- that is a threshold applied by the gate, not a field a sensor publishes.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "default": null
+        },
+        "last_utterance": { "type": ["string", "null"], "default": null },
+        "consecutive_no_response": {
+          "description": "Times this person was addressed and did not respond. Drives R2.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+
+    "recent_decisions": {
+      "description": "Newest first. Prevents the robot repeating itself, the most common failure mode in systems of this kind.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["s_ago", "action"],
+        "properties": {
+          "s_ago": { "type": "number", "minimum": 0 },
+          "action": {
+            "type": "string",
+            "enum": ["remain_silent", "wait", "greet", "respond"]
+          },
+          "reason": { "type": ["string", "null"], "default": null }
+        }
+      }
+    }
+  }
+}
