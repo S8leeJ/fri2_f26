@@ -2,11 +2,16 @@
   "_comment": "Canonical round-trip example. The context is what the fusion node publishes on /social_context; the decision is what the initiator publishes on /initiation_decision in response. Both validate against the schemas beside this file. Every optional field is populated here to show its shape -- a real publisher will emit far fewer.",
 
   "social_context": {
-    "schema_version": "1.0",
+    "schema_version": "2.0",
     "t": 1789456123.4,
     "since_last_decision_s": 6.2,
     "ambient": {
-      "noise_db": 41.5,
+      "noise_floor_db": -58.4,
+      "noise_level": "quiet",
+      "speech_snr_db": 21.3,
+      "speech_now": true,
+      "speech_ratio_10s": 0.18,
+      "seconds_since_speech": 0.0,
       "other_speech_active": false,
       "noise_trend": "steady",
       "speech_sources_estimated": 0,
@@ -39,11 +44,13 @@
     ],
     "robot": {
       "is_speaking": false,
-      "last_spoke_s_ago": null,
-      "last_utterance": null,
+      "engaged": true,
+      "last_spoke_s_ago": 3.5,
+      "last_utterance": "Hi there!",
       "consecutive_no_response": 0
     },
     "recent_decisions": [
+      { "s_ago": 3.5, "action": "greet", "reason": "R5 facing and stationary" },
       { "s_ago": 11.0, "action": "wait", "reason": "person_in_conversation" }
     ]
   },
@@ -72,7 +79,7 @@
   },
 
   "minimal_social_context": {
-    "schema_version": "1.0",
-    "ambient": { "noise_db": 42.0 }
+    "schema_version": "2.0",
+    "ambient": {}
   }
 }

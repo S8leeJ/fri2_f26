@@ -3,20 +3,29 @@
   "expect": "greet",
   "note": "Clearest possible yes. If the model misses this, the prompt is broken.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -58.4,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
       "distance_m": 2.1,
       "facing_robot": true,
       "gaze_at_robot_s": 1.4,
-      "is_moving": false,
+      "motion": "stationary",
       "in_conversation": false,
-      "activity": "standing_idle"
+      "activity": "idle"
     },
-    "ambient": {
-      "noise_db": 42,
-      "other_speech_active": false
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }

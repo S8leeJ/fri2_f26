@@ -3,20 +3,29 @@
   "expect": "greet",
   "note": "Strong invitation: sustained gaze, closing distance, quiet. Should be high confidence.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -61.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
       "distance_m": 1.5,
       "facing_robot": true,
       "gaze_at_robot_s": 3.2,
-      "is_moving": true,
+      "motion": "approaching",
       "in_conversation": false,
-      "activity": "approaching_robot"
+      "activity": "transiting"
     },
-    "ambient": {
-      "noise_db": 40,
-      "other_speech_active": false
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }

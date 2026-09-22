@@ -3,20 +3,29 @@
   "expect": "remain_silent",
   "note": "R4. Very quiet room tempts high ambient_fit; interruption cost should dominate.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -66.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
       "distance_m": 2.4,
       "facing_robot": false,
       "gaze_at_robot_s": 0.0,
-      "is_moving": false,
+      "motion": "stationary",
       "in_conversation": false,
-      "activity": "seated_typing"
+      "activity": "working"
     },
-    "ambient": {
-      "noise_db": 34,
-      "other_speech_active": false
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }
