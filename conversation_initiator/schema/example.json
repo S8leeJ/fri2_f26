@@ -1,0 +1,78 @@
+{
+  "_comment": "Canonical round-trip example. The context is what the fusion node publishes on /social_context; the decision is what the initiator publishes on /initiation_decision in response. Both validate against the schemas beside this file. Every optional field is populated here to show its shape -- a real publisher will emit far fewer.",
+
+  "social_context": {
+    "schema_version": "1.0",
+    "t": 1789456123.4,
+    "since_last_decision_s": 6.2,
+    "ambient": {
+      "noise_db": 41.5,
+      "other_speech_active": false,
+      "noise_trend": "steady",
+      "speech_sources_estimated": 0,
+      "reverberance": "low"
+    },
+    "target": {
+      "distance_m": 1.4,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.8,
+      "motion": "approaching",
+      "in_conversation": false,
+      "activity": "idle",
+      "bearing_deg": -8,
+      "dwell_s": 4.1,
+      "speech": {
+        "detected": true,
+        "partial_transcript": "sorry do you know where",
+        "syntactically_complete": false,
+        "prosody": {
+          "pitch_semitones_rel": 1.2,
+          "energy_rel": 0.6,
+          "rate_wpm": 168
+        },
+        "tone_estimate": "uncertain",
+        "tone_confidence": 0.61
+      }
+    },
+    "bystanders": [
+      { "distance_m": 3.2, "facing_robot": false, "in_conversation": true }
+    ],
+    "robot": {
+      "is_speaking": false,
+      "last_spoke_s_ago": null,
+      "last_utterance": null,
+      "consecutive_no_response": 0
+    },
+    "recent_decisions": [
+      { "s_ago": 11.0, "action": "wait", "reason": "person_in_conversation" }
+    ]
+  },
+
+  "decision": {
+    "rubric": {
+      "invitation": 5,
+      "interruption_cost": 1,
+      "urgency": 3,
+      "redundancy": 1,
+      "ambient_fit": 4,
+      "addressivity": 5
+    },
+    "action": "respond",
+    "category": "person_needs_assistance",
+    "rule_fired": "R5 facing, closing, addressing robot",
+    "confidence": 0.86,
+    "recheck_in_ms": 3000,
+    "speech": {
+      "text": "Hi, can I help you find something?",
+      "volume": "medium",
+      "rate": "medium",
+      "pitch": "medium",
+      "target_person_id": 0
+    }
+  },
+
+  "minimal_social_context": {
+    "schema_version": "1.0",
+    "ambient": { "noise_db": 42.0 }
+  }
+}
