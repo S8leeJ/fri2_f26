@@ -6,4 +6,4 @@ scipy              # resampling
 sounddevice        # microphone capture
 soundfile          # reading and writing WAV files
 faster-whisper     # speech-to-text, and ships the Silero voice detector
-praat-parselmouth  # pitch and intensity, gated path only
+# praat-parselmouth  # pitch and intensity, gated path only

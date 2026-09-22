@@ -26,13 +26,31 @@ class RingBuffer:
         self._lock = threading.Lock()
         self._samples = np.zeros(0, dtype=np.float32)
         self._start_t = None       # timestamp of the oldest sample held
+        self._next_t = None        # where the next block should start
+        self.gaps = 0              # how often audio went missing
 
     def add(self, block):
         # One block from capture.py. Old audio falls off the front.
         with self._lock:
             if self._start_t is None:
                 self._start_t = block.t
+                self._next_t = block.t
+
+            # The processor skips blocks while the robot is speaking, so the
+            # audio arriving here is not always contiguous. Slicing works by
+            # counting samples forward from _start_t, so a gap left unfilled
+            # would put every later timestamp out by the missing duration,
+            # and utterances would slice to the wrong audio or to nothing.
+            # Filling it with silence keeps the timeline exact.
+            gap = block.t - self._next_t
+            if gap > 0.001:
+                self.gaps += 1
+                self._samples = np.concatenate([
+                    self._samples,
+                    np.zeros(round(gap * self.rate), dtype=np.float32)])
+
             self._samples = np.concatenate([self._samples, block.samples])
+            self._next_t = block.t + len(block.samples) / self.rate
 
             excess = len(self._samples) - self.max_samples
             if excess > 0:
@@ -51,7 +69,10 @@ class RingBuffer:
             finish = round((end_t - self._start_t) * self.rate)
             if begin < 0 or finish <= begin:
                 return None
-            return self._samples[begin:min(finish, len(self._samples))].copy()
+            out = self._samples[begin:min(finish, len(self._samples))]
+            # An empty slice means the stretch is not here after all. Say so
+            # rather than handing back nothing-shaped audio.
+            return out.copy() if len(out) else None
 
     def last(self, seconds):
         # The most recent stretch, for transcribing retroactively the moment

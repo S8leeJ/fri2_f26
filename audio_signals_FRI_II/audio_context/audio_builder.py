@@ -82,8 +82,11 @@ class Builder:
                 flags += " ENGAGED"
             if state.robot_speaking():
                 flags += " ROBOT"
+            age = ""
+            if self.stt and self.stt.latest_time() and audio["stamp"]:
+                age = f"  text {audio['stamp'] - self.stt.latest_time():.1f}s old"
             print(f"  BUILD {self.builds:3d}  floor {f:>7} dBFS  {str(level):<9} "
-                  f"snr {s:>6} dB   {talking}   ratio {r_s}  quiet {q_s}{flags}")
+                  f"snr {s:>6} dB   {talking}   ratio {r_s}  quiet {q_s}{flags}{age}")
         return audio
 
     def _suppressed(self):
