@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/S8leeJ/fri2_f26/conversation_initiator/schema/decision.schema.json",
+  "title": "Decision",
+  "description": "The model's answer for one decision moment. Published on /initiation_decision, and handed to the provider SDKs as a structured-output schema. Property order is load-bearing: providers generate keys in schema order, so rubric first forces scoring before the action is chosen -- chain of thought without a second call.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rubric", "action", "category", "rule_fired", "confidence", "recheck_in_ms"],
+  "properties": {
+    "rubric": {
+      "description": "All six scored before the action. Adapted from the Inner Thoughts framework (arXiv:2501.00383).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invitation",
+        "interruption_cost",
+        "urgency",
+        "redundancy",
+        "ambient_fit",
+        "addressivity"
+      ],
+      "properties": {
+        "invitation": {
+          "description": "1 = walking away, no gaze. 5 = facing, gaze held, addressing robot.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        },
+        "interruption_cost": {
+          "description": "1 = idle, waiting. 5 = mid-conversation, focused work.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        },
+        "urgency": {
+          "description": "1 = nothing. 5 = person appears lost or distressed.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        },
+        "redundancy": {
+          "description": "1 = never engaged. 5 = just asked.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        },
+        "ambient_fit": {
+          "description": "1 = near-silent, others working. 5 = active social noise.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        },
+        "addressivity": {
+          "description": "1 = ambiguous group. 5 = one clear person.",
+          "type": "integer", "minimum": 1, "maximum": 5
+        }
+      }
+    },
+
+    "action": {
+      "description": "respond replies to something said to the robot; greet opens a new interaction. respond requires target.speech in the context.",
+      "type": "string",
+      "enum": ["remain_silent", "wait", "greet", "respond"]
+    },
+
+    "category": {
+      "type": "string",
+      "enum": [
+        "appropriate_to_initiate",
+        "inappropriate_to_interrupt",
+        "person_needs_assistance",
+        "insufficient_evidence"
+      ]
+    },
+
+    "rule_fired": {
+      "description": "Rule ID and a few words, e.g. \"R1 target in conversation\". Makes every choice traceable in the results section.",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "confidence": {
+      "description": "Bounded 0-1. Documented as poorly calibrated -- MVP_PLAN.md records values clustered 0.85-1.00 including on wrong answers. Do not threshold on it without validating against outcomes first.",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+
+    "recheck_in_ms": {
+      "description": "The model's own requested cooldown, preferable to a fixed timer. The gate floors it at min_cooldown_ms.",
+      "type": "integer",
+      "minimum": 0
+    },
+
+    "speech": {
+      "description": "Null unless action is greet or respond. Abstract enums only -- a deterministic mapper builds the SSML, because a malformed tag fails silently at the speaker rather than loudly at the schema.",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["text", "volume", "rate", "pitch"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "volume": { "type": "string", "enum": ["x-soft", "soft", "medium", "loud"] },
+        "rate": { "type": "string", "enum": ["slow", "medium", "fast"] },
+        "pitch": { "type": "string", "enum": ["low", "medium", "high"] },
+        "target_person_id": { "type": ["integer", "null"], "default": null }
+      }
+    }
+  }
+}
