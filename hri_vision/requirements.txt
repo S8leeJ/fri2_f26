@@ -1,0 +1,4 @@
+# Keep NumPy 1.x for maximum compatibility with ROS 2 Humble cv_bridge wheels.
+numpy<2
+ultralytics>=8.3
+mediapipe>=0.10,<0.11

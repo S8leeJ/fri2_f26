@@ -1,0 +1,50 @@
+detection_node:
+  ros__parameters:
+    model: "yolo11n.pt"
+    tracker: "bytetrack.yaml"
+    confidence: 0.35
+    iou: 0.50
+    device: "cpu"
+    max_rate_hz: 12.0
+    output_topic: "/hri/vision/detections"
+
+person_context_node:
+  ros__parameters:
+    detections_topic: "/hri/vision/detections"
+    output_topic: "/hri/vision/person_context"
+    center_crop_fraction: 0.60
+    min_depth_mm: 250
+    max_depth_mm: 8000
+    direction_threshold_mm: 100.0
+    distance_window: 4
+    track_grace_s: 2.0
+    max_depth_age_s: 0.25
+
+orientation_node:
+  ros__parameters:
+    detections_topic: "/hri/vision/detections"
+    output_topic: "/hri/vision/orientation"
+    max_rate_hz: 5.0
+    min_pose_detection_confidence: 0.45
+    min_face_detection_confidence: 0.45
+    sideways_shoulder_ratio: 0.55
+    min_visibility: 0.45
+
+context_builder_node:
+  ros__parameters:
+    person_context_topic: "/hri/vision/person_context"
+    orientation_topic: "/hri/vision/orientation"
+    output_topic: "/hri/vision/context"
+    orientation_max_age_s: 1.0
+    log_context: true
+    log_rate_hz: 1.0
+
+webcam_test_node:
+  ros__parameters:
+    camera_index: 0
+    synthetic_depth_mm: 2000
+    fps: 10.0
+
+kinect_direct_node:
+  ros__parameters:
+    fps: 15.0
