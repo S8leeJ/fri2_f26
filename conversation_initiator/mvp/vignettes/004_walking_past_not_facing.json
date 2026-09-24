@@ -3,20 +3,29 @@
   "expect": "remain_silent",
   "note": "R3. Close and quiet, but in transit. Proximity alone must not trigger speech.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -52.5,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
       "distance_m": 1.2,
       "facing_robot": false,
       "gaze_at_robot_s": 0.0,
-      "is_moving": true,
+      "motion": "passing",
       "in_conversation": false,
-      "activity": "walking_past"
+      "activity": "transiting"
     },
-    "ambient": {
-      "noise_db": 45,
-      "other_speech_active": false
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }

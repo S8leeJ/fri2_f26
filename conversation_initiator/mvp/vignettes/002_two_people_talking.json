@@ -3,20 +3,31 @@
   "expect": "remain_silent",
   "note": "R1. Nearest person is close and stationary, which naively looks inviting.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -44.0,
+      "noise_level": "moderate",
+      "speech_snr_db": 18.0,
+      "speech_now": true,
+      "speech_ratio_10s": 0.74,
+      "seconds_since_speech": 0.0
+    },
+    "target": {
       "distance_m": 1.8,
       "facing_robot": false,
       "gaze_at_robot_s": 0.0,
-      "is_moving": false,
+      "motion": "stationary",
       "in_conversation": true,
-      "activity": "talking_with_bystander"
+      "activity": "socializing"
     },
-    "ambient": {
-      "noise_db": 58,
-      "other_speech_active": true
-    },
+    "bystanders": [
+      { "distance_m": 2.2, "facing_robot": false, "in_conversation": true }
+    ],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }

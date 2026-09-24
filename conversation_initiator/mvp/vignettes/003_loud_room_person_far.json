@@ -3,20 +3,29 @@
   "expect": "wait",
   "note": "Interested but out of range in a noisy space. Tests the wait/silent boundary.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -33.0,
+      "noise_level": "loud",
+      "speech_snr_db": 4.5,
+      "speech_now": true,
+      "speech_ratio_10s": 0.48,
+      "seconds_since_speech": 0.0
+    },
+    "target": {
       "distance_m": 5.6,
       "facing_robot": true,
       "gaze_at_robot_s": 0.9,
-      "is_moving": true,
+      "motion": "approaching",
       "in_conversation": false,
-      "activity": "walking_toward_robot"
+      "activity": "transiting"
     },
-    "ambient": {
-      "noise_db": 71,
-      "other_speech_active": true
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": false,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
       "consecutive_no_response": 0
     }
   }

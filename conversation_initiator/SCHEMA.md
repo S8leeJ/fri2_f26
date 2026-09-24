@@ -1,6 +1,8 @@
-# Context Schema v1.0 — frozen
+# Context Schema v2.0
 
-**Status:** Frozen September 18, 2026. This is the interface contract for `/social_context`.
+**Status:** v2.0, September 22, 2026. Supersedes the v1.0 freeze of September 18. Pending
+sign-off from the audio and vision node owners; see §7 for what changed and why it is a
+major version. This is the interface contract for `/social_context`.
 **Machine-readable:** [`schema/social_context.schema.json`](schema/social_context.schema.json) · [`schema/decision.schema.json`](schema/decision.schema.json) · [`schema/example.json`](schema/example.json)
 **Evidence behind the reconciliation:** [`SCHEMA_COMPARISON.md`](SCHEMA_COMPARISON.md)
 
@@ -30,16 +32,16 @@ multi-package rebuild. It also means `ros2 topic pub` can inject test data by ha
 
 ## 2. Input — `/social_context`
 
-Only **two things are required**: `schema_version` and `ambient.noise_db`. Everything
-else has a documented default, so a node that can only produce part of this is still a
-valid publisher. That is deliberate — it is what lets the initiator reach Phase 3 before
+Only **two things are required**: `schema_version` and an `ambient` object, which may be
+empty. Everything else has a documented default, so a node that can only produce part of
+this is still a valid publisher. That is deliberate — it is what lets the initiator reach Phase 3 before
 the sensor nodes exist.
 
 ### 2.1 Top level
 
 | Field | Type | Required | Default | Owner |
 |---|---|---|---|---|
-| `schema_version` | `"1.0"` | **yes** | — | fusion |
+| `schema_version` | `"2.0"` | **yes** | — | fusion |
 | `t` | number/null | no | `null` | fusion |
 | `since_last_decision_s` | number/null | no | `null` | initiator |
 | `ambient` | object | **yes** | — | audio |
@@ -53,16 +55,31 @@ spending an LLM call.
 
 ### 2.2 `ambient` — audio node
 
-| Field | Type | Required | Default |
-|---|---|---|---|
-| `noise_db` | number | **yes** | — |
-| `other_speech_active` | bool | no | `false` |
-| `noise_trend` | `rising`\|`steady`\|`falling` | no | `"steady"` |
-| `speech_sources_estimated` | int/null | no | `null` |
-| `reverberance` | `low`\|`medium`\|`high`\|null | no | `null` |
+Every field is optional. The first six are what the audio node in
+`audio_signals_FRI_II` actually measures, under the names it already uses.
 
-`noise_db` is the one field with no default. A publisher that cannot measure it should
-not publish at all, rather than publish a fabricated number.
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `noise_floor_db` | number ≤ 0 / null | `null` | room level with nobody talking, dBFS |
+| `noise_level` | `quiet`\|`moderate`\|`loud`\|null | `null` | the audio node's label for the floor |
+| `speech_snr_db` | number/null | `null` | how far a voice rises above the floor |
+| `speech_now` | bool/null | `null` | someone is talking this second |
+| `speech_ratio_10s` | 0–1 / null | `null` | share of the last 10 s with speech |
+| `seconds_since_speech` | number ≥ 0 / null | `null` | current pause; `null` = nobody has spoken yet |
+| `noise_db` | number | omitted | A-weighted level, calibrated microphone only |
+| `other_speech_active` | bool | `false` | |
+| `noise_trend` | `rising`\|`steady`\|`falling` | `"steady"` | |
+| `speech_sources_estimated` | int/null | `null` | |
+| `reverberance` | `low`\|`medium`\|`high`\|null | `null` | |
+
+dBFS is relative to the microphone's full scale, so more negative is quieter, and the same
+room reads differently on a different mic or gain. That is why it is not `noise_db`.
+Publish `noise_db` only from a calibrated microphone, and never convert dBFS into it.
+
+`null` means not measured, never zero. Three cases the model must not misread:
+`seconds_since_speech: null` means nobody has spoken, not a long pause;
+`speech_snr_db: null` means no voice, not a faint one; and while `robot.is_speaking` is
+true every measured field is `null`, because the microphone only hears the robot.
 
 ### 2.3 `target` — vision node
 
@@ -90,8 +107,10 @@ can only initiate, never reply.
 list means nobody else is present, which is a different claim from the vision node being
 unable to tell; use `[]` only when you actually looked.
 
-`robot` — `is_speaking`, `last_spoke_s_ago`, `last_utterance`, `consecutive_no_response`.
-Written by the initiator only. No sensor node writes these.
+`robot` — `is_speaking`, `engaged`, `last_spoke_s_ago`, `last_utterance`,
+`consecutive_no_response`. Written by the initiator only. No sensor node writes these.
+`engaged` means the robot is already in a conversation; the audio node reads it to decide
+whether to transcribe, so an empty transcript while `engaged` is false is not silence.
 
 `recent_decisions[]` — `s_ago` and `action` required, `reason` optional. Newest first.
 
@@ -165,6 +184,23 @@ schema change.
 **7. `schema_version` added.** Neither prior shape had one. It is what makes this
 freezable without being permanent — see §7.
 
+### Added in v2.0
+
+**8. `ambient` takes the audio node's real fields, and `noise_db` is no longer required.**
+v1.0 was frozen on Sep 18; the audio node merged on Sep 19 and measures uncalibrated
+dBFS, not an A-weighted level. Under v1.0 it could not publish at all without fabricating
+`noise_db`, which the schema itself forbids. The six measured fields are added under the
+audio node's own names, so no renaming layer sits between the two.
+
+**9. `ambient_fit` redefined in the decision schema.** v1.0 read "1 = near-silent,
+others working. 5 = active social noise", which scores a quiet library 1 and a room too
+loud to hear the robot 5. That contradicts the rule prompt, and the schema description is
+sent to the model alongside the prompt. It now reads "1 = inaudible or intrusive,
+5 = well suited"; the cost of disturbing someone working belongs in `interruption_cost`.
+
+**10. `robot.engaged` added.** The audio node already reads this flag to gate
+transcription; the model needs it to tell "nobody spoke" from "not transcribing".
+
 ---
 
 ## 5. Migration
@@ -199,6 +235,24 @@ talking_with_bystander_glancing_at_robot  -> motion=stationary,  activity=social
 
 The last two also imply a `bystanders[]` entry with `in_conversation: true`.
 
+### From the audio node's output
+
+`audio_context/audio_builder.py` publishes one flat object a second. Everything maps
+by name except four fields:
+
+| Audio node | Schema |
+|---|---|
+| `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech` | `ambient.*`, same names |
+| `stamp` | `t` |
+| `transcript` | `target.speech.partial_transcript` (empty string becomes `null`) |
+| `robot_speaking` | `robot.is_speaking` |
+| `engaged` | `robot.engaged` |
+
+### From v1.0
+
+Set `schema_version` to `"2.0"`. Nothing else is required: every v1.0 field still exists
+with the same type, so a v1.0 context validates once the version string changes.
+
 ### From the design doc shape
 
 Only three changes: `gaze_on_robot` → `gaze_at_robot_s`, `in_conversation` added to
@@ -215,10 +269,12 @@ but touches the `expect` labels' provenance, so it belongs in its own change.
 The short version of what to publish. Everything not listed is optional and defaults
 sensibly — send what you can actually measure, not what you wish you could.
 
-**Audio node** — required: `ambient.noise_db`. Strongly wanted:
-`ambient.other_speech_active`. Everything else (`noise_trend`,
-`speech_sources_estimated`, `reverberance`, and the whole `target.speech` block) is
-optional and can arrive later without a schema change.
+**Audio node** — nothing is strictly required, but publish what `audio_builder.py`
+already measures: `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`,
+`speech_ratio_10s`, `seconds_since_speech`. Send `null` rather than a stale value while
+the robot is speaking. Leave out `noise_db` unless the microphone is calibrated.
+Everything else (`noise_trend`, `speech_sources_estimated`, `reverberance`, and the rest
+of `target.speech`) can arrive later without a schema change.
 
 **Vision node** — required if a person is present: `target.distance_m`,
 `target.facing_robot`. Highest value next: `target.in_conversation` (drives the
@@ -233,8 +289,13 @@ reads as "not measured"; a fabricated one reads as fact.
 
 ## 7. Versioning
 
-`schema_version` is `"1.0"` and is required. Consumers reject a major version they do not
+`schema_version` is `"2.0"` and is required. Consumers reject a major version they do not
 recognise rather than guessing.
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0 | Sep 18 | First freeze |
+| 2.0 | Sep 22 | `ambient.noise_db` no longer required; audio node fields and `robot.engaged` added; `ambient_fit` redefined (§4, changes 8–10). Major because a required field became optional and a rubric dimension changed meaning. |
 
 - **Adding an optional field** — no version bump. This is why almost everything is
   optional.

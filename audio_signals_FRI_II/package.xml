@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>audio_context</name>
+  <version>0.1.0</version>
+  <description>Audio context for conversation initiation: noise floor, speech
+  activity and transcription, published once a second.</description>
+  <maintainer email="mayank@example.com">Mayank Konduri</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <!-- pip installs the rest: numpy<2, scipy, sounddevice, soundfile,
+       faster-whisper. rosdep has no keys for sounddevice or faster-whisper,
+       so they are not listed here. See requirements.txt. -->
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

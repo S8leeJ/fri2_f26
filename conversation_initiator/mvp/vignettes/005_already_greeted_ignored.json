@@ -3,20 +3,30 @@
   "expect": "remain_silent",
   "note": "R2 overriding R5. Geometry is identical to 001; only the history differs.",
   "context": {
-    "person": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -57.6,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
       "distance_m": 2.0,
       "facing_robot": true,
       "gaze_at_robot_s": 1.1,
-      "is_moving": false,
+      "motion": "stationary",
       "in_conversation": false,
-      "activity": "standing_idle"
+      "activity": "idle"
     },
-    "ambient": {
-      "noise_db": 43,
-      "other_speech_active": false
-    },
+    "bystanders": [],
     "robot": {
-      "greeted_recently": true,
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": 8.0,
+      "last_utterance": "Hi there!",
       "consecutive_no_response": 2
     }
   }

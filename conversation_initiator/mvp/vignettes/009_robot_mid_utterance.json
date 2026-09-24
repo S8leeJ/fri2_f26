@@ -1,0 +1,33 @@
+{
+  "id": "009",
+  "expect": null,
+  "note": "Same person as 001, but the robot is talking, so the microphone measured nothing and every ambient field is null. Tests that the model reads null as not measured, not as a silent room. last_spoke_s_ago is 0 because the robot is speaking, so R2 also applies; check rule_fired to see which it used. Write expect before running; mvp.py skips vignettes without one.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": null,
+      "noise_level": null,
+      "speech_snr_db": null,
+      "speech_now": null,
+      "speech_ratio_10s": null,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "distance_m": 2.1,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.4,
+      "motion": "stationary",
+      "in_conversation": false,
+      "activity": "idle"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": true,
+      "engaged": false,
+      "last_spoke_s_ago": 0.0,
+      "last_utterance": "Excuse me, coming through.",
+      "consecutive_no_response": 0
+    }
+  }
+}

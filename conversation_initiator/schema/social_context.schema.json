@@ -10,10 +10,10 @@
     "schema_version": {
       "description": "Increment on any breaking change. Consumers reject a major they do not know.",
       "type": "string",
-      "const": "1.0"
+      "const": "2.0"
     },
     "t": {
-      "description": "Unix timestamp of the sensor observation, not of publication.",
+      "description": "Unix timestamp of the sensor observation, not of publication. The audio node's stamp maps here.",
       "type": ["number", "null"]
     },
     "since_last_decision_s": {
@@ -22,14 +22,48 @@
     },
 
     "ambient": {
-      "description": "Owned by the audio node.",
+      "description": "Owned by the audio node. Every field is optional; omit or null what was not measured. All fields are null while the robot is speaking, because the microphone only hears the robot.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["noise_db"],
       "properties": {
         "noise_db": {
-          "description": "A-weighted sound level. The only field in this schema with no default; a publisher that cannot measure it should not publish.",
+          "description": "A-weighted sound level. Only from a calibrated microphone; dBFS is not a substitute. Omit if uncalibrated.",
           "type": "number"
+        },
+        "noise_floor_db": {
+          "description": "Room level with nobody talking, in dBFS (more negative is quieter). Uncalibrated. Null until enough quiet audio has been heard.",
+          "type": ["number", "null"],
+          "maximum": 0,
+          "default": null
+        },
+        "noise_level": {
+          "description": "The audio node's label for noise_floor_db. Prefer this over the raw number.",
+          "type": ["string", "null"],
+          "enum": ["quiet", "moderate", "loud", null],
+          "default": null
+        },
+        "speech_snr_db": {
+          "description": "How far a voice rises above noise_floor_db. Large is close and clear, small is distant or drowned out. Null when there is no voice to measure.",
+          "type": ["number", "null"],
+          "default": null
+        },
+        "speech_now": {
+          "description": "Someone is talking this second.",
+          "type": ["boolean", "null"],
+          "default": null
+        },
+        "speech_ratio_10s": {
+          "description": "Fraction of the last 10 s that contained speech. High means a conversation is underway.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "default": null
+        },
+        "seconds_since_speech": {
+          "description": "Length of the current pause; 0 while someone is talking. Null means nobody has spoken yet, which is not a long pause.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "default": null
         },
         "other_speech_active": {
           "description": "Someone other than the robot is speaking. Default false.",
@@ -103,7 +137,7 @@
           "default": null
         },
         "speech": {
-          "description": "Null until the audio node emits transcripts. Required for the 'respond' action; without it the robot can only initiate.",
+          "description": "Null until the audio node emits transcripts. Required for the 'respond' action; without it the robot can only initiate. The audio node's transcript maps to partial_transcript; it is only filled once robot.engaged is true.",
           "type": ["object", "null"],
           "additionalProperties": false,
           "default": null,
@@ -158,7 +192,16 @@
       "additionalProperties": false,
       "default": {},
       "properties": {
-        "is_speaking": { "type": "boolean", "default": false },
+        "is_speaking": {
+          "description": "The robot is talking. The audio node's robot_speaking maps here; while true, ambient is not measured.",
+          "type": "boolean",
+          "default": false
+        },
+        "engaged": {
+          "description": "The robot is already in a conversation. Gates transcription in the audio node. Not a measure of whether the person wants contact.",
+          "type": "boolean",
+          "default": false
+        },
         "last_spoke_s_ago": {
           "description": "Null means never. Canonical source for 'greeted recently' -- that is a threshold applied by the gate, not a field a sensor publishes.",
           "type": ["number", "null"],

@@ -37,7 +37,7 @@
           "type": "integer", "minimum": 1, "maximum": 5
         },
         "ambient_fit": {
-          "description": "1 = near-silent, others working. 5 = active social noise.",
+          "description": "Whether speech would be heard and fit the soundscape. 1 = inaudible or intrusive. 5 = well suited. A quiet room is high here; the cost of disturbing someone working belongs in interruption_cost.",
           "type": "integer", "minimum": 1, "maximum": 5
         },
         "addressivity": {
