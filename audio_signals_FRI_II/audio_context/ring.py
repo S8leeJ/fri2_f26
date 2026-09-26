@@ -23,13 +23,6 @@ class RingBuffer:
     def __init__(self, cfg):
         self.rate = cfg["sample_rate"]
         self.max_samples = round(cfg["ring_buffer_sec"] * self.rate)
-
-        # What counts as audio actually going missing, rather than a block
-        # arriving a moment late. Blocks come every block_samples / rate,
-        # about 128 ms, so a real gap is at least that. Timestamps come from
-        # the audio callback and jitter by a few milliseconds, which is not
-        # a gap. Half a block sits well clear of both.
-        self.gap_threshold = 0.5 * cfg["block_samples"] / self.rate
         self._lock = threading.Lock()
         self._samples = np.zeros(0, dtype=np.float32)
         self._start_t = None       # timestamp of the oldest sample held
@@ -49,14 +42,8 @@ class RingBuffer:
             # would put every later timestamp out by the missing duration,
             # and utterances would slice to the wrong audio or to nothing.
             # Filling it with silence keeps the timeline exact.
-            #
-            # Only for a gap worth the name. An earlier version triggered on
-            # a millisecond, so ordinary callback jitter punched silence into
-            # the middle of utterances: about seven breaks per two seconds,
-            # which arrived at the transcriber as chopped audio and cut
-            # "good morning" down to "good".
             gap = block.t - self._next_t
-            if gap > self.gap_threshold:
+            if gap > 0.001:
                 self.gaps += 1
                 self._samples = np.concatenate([
                     self._samples,
