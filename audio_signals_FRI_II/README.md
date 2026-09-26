@@ -40,6 +40,13 @@ After changing code:
 
 ## Second Terminal — View Output
 
-    source /opt/ros/humble/setup.bash
+Starting from:
 
+    mayankkonduri@singularity-0:~$
+
+Run:
+
+    cd ~/fri2_f26/audio_signals_FRI_II
+    source /opt/ros/humble/setup.bash
+    source install/setup.bash
     ros2 topic echo /audio_context
