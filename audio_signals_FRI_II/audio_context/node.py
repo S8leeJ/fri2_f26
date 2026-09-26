@@ -71,6 +71,10 @@ class AudioContextNode(Node):
 
     # -- subscribers -------------------------------------------------------
 
+    # Both log only on a change. `ros2 topic pub` republishes about once a
+    # second and the real nodes will too, so logging every message would
+    # bury everything else in the terminal.
+
     def _on_engaged(self, msg):
         if msg.data == state.engaged():
             return
@@ -82,6 +86,9 @@ class AudioContextNode(Node):
         self.get_logger().info(f"engaged = {msg.data}")
 
     def _on_speaking(self, msg):
+        # Compare before setting, or it can never look changed.
+        if msg.data != state.robot_speaking():
+            self.get_logger().info(f"robot_speaking = {msg.data}")
         state.set_robot_speaking(msg.data)
 
     # -- the two loops -----------------------------------------------------
