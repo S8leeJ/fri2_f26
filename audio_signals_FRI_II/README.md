@@ -45,7 +45,9 @@ Starting from:
 
 Run:
 
+> **Note:** Key idea is that you can subscribe anywhere as long as you do the /install/setup.bash from the folder that is publishing the topic.
+
     cd ~/fri2_f26
     source /opt/ros/humble/setup.bash
     source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
-    ros2 topic echo /audio_context
+    ros2 topic echo /audio_context --field data
