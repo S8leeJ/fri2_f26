@@ -2,7 +2,10 @@
 
 ## New Setup — First Time Only
 
-    cd ~/fri2_f26/audio_signals_FRI_II
+    cd ~/fri2_f26
+    git clone https://github.com/S8leeJ/fri2_f26.git
+    cd fri2_f26/audio_signals_FRI_II
+
     source /opt/ros/humble/setup.bash
 
     pip install --user --upgrade pip
@@ -15,8 +18,11 @@
 
 ## New Terminal / Coming Back
 
-    cd ~/fri2_f26/audio_signals_FRI_II
+    cd ~/fri2_f26/fri2_f26/audio_signals_FRI_II
+    git pull
+
     source /opt/ros/humble/setup.bash
+    colcon build --packages-select audio_context
     source install/setup.bash
 
     ros2 run audio_context node
@@ -26,13 +32,14 @@
 After changing code:
 
     Ctrl+C
+
     colcon build --packages-select audio_context
     source install/setup.bash
+
     ros2 run audio_context node
 
 ## Second Terminal — View Output
 
     source /opt/ros/humble/setup.bash
-    source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
 
     ros2 topic echo /audio_context
