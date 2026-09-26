@@ -1,29 +1,38 @@
-# audio_signals_FRI_II
+# Lab Machine Setup
 
-Audio subsystem for Team Read the Room (FRI 2, Autonomous Intelligent Robotics).
+## New Setup — First Time Only
 
-Produces the `"audio"` block of the shared context object, once per second:
-room noise level, whether anyone is speaking, how far their voice rises above
-the room, and - only once the robot has engaged someone - a transcript and
-basic vocal tone.
+    cd ~/fri2_f26/audio_signals_FRI_II
+    source /opt/ros/humble/setup.bash
 
-## Setup
+    pip install --user --upgrade pip
+    pip install --user -r requirements.txt
 
-Python 3.10, to match the robot's ROS 2 Humble.
+    colcon build --packages-select audio_context
+    source install/setup.bash
 
-    python3.10 -m venv .venv
-    source .venv/bin/activate        # Windows: .venv\Scripts\activate
-    pip install -r requirements.txt
+> **Note:** `libportaudio2` is already installed, so `sudo` is not required.
 
-## First run
+## New Terminal / Coming Back
 
-    python tools/check_devices.py
+    cd ~/fri2_f26/audio_signals_FRI_II
+    source /opt/ros/humble/setup.bash
+    source install/setup.bash
 
-This finds your USB microphone and prints the three values to paste into
-`audio_context/config.py`.
+    ros2 run audio_context node
 
-## Layout
+## Updating Code
 
-    audio_context/config.py   every tunable number lives here
-    tools/                    one-off diagnostics
-    clips/                    recorded scenario clips for offline testing
+After changing code:
+
+    Ctrl+C
+    colcon build --packages-select audio_context
+    source install/setup.bash
+    ros2 run audio_context node
+
+## Second Terminal — View Output
+
+    source /opt/ros/humble/setup.bash
+    source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
+
+    ros2 topic echo /audio_context
