@@ -20,6 +20,12 @@
     cd ~/fri2_f26/audio_signals_FRI_II
     git pull
 
+### Free the USB microphone from PulseAudio
+    pactl set-card-profile alsa_card.usb-1415_USB_Camera-B4.09.24.1-01 off
+    arecord -l
+    python3 tools/check_devices.py
+    python3 tools/check_levels.py
+
     source /opt/ros/humble/setup.bash
     colcon build --packages-select audio_context
     source install/setup.bash
