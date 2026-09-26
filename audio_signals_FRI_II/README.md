@@ -2,7 +2,6 @@
 
 ## New Setup — First Time Only
 
-    cd ~/fri2_f26
     git clone https://github.com/S8leeJ/fri2_f26.git
     cd fri2_f26/audio_signals_FRI_II
 
@@ -18,7 +17,7 @@
 
 ## New Terminal / Coming Back
 
-    cd ~/fri2_f26/fri2_f26/audio_signals_FRI_II
+    cd ~/fri2_f26/audio_signals_FRI_II
     git pull
 
     source /opt/ros/humble/setup.bash
@@ -46,7 +45,7 @@ Starting from:
 
 Run:
 
-    cd ~/fri2_f26/audio_signals_FRI_II
+    cd ~/fri2_f26
     source /opt/ros/humble/setup.bash
-    source install/setup.bash
+    source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
     ros2 topic echo /audio_context
