@@ -26,10 +26,14 @@ VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 DEFAULT_MODEL = {
     "anthropic": "claude-haiku-4-5-20251001",
     "gemini": "gemini-3.1-flash-lite",
+    "groq": "openai/gpt-oss-20b",
+    "jev": "jev-latest",
 }
 ENV_KEY = {
     "anthropic": "ANTHROPIC_API_KEY",
     "gemini": "GEMINI_API_KEY",
+    "groq": "GROQ_API_KEY",
+    "jev": "TYPESAFE_API_KEY",
 }
 SPEAKS = ("greet", "respond")
 
@@ -220,6 +224,22 @@ def make_client(provider: str, timeout_s: float):
                 retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
+    if provider == "groq":
+        import httpx
+
+        return httpx.Client(
+            base_url="https://api.groq.com/openai/v1",
+            headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"]},
+            timeout=timeout_s,
+        )
+    if provider == "jev":
+        import httpx
+
+        return httpx.Client(
+            base_url="https://api.typesafe.ai/v1",
+            headers={"Authorization": "Bearer " + os.environ["TYPESAFE_API_KEY"]},
+            timeout=timeout_s,
+        )
     raise ValueError("unknown provider: %s" % provider)
 
 
@@ -264,14 +284,16 @@ def _ask_gemini(client, model, system, user, schema, max_tokens):
     try:
         response = call(model not in _NO_THINKING_CONTROL)
     except errors.ClientError as e:
-        # A 429 is also a ClientError; only a thinking rejection should switch
-        # thinking on, or one rate limit would slow every later call.
-        if model in _NO_THINKING_CONTROL or "thinking" not in str(e).lower():
+        # A 429 is also a ClientError; only a rejected request (400) should switch
+        # thinking on, or one rate limit would slow every later call. The 400 does
+        # not name the thinking setting, so the model is only recorded once the
+        # retry without it succeeds.
+        if model in _NO_THINKING_CONTROL or getattr(e, "code", None) != 400:
             raise
+        response = call(False)
         _NO_THINKING_CONTROL.add(model)
         print("note: %s rejects thinking_budget=0; leaving thinking on, which "
               "costs latency" % model, file=sys.stderr)
-        response = call(False)
 
     usage = response.usage_metadata
     thoughts = getattr(usage, "thoughts_token_count", None) if usage else None
@@ -280,12 +302,181 @@ def _ask_gemini(client, model, system, user, schema, max_tokens):
     return schema.model_validate_json(response.text), thoughts
 
 
+class ApiError(Exception):
+    def __init__(self, code: int, body: str):
+        super().__init__("%d %s" % (code, body[:300]))
+        self.code = code
+
+
+def _strict_schema(schema) -> dict:
+    """Pydantic's JSON schema, reshaped for strict structured output: refs
+    inlined, every property required, no extra keys."""
+    raw = schema.model_json_schema()
+    defs = raw.pop("$defs", {})
+
+    def walk(node):
+        if isinstance(node, list):
+            return [walk(n) for n in node]
+        if not isinstance(node, dict):
+            return node
+        if "$ref" in node:
+            return walk(defs[node["$ref"].split("/")[-1]])
+        node = {k: walk(v) for k, v in node.items() if k not in ("title", "default")}
+        if node.get("type") == "object":
+            node["additionalProperties"] = False
+            node["required"] = list(node.get("properties", {}))
+        return node
+
+    return walk(raw)
+
+
+# gpt-oss reasons before answering and those tokens count against the output
+# limit, so the decision's own budget alone would truncate it.
+GROQ_REASONING_ALLOWANCE = 1024
+
+
+def _ask_groq(client, model, system, user, schema, max_tokens):
+    body = {
+        "model": model,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+        "temperature": 0,
+        "max_completion_tokens": max_tokens + GROQ_REASONING_ALLOWANCE,
+        "response_format": {"type": "json_schema", "json_schema": {
+            "name": schema.__name__, "strict": True, "schema": _strict_schema(schema)}},
+    }
+    if model.startswith("openai/gpt-oss"):
+        body["reasoning_effort"] = "low"
+        body["include_reasoning"] = False
+    response = client.post("/chat/completions", json=body)
+    if response.status_code != 200:
+        raise ApiError(response.status_code, response.text)
+    data = response.json()
+    details = (data.get("usage") or {}).get("completion_tokens_details") or {}
+    return (schema.model_validate_json(data["choices"][0]["message"]["content"]),
+            details.get("reasoning_tokens"))
+
+
+def _parse_block(text: str) -> dict:
+    """'name  description' lines, with indented lines continuing the previous one."""
+    out, name = {}, None
+    for line in text.splitlines()[1:]:
+        if not line.strip():
+            continue
+        if line[0].isspace() and name:
+            out[name] += " " + line.strip()
+        else:
+            name, _, desc = line.partition(" ")
+            out[name] = desc.strip()
+    return out
+
+
+def _score_levels(ends: str) -> List[str]:
+    """'1 = low, 5 = high' as five ordered levels."""
+    low, high = ends.split(", 5 = ")
+    return ["1: " + low.split("= ", 1)[1], "2", "3", "4", "5: " + high]
+
+
+DIMENSION_ENDS = _parse_block("\n" + DIMENSIONS_6.split("\n\n", 1)[1])
+RULE_TEXT = {line.split(" ", 1)[0]: line.split(" ", 1)[1]
+             for line in RULES.splitlines()[1:] if line.strip()}
+ACTION_TEXT = _parse_block(ACTIONS_6.split("\n\nCategories")[0])
+CATEGORY_TEXT = _parse_block(ACTIONS_6.split("\n\n")[1])
+
+
+def _ask_jev(client, model, system, user, schema, max_tokens):
+    """Jev answers typed questions, not prompts, so the decision is rebuilt from
+    one Score per rubric dimension plus Choices for action, rule, and category.
+    Each question is evaluated in isolation, so the action does not see the scores."""
+    six = schema is Decision6
+    dims = list(Rubric.model_fields) if six else ["invitation", "interruption_cost", "ambient_fit"]
+    actions = list(ACTION_TEXT) if six else ["remain_silent", "wait", "greet"]
+    guide = {"field_guide": FIELD_GUIDE, "rules": RULES}
+
+    questions = {d: {"type": "score",
+                     "instructions": {**guide, "question": "Rate `%s` for this moment." % d},
+                     "criteria": _score_levels(DIMENSION_ENDS[d])} for d in dims}
+    questions["action"] = {
+        "type": "choice",
+        "instructions": {**guide, "question": "Which action should the robot take now? "
+                         "Apply `rules` in priority order; a higher rule overrides a lower one."},
+        "criteria": {a: ACTION_TEXT[a] for a in actions}}
+    questions["rule_fired"] = {
+        "type": "choice",
+        "instructions": {**guide, "question": "Which single rule most decides this moment?"},
+        "criteria": RULE_TEXT}
+    if six:
+        questions["category"] = {
+            "type": "choice",
+            "instructions": {**guide, "question": "Which category describes this moment?"},
+            "criteria": CATEGORY_TEXT}
+
+    response = client.post("/systemone", json={
+        "model": model, "state": json.loads(user), "questions": questions})
+    if response.status_code != 200:
+        raise ApiError(response.status_code, response.text)
+    answers = response.json()["answers"]
+
+    # Score levels come back 0-indexed and probability-weighted.
+    scores = {d: min(5, max(1, round(answers[d]["score"]) + 1)) for d in dims}
+    action = answers["action"]
+    rule = answers["rule_fired"]["choice"]
+    common = dict(action=action["choice"], confidence=action["confidence"],
+                  rule_fired="%s %s" % (rule, RULE_TEXT[rule]))
+    if six:
+        return Decision6(rubric=Rubric(**scores), category=answers["category"]["choice"],
+                         recheck_in_ms=0, **common), None
+    return Decision3(**scores, **common), None
+
+
+ASK = {"anthropic": _ask_anthropic, "gemini": _ask_gemini, "groq": _ask_groq,
+       "jev": _ask_jev}
+
+
+# Set from --pace and --busy-retries. Free tiers cap requests per minute and
+# shed load with 503s, so a benchmark that fires calls back to back measures
+# the quota, not the model.
+PACING = {"pace_s": 0.0, "busy_retries": 0}
+BUSY_WAITS_S = (15, 30, 60)
+BUSY_STATUS = {429, 500, 503, 504, 529}
+busy_retries_used = 0
+_last_call_t = None
+
+
+def _status(e: BaseException) -> Optional[int]:
+    code = getattr(e, "code", None) or getattr(e, "status_code", None)
+    return code if isinstance(code, int) else None
+
+
 def ask(provider, client, model, system, user, schema, max_tokens):
-    """Returns (parsed, elapsed_ms, thought_tokens). Timing wraps only the network call."""
-    fn = _ask_anthropic if provider == "anthropic" else _ask_gemini
-    start = time.perf_counter()
-    parsed, thoughts = fn(client, model, system, user, schema, max_tokens)
-    return parsed, (time.perf_counter() - start) * 1000, thoughts
+    """Returns (parsed, elapsed_ms, thought_tokens).
+
+    Timing wraps only the successful network call. Pacing waits and busy
+    retries happen outside it, so they never show up as model latency.
+    """
+    global busy_retries_used, _last_call_t
+    fn = ASK[provider]
+
+    for attempt in range(PACING["busy_retries"] + 1):
+        if _last_call_t is not None:
+            wait = PACING["pace_s"] - (time.monotonic() - _last_call_t)
+            if wait > 0:
+                time.sleep(wait)
+        _last_call_t = time.monotonic()
+
+        start = time.perf_counter()
+        try:
+            parsed, thoughts = fn(client, model, system, user, schema, max_tokens)
+        except Exception as e:  # noqa: BLE001 - re-raised unless the server was busy
+            if _status(e) not in BUSY_STATUS or attempt == PACING["busy_retries"]:
+                raise
+            wait = BUSY_WAITS_S[min(attempt, len(BUSY_WAITS_S) - 1)]
+            busy_retries_used += 1
+            print("  server busy (%s); waiting %ds and retrying" % (_status(e), wait),
+                  file=sys.stderr)
+            time.sleep(wait)
+            continue
+        return parsed, (time.perf_counter() - start) * 1000, thoughts
 
 
 @dataclass
@@ -308,14 +499,15 @@ def decide(provider, client, model, ctx, rubric) -> Result:
 
     d, ms, thoughts = ask(provider, client, model, SYSTEM_6, user, Decision6, 400)
     speech = ms2 = speech_error = None
-    if d.action in SPEAKS:
+    # Jev only answers typed questions; it cannot write the line to say.
+    if d.action in SPEAKS and provider != "jev":
         # A failed line should not cost the decision, which is what is being scored.
         try:
             speech, ms2, _ = ask(provider, client, model, SPEECH_SYSTEM,
                                  json.dumps({"context": ctx, "decision": d.model_dump()}),
                                  Speech, 150)
         except Exception as e:  # noqa: BLE001
-            speech_error = "TIMEOUT" if is_timeout(e) else type(e).__name__
+            speech_error = "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
     r = d.rubric
     return Result(d.action,
                   [r.invitation, r.interruption_cost, r.urgency, r.redundancy,
@@ -348,7 +540,19 @@ def main() -> None:
     ap.add_argument("--rubric", type=int, default=6, choices=[3, 6],
                     help="3 = original MVP decision, 6 = schema/decision.schema.json")
     ap.add_argument("--timeout", type=float, default=5.0, help="seconds per call")
+    ap.add_argument("--pace", type=float, default=0.0,
+                    help="minimum seconds between calls, to stay under a free-tier rate limit")
+    ap.add_argument("--busy-retries", type=int, default=0,
+                    help="retries after a 429/503, waiting 15, 30, then 60 s")
+    ap.add_argument("--gentle", action="store_true",
+                    help="free-tier preset: --pace 5 --busy-retries 3 --timeout 15")
     args = ap.parse_args()
+    if args.gentle:
+        args.pace = max(args.pace, 5.0)
+        args.busy_retries = max(args.busy_retries, 3)
+        args.timeout = max(args.timeout, 15.0)
+    PACING["pace_s"] = args.pace
+    PACING["busy_retries"] = args.busy_retries
 
     dotenv.load_dotenv(pathlib.Path(__file__).parent / ".env")
     key = ENV_KEY[args.provider]
@@ -451,15 +655,18 @@ def main() -> None:
           % (false_greets, sum(1 for a in greet_rows if a == "greet"), len(greet_rows),
              timeouts, errors))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
+    if busy_retries_used:
+        print("busy retries: %d (waits not counted in latency)" % busy_retries_used)
     if args.rubric == 6:
         print("call 2 (speech):   %s" % fmt_ms(ms2s))
     if args.repeat > 1:
         flips = sorted(i for i, acts in actions_by_id.items() if len(set(acts)) > 1)
         print("flipped across repeats: %s" % (", ".join(flips) if flips else "none"))
     if thoughts and any(thoughts):
-        print("thinking tokens per call: mean %.0f, max %d. Thinking is on despite "
-              "thinking_budget=0, and it costs latency."
-              % (statistics.mean(thoughts), max(thoughts)))
+        why = ("reasoning_effort=low" if args.provider == "groq"
+               else "Thinking is on despite thinking_budget=0, and it costs latency")
+        print("thinking tokens per call: mean %.0f, max %d. %s."
+              % (statistics.mean(thoughts), max(thoughts), why))
 
     if false_greets:
         print("\nThe robot spoke when it should not have. That is the costly error;\n"
