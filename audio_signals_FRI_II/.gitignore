@@ -2,3 +2,7 @@ data/
 clips/
 *.wav
 models/
+
+build/
+install/
+log/
