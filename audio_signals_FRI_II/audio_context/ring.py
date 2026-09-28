@@ -29,6 +29,13 @@ class RingBuffer:
         self._next_t = None        # where the next block should start
         self.gaps = 0              # how often audio went missing
 
+        # What counts as audio actually going missing, rather than a block
+        # arriving a moment late. Blocks come every block_samples / rate,
+        # about 128 ms, so a real gap is at least that. Timestamps come from
+        # the audio callback and jitter by a few milliseconds, which is not
+        # a gap. Half a block sits well clear of both.
+        self.gap_threshold = 0.5 * cfg["block_samples"] / self.rate
+
     def add(self, block):
         # One block from capture.py. Old audio falls off the front.
         with self._lock:
@@ -42,8 +49,16 @@ class RingBuffer:
             # would put every later timestamp out by the missing duration,
             # and utterances would slice to the wrong audio or to nothing.
             # Filling it with silence keeps the timeline exact.
+            # Only a gap worth the name. Triggering on a millisecond meant
+            # ordinary callback jitter inserted padding on half the blocks.
+            # Each insertion adds time to the buffer that never passed, so
+            # _start_t advanced faster than the wall clock and every slice
+            # landed progressively earlier: about 18 ms of drift per second,
+            # over a second off after a minute. That is why transcription
+            # was fine at first and returned fragments of the previous
+            # utterance later on.
             gap = block.t - self._next_t
-            if gap > 0.001:
+            if gap > self.gap_threshold:
                 self.gaps += 1
                 self._samples = np.concatenate([
                     self._samples,

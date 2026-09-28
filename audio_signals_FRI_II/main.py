@@ -10,6 +10,7 @@
 #   python main.py --show builder          only the once-a-second builds
 #   python main.py --show processor        only the per-block lines
 #   python main.py --show none             silent until the summary
+#   python main.py --show json             the full object, every second
 #
 #   python main.py --wav clips/capture_test.wav    stops when the file ends
 #   python main.py --seconds 10                   for a quick check
@@ -39,7 +40,7 @@ def main():
                     help="stop after this long; runs until Ctrl+C otherwise")
     ap.add_argument("--wav", default=None, help="read a file instead of the mic")
     ap.add_argument("--show", default="both",
-                    choices=["both", "processor", "builder", "none"],
+                    choices=["both", "processor", "builder", "none", "json"],
                     help="which loop prints its output")
     ap.add_argument("--engaged", action="store_true",
                     help="start engaged, so transcription runs from the off")
@@ -56,6 +57,9 @@ def main():
 
     show_proc = args.show in ("both", "processor")
     show_build = args.show in ("both", "builder")
+    # "json" prints the whole object each second instead of the summary
+    # line, so the stream can be watched live rather than only at the end.
+    show_json = args.show == "json"
 
     proc = Processor(CONFIG, verbose=show_proc)
     builder = Builder(CONFIG, proc.buffer, proc.utterance, proc.counters,
@@ -105,7 +109,10 @@ def main():
     recent = deque(maxlen=5)
     try:
         while not finished.wait(interval):
-            recent.append(builder.build())
+            audio = builder.build()
+            recent.append(audio)
+            if show_json:
+                print(json.dumps(audio))
     except KeyboardInterrupt:
         print("\nstopping")
 
@@ -118,7 +125,8 @@ def main():
     print(f"\n{proc.blocks} blocks, {proc.n_frames} frames, "
           f"{builder.builds} builds, {proc.stt.done} transcripts")
 
-    if recent:
+    # Already shown one by one in json mode, so no need to repeat them.
+    if recent and not show_json:
         print(f"\nlast {len(recent)} audio objects:")
         for i, obj in enumerate(recent, 1):
             print(f"\n[{i}]")

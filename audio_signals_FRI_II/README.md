@@ -26,6 +26,9 @@
     python3 tools/check_devices.py
     python3 tools/check_levels.py
 
+### Change Audio Enhancements
+    Settings->Sound->Input->(Select the current microphone input)->Turn Audio Enhancements OFF!
+
     source /opt/ros/humble/setup.bash
     colcon build --packages-select audio_context
     source install/setup.bash
