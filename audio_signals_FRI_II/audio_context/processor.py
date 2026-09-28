@@ -37,6 +37,7 @@ from audio_context.counters import Counters
 from audio_context.frames import Buffer
 from audio_context.ring import RingBuffer
 from audio_context.stt import Transcriber
+from audio_context.tone import Tone
 from audio_context.utterance import Utterance
 
 # One per block. db and voice are the same length, one entry per 32 ms frame.
@@ -73,6 +74,7 @@ class Processor:
         # just before the decision to engage are still here.
         self.ring = RingBuffer(cfg)
         self.stt = Transcriber(cfg, verbose=verbose)
+        self.tone = Tone(cfg)
         self.ignored = 0           # blocks dropped while the robot spoke
 
     def _report(self, background, speech):
@@ -96,7 +98,10 @@ class Processor:
             return
         samples = self.ring.slice(span.start, span.end)
         if samples is not None:
+            # Transcription goes to its own thread; tone is quick enough to
+            # run here, about 30 ms against several hundred for the text.
             self.stt.request(samples, when=span.end)
+            self.tone.measure(samples)
 
     def _analyse(self, block):
         # Everything that happens to one block. Both modules receive the same

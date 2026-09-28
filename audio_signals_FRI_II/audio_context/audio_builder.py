@@ -20,13 +20,14 @@ from audio_context.speech import Speech
 
 class Builder:
 
-    def __init__(self, cfg, buffer, utterance, counters, stt=None,
+    def __init__(self, cfg, buffer, utterance, counters, stt=None, tone=None,
                  verbose=False):
         self.cfg = cfg
         self.buffer = buffer       # the stores processor.py is filling
         self.utterance = utterance # the tracker processor.py is feeding
         self.counters = counters   # the rolling counts it also feeds
         self.stt = stt             # the transcriber, when there is one
+        self.tone = tone           # the tone measurer, when there is one
         self.verbose = verbose
         self.background = Background(cfg)
         self.speech = Speech(cfg)
@@ -61,6 +62,11 @@ class Builder:
             # Whatever text is ready. Empty when nobody has spoken, or when
             # not engaged, or while a transcription is still running.
             "transcript": self.stt.latest() if self.stt else "",
+
+            # How the last utterance sounded: pitch, spread, level. Null
+            # when nobody has spoken, when not engaged, or when there was
+            # too little voiced audio to measure.
+            "tone": self.tone.latest() if self.tone else None,
 
             # Echoed from state.py, not measured. Whichever value was in
             # force when these readings were taken.
@@ -101,6 +107,7 @@ class Builder:
             "speech_ratio_10s": None,
             "seconds_since_speech": None,
             "transcript": "",
+            "tone": None,
             "engaged": state.engaged(),
             "robot_speaking": state.robot_speaking(),
         }

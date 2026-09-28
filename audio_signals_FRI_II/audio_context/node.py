@@ -52,7 +52,8 @@ class AudioContextNode(Node):
 
         self.proc = Processor(CONFIG)
         self.builder = Builder(CONFIG, self.proc.buffer, self.proc.utterance,
-                               self.proc.counters, self.proc.stt)
+                               self.proc.counters, self.proc.stt,
+                               self.proc.tone)
 
         self.pub = self.create_publisher(String, out, 10)
         self.create_subscription(Bool, eng, self._on_engaged, 10)

@@ -14,7 +14,7 @@ CONFIG = {
     # "USB Audio" finds both "Microphone (USBAudio1.0)" on Windows and
     # "USB Audio Device" on Linux. Falls back to the default if it is not
     # found, so a missing device never stops the node.
-    "input_device":        "Camera-B4",
+    "input_device":        None,
     "input_channels":      None,   # None = ask the device
     "capture_sample_rate": None,   # None = ask the device
     "warmup_blocks":       2,      # some backends open with digital silence
@@ -81,9 +81,7 @@ CONFIG = {
                                    # here will not match the robot
     "stt_compute_type":    "int8",
     "stt_threads":         1,
-    "tone_enabled":        True,
-    "pitch_floor_hz":      75.0,   # parselmouth search range for adult speech
-    "pitch_ceiling_hz":    500.0,
+    "tone_enabled":        True,   # level and timing only; see tone.py
 
     # --- robot hearing itself --------------------------------------
     "robot_speaking_tail_sec": 0.5,
