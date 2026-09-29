@@ -126,7 +126,7 @@ conversation_initiator/
     ├── test_gate.py        gate and contract tests + a 100-tick simulation
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
-    └── vignettes/          hand-labelled test scenes, 001–009
+    └── vignettes/          test scenes, 001–021. 010–021 need labels
 ```
 
 ### `mvp.py`: the decision

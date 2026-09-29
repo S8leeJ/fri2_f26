@@ -1,0 +1,32 @@
+{
+  "id": "013",
+  "expect": null,
+  "note": "Same as 001, but the robot greeted this person 40 s ago and got no response once.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 1.6,
+      "facing_robot": true,
+      "gaze_at_robot_s": 2.0,
+      "motion": "stationary",
+      "activity": "idle"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": 40.0,
+      "consecutive_no_response": 1
+    }
+  }
+}
