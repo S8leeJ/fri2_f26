@@ -145,7 +145,7 @@ R1 Never greet someone who is in a conversation with another person.
 R2 Never greet if robot.last_spoke_s_ago is under 30, or consecutive_no_response is 2 or more.
 R3 Do not greet someone moving past without facing the robot; they are in transit.
 R4 Do not greet someone absorbed in work unless they look at the robot.
-R5 Greet when the person faces the robot, is stationary, and is within ~3 m.
+R5 Greet when the person faces the robot, is stationary or approaching, and is within ~3 m.
 R6 When evidence is thin or contradictory, remain silent. Silence is the safe default."""
 
 ACTIONS_3 = """Actions
