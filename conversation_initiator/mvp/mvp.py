@@ -20,7 +20,7 @@ import dotenv
 from pydantic import BaseModel, Field
 
 from context import validate
-from postfilter import enforce
+from postfilter import blocking_rule, enforce
 
 VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 
@@ -185,6 +185,16 @@ nearby person. You are given the scene and the decision.
 Write one short line for it to say: under 12 words, friendly and plain. If the action \
 is respond, answer what the person said. Match the room: soft when ambient.noise_level \
 is quiet, medium when moderate, loud only when the room is loud."""
+
+
+VOLUME_FOR_NOISE = {"quiet": "soft", "moderate": "medium", "loud": "loud"}
+
+
+def fixed_greeting(ctx) -> Speech:
+    """A greet line with no second call. Volume follows the room, as SPEECH_SYSTEM asks."""
+    level = (ctx.get("ambient") or {}).get("noise_level")
+    return Speech(text="Hi there! Can I help you with anything?",
+                  volume=VOLUME_FOR_NOISE.get(level, "medium"), rate="medium", pitch="medium")
 
 
 def load_vignettes() -> list:
@@ -491,6 +501,25 @@ class Result:
     speech_error: Optional[str]
 
 
+def line_to_say(provider, client, model, ctx, d):
+    """Returns (speech, elapsed_ms, error). Skips the call when nothing will be said."""
+    if d.action not in SPEAKS or blocking_rule(ctx, d.action):
+        return None, None, None
+    if provider == "jev":
+        # Jev answers typed questions only, so it cannot write a line.
+        if d.action == "greet":
+            return fixed_greeting(ctx), None, None
+        return None, None, "jev cannot write a reply"
+    # A failed line should not cost the decision, which is what is being scored.
+    try:
+        speech, ms, _ = ask(provider, client, model, SPEECH_SYSTEM,
+                            json.dumps({"context": ctx, "decision": d.model_dump()}),
+                            Speech, 150)
+        return speech, ms, None
+    except Exception as e:  # noqa: BLE001
+        return None, None, "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+
+
 def decide(provider, client, model, ctx, rubric) -> Result:
     user = json.dumps(ctx)
     if rubric == 3:
@@ -499,16 +528,7 @@ def decide(provider, client, model, ctx, rubric) -> Result:
                       ms, None, thoughts, None, None)
 
     d, ms, thoughts = ask(provider, client, model, SYSTEM_6, user, Decision6, 400)
-    speech = ms2 = speech_error = None
-    # Jev only answers typed questions; it cannot write the line to say.
-    if d.action in SPEAKS and provider != "jev":
-        # A failed line should not cost the decision, which is what is being scored.
-        try:
-            speech, ms2, _ = ask(provider, client, model, SPEECH_SYSTEM,
-                                 json.dumps({"context": ctx, "decision": d.model_dump()}),
-                                 Speech, 150)
-        except Exception as e:  # noqa: BLE001
-            speech_error = "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+    speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
     r = d.rubric
     return Result(d.action,
                   [r.invitation, r.interruption_cost, r.urgency, r.redundancy,
@@ -583,6 +603,7 @@ def main() -> None:
             ask(args.provider, client, model, SYSTEM_3, json.dumps(warm_ctx), Decision3, 400)
         else:
             ask(args.provider, client, model, SYSTEM_6, json.dumps(warm_ctx), Decision6, 400)
+        if args.rubric == 6 and args.provider != "jev":
             ask(args.provider, client, model, SPEECH_SYSTEM,
                 json.dumps({"context": warm_ctx, "decision": {"action": "greet"}}), Speech, 150)
     except Exception as e:  # noqa: BLE001 - a cold-start failure shouldn't end the run
