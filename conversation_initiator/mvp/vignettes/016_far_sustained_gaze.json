@@ -1,0 +1,32 @@
+{
+  "id": "016",
+  "expect": null,
+  "note": "Stationary, looks at the robot for 4 s, but 4.5 m away, past the ~3 m in R5.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 4.5,
+      "facing_robot": true,
+      "gaze_at_robot_s": 4.0,
+      "motion": "stationary",
+      "activity": "idle"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}

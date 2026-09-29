@@ -1,0 +1,32 @@
+{
+  "id": "010",
+  "expect": null,
+  "note": "Looks at the robot for under a second while walking past. Is a glance an invitation?",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 2.4,
+      "facing_robot": true,
+      "gaze_at_robot_s": 0.6,
+      "motion": "passing",
+      "activity": "transiting"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}

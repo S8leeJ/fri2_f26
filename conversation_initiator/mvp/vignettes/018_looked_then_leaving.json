@@ -1,0 +1,32 @@
+{
+  "id": "018",
+  "expect": null,
+  "note": "Looked at the robot for 1.5 s, then turned and is now walking away.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 2.2,
+      "facing_robot": false,
+      "gaze_at_robot_s": 1.5,
+      "motion": "leaving",
+      "activity": "transiting"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}
