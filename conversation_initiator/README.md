@@ -56,6 +56,10 @@ the audio and vision nodes are wired together.
 6. **Only if the action is `greet` or `respond`,** a second call writes the
    line and picks its volume, rate, and pitch. Keeping it separate means the
    silent cases, which are most of them, never pay for generating text.
+   The call is skipped when the post-filter blocks the action. With
+   `--provider jev`, a greet uses a fixed line with the volume set by
+   `noise_level`, so there is no second call. Jev cannot write a reply to
+   `respond`.
 
 Scores come before the action in the schema on purpose. The model commits to
 its reading of the scene first, and then picks the action.
