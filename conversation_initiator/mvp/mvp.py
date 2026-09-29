@@ -20,6 +20,7 @@ import dotenv
 from pydantic import BaseModel, Field
 
 from context import validate
+from postfilter import enforce
 
 VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 
@@ -598,8 +599,9 @@ def main() -> None:
     print("-" * len(header))
 
     rows = []            # (vignette, action or None)
+    filtered = []        # (vignette, action after the post-filter)
     ms1s, ms2s, thoughts = [], [], []
-    timeouts = errors = 0
+    timeouts = errors = blocked = 0
     actions_by_id = {}
 
     for _ in range(args.repeat):
@@ -620,6 +622,8 @@ def main() -> None:
                 continue
 
             rows.append((v, r.action))
+            final, blocked_by = enforce(v["context"], r.action)
+            filtered.append((v, final))
             actions_by_id.setdefault(v["id"], []).append(r.action)
             ms1s.append(r.ms1)
             if r.ms2 is not None:
@@ -637,6 +641,9 @@ def main() -> None:
                 print("     says: \"%s\"  (%s, %s, %s)" % (s.text, s.volume, s.rate, s.pitch))
             elif r.speech_error:
                 print("     speech call failed: %s" % r.speech_error)
+            if blocked_by:
+                blocked += 1
+                print("     post-filter: %s -> %s (%s)" % (r.action, final, blocked_by))
 
     print("-" * len(header))
     total = len(rows)
@@ -654,6 +661,9 @@ def main() -> None:
     print("false greets: %d   greet recall: %d/%d   timeouts: %d   errors: %d"
           % (false_greets, sum(1 for a in greet_rows if a == "greet"), len(greet_rows),
              timeouts, errors))
+    if blocked:
+        print("post-filter blocked: %d   false greets after it: %d"
+              % (blocked, sum(1 for v, a in filtered if a in SPEAKS and v["expect"] not in SPEAKS)))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
     if busy_retries_used:
         print("busy retries: %d (waits not counted in latency)" % busy_retries_used)
