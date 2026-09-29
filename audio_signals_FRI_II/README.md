@@ -83,3 +83,32 @@ Run:
     source /opt/ros/humble/setup.bash
     source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
     ros2 topic echo /audio_context --field data
+
+
+## Third Terminal — Drive the Flags
+
+Nothing publishes these yet, so set them by hand. Each holds until Ctrl+C.
+
+    cd ~/fri2_f26
+    source /opt/ros/humble/setup.bash
+    source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
+
+Turn transcription on:
+
+    ros2 topic pub /engaged std_msgs/Bool "data: true"
+
+Tell the node the robot is talking, so it stops measuring:
+
+    ros2 topic pub /robot_speaking std_msgs/Bool "data: true"
+
+One topic per terminal, so a fourth is needed to hold both at once.
+
+What to expect in the echo terminal:
+
+| flag | effect |
+|---|---|
+| `engaged: true` | speak, and `transcript` fills within a second or two |
+| `robot_speaking: true` | every measurement goes `null` until you stop publishing |
+| both false | numbers flow, `transcript` stays empty |
+
+`null` everywhere with `robot_speaking: true` means suppressed, not broken.
