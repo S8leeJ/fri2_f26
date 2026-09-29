@@ -1,19 +1,89 @@
-mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ uptime
- 16:32:09 up  5:01,  1 user,  load average: 0.04, 0.08, 0.02
-mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ top -bn1 | head -15
-top - 16:32:19 up  5:01,  1 user,  load average: 0.04, 0.08, 0.02
-Tasks: 429 total,   1 running, 428 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  1.0 us,  1.0 sy,  0.0 ni, 98.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-MiB Mem :  15625.9 total,   6977.4 free,   3455.0 used,   5193.4 buff/cache
-MiB Swap:    980.0 total,    980.0 free,      0.0 used.  11505.0 avail Mem 
+mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ python3 main.py --show json --engaged
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+capture running, building every 1s, showing json.
+engaged = True.  Enter = toggle robot_speaking, Ctrl+C to stop.
 
-    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
-   1387 root     -51   0       0      0      0 S   6.2   0.0   0:00.06 irq/193-iwlwifi:queue_11
-   6381 mayankk   20   0   26.1g 194092 124244 S   6.2   1.2   0:21.18 Xorg
-   6638 mayankk   20   0 6826464 357296 152092 S   6.2   2.2   0:30.91 gnome-shell
-  12056 mayankk   20   0 1452.1g 436364 132536 S   6.2   2.7   1:23.24 code
-  18304 mayankk   20   0   10920   4376   3324 R   6.2   0.0   0:00.01 top
-      1 root      20   0  169144  14520   8384 S   0.0   0.1   0:01.82 systemd
-      2 root      20   0       0      0      0 S   0.0   0.0   0:00.01 kthreadd
-      3 root      20   0       0      0      0 S   0.0   0.0   0:00.00 pool_workqueue_release
+{"stamp": null, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false,"speech_ratio_10s": null, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true,"robot_speaking": false}
+{"stamp": 1790717907.300442, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717908.324543, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717909.34845, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717910.3724697, "noise_floor_db": -42.5, "noise_level": "moderate", "speech_snr_db": null,"speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717911.3964884, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 0.6, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717912.2925315, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 0.1, "speech_now": true, "speech_ratio_10s": 0.08, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717913.3162477, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 0.3, "speech_now": false, "speech_ratio_10s": 0.19, "seconds_since_speech": 0.2, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717914.3402793, "noise_floor_db": -42.1, "noise_level": "moderate", "speech_snr_db": 0.0, "speech_now": true, "speech_ratio_10s": 0.22, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717915.3645105, "noise_floor_db": -42.1, "noise_level": "moderate", "speech_snr_db": 0.0, "speech_now": false, "speech_ratio_10s": 0.2, "seconds_since_speech": 0.9, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717916.388615, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 0.2, "speech_now": false, "speech_ratio_10s": 0.18, "seconds_since_speech": 2.0, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717917.412626, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 0.1, "speech_now": false, "speech_ratio_10s": 0.18, "seconds_since_speech": 3.0, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717918.308627, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 1.9, "speech_now": true, "speech_ratio_10s": 0.21, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -41.5, "seconds": 0.96, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717919.3325295, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 3.1, "speech_now": false, "speech_ratio_10s": 0.3, "seconds_since_speech": 0.1, "transcript": "", "tone": {"intensity_db": -25.9, "seconds": 0.8, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717920.3565361, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 3.5, "speech_now": false, "speech_ratio_10s": 0.3, "seconds_since_speech": 1.2, "transcript": "Good morning.","tone": {"intensity_db": -25.9, "seconds": 0.8, "active_ratio": 1.0}, "engaged": true, "robot_speaking":false}
+{"stamp": 1790717921.3805473, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 3.9, "speech_now": false, "speech_ratio_10s": 0.3, "seconds_since_speech": 2.2, "transcript": "Good morning.","tone": {"intensity_db": -25.9, "seconds": 0.8, "active_ratio": 1.0}, "engaged": true, "robot_speaking":false}
+{"stamp": 1790717922.4045599, "noise_floor_db": -42.7, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": true, "speech_ratio_10s": 0.29, "seconds_since_speech": 0.0, "transcript": "Good morning.","tone": {"intensity_db": -25.9, "seconds": 0.8, "active_ratio": 1.0}, "engaged": true, "robot_speaking":false}
+{"stamp": 1790717923.3005586, "noise_floor_db": -42.6, "noise_level": "moderate", "speech_snr_db": 3.1, "speech_now": true, "speech_ratio_10s": 0.31, "seconds_since_speech": 0.0, "transcript": "Good morning.","tone": {"intensity_db": -25.9, "seconds": 0.8, "active_ratio": 1.0}, "engaged": true, "robot_speaking":false}
+{"stamp": 1790717924.3243673, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 3.7, "speech_now": false, "speech_ratio_10s": 0.28, "seconds_since_speech": 0.9, "transcript": "Good morning.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717925.220351, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 4.4, "speech_now": false, "speech_ratio_10s": 0.27, "seconds_since_speech": 1.8, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717926.372668, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.32, "seconds_since_speech": 0.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717927.3966975, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 3.2, "speech_now": false, "speech_ratio_10s": 0.32, "seconds_since_speech": 1.1, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717928.4204998, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 1.6, "speech_now": false, "speech_ratio_10s": 0.29, "seconds_since_speech": 2.1, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717929.316704, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 1.0, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 3.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717930.3407176, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 0.9, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 4.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717931.364695, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 1.0, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 5.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717932.3887184, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 0.8, "speech_now": false, "speech_ratio_10s": 0.16, "seconds_since_speech": 6.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717933.412739, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 0.6, "speech_now": true, "speech_ratio_10s": 0.06, "seconds_since_speech": 0.0, "transcript": "We could try survival.", "tone": {"intensity_db": -41.0, "seconds": 1.22, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717934.436487, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.0, "speech_now": false, "speech_ratio_10s": 0.11, "seconds_since_speech": 0.5, "transcript": "", "tone": {"intensity_db": -42.1, "seconds": 0.26, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717935.332752, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 0.5, "speech_now": true, "speech_ratio_10s": 0.12, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -42.1, "seconds": 0.26, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717936.3566365, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 1.7, "speech_now": true, "speech_ratio_10s": 0.12, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -41.1, "seconds": 0.38, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717937.3804686, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 1.5, "speech_now": true, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -41.1, "seconds": 0.38, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717938.4046469, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 1.8, "speech_now": false, "speech_ratio_10s": 0.33, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -41.1, "seconds": 1.73, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717939.4286532, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.8, "speech_now": true, "speech_ratio_10s": 0.35, "seconds_since_speech": 0.0, "transcript": "and you know, Iwas just here.", "tone": {"intensity_db": -41.1, "seconds": 1.73, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717940.3246589, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.7, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "and you know, Iwas just here.", "tone": {"intensity_db": -41.1, "seconds": 1.73, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717941.3484364, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.7, "speech_now": false, "speech_ratio_10s": 0.51, "seconds_since_speech": 0.3, "transcript": "and you know, I was just here.", "tone": {"intensity_db": -40.3, "seconds": 1.54, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717942.3726707, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.7, "speech_now": false, "speech_ratio_10s": 0.51, "seconds_since_speech": 1.3, "transcript": "", "tone": {"intensity_db": -40.3, "seconds": 1.54, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717943.3966775, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 1.7, "speech_now": true, "speech_ratio_10s": 0.59, "seconds_since_speech": 0.0, "transcript": "", "tone": {"intensity_db": -40.3, "seconds": 1.54, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717944.4206834, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 1.6, "speech_now": false, "speech_ratio_10s": 0.56, "seconds_since_speech": 0.8, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717945.4446757, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 2.1, "speech_now": false, "speech_ratio_10s": 0.53, "seconds_since_speech": 1.9, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717946.340696, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 1.8, "speech_now": false, "speech_ratio_10s": 0.54, "seconds_since_speech": 0.2, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717947.3647006, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 2.1, "speech_now": false, "speech_ratio_10s": 0.44, "seconds_since_speech": 1.2, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717948.3885455, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 1.5, "speech_now": false, "speech_ratio_10s": 0.34, "seconds_since_speech": 2.2, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717949.412712, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 1.6, "speech_now": true, "speech_ratio_10s": 0.32, "seconds_since_speech": 0.0, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717950.4367182, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 6.5, "speech_now": true, "speech_ratio_10s": 0.32, "seconds_since_speech": 0.0, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717951.4607244, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 7.8, "speech_now": true, "speech_ratio_10s": 0.36, "seconds_since_speech": 0.0, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717952.356516, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 7.5, "speech_now": true, "speech_ratio_10s": 0.45, "seconds_since_speech": 0.0, "transcript": "See you.", "tone": {"intensity_db": -42.4, "seconds": 0.61, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717953.3807356, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 7.9, "speech_now": false, "speech_ratio_10s": 0.4, "seconds_since_speech": 0.8, "transcript": "Final test before I close this trim.", "tone": {"intensity_db": -32.2, "seconds": 2.91, "active_ratio": 1.0}, "engaged":true, "robot_speaking": false}
+{"stamp": 1790717954.4047425, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": 7.3, "speech_now": true, "speech_ratio_10s": 0.42, "seconds_since_speech": 0.0, "transcript": "Final test before I close this trim.", "tone": {"intensity_db": -32.2, "seconds": 2.91, "active_ratio": 1.0}, "engaged":true, "robot_speaking": false}
+{"stamp": 1790717955.4287488, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 6.9, "speech_now": false, "speech_ratio_10s": 0.43, "seconds_since_speech": 0.9, "transcript": "", "tone": {"intensity_db": -38.8, "seconds": 0.32, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717956.4527547, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 7.3, "speech_now": false, "speech_ratio_10s": 0.38, "seconds_since_speech": 1.9, "transcript": "", "tone": {"intensity_db": -38.8, "seconds": 0.32, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+{"stamp": 1790717957.348757, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 6.8, "speech_now": false, "speech_ratio_10s": 0.38, "seconds_since_speech": 2.8, "transcript": "", "tone": {"intensity_db": -38.8, "seconds": 0.32, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+^C
+stopping
+
+404 blocks, 1616 frames, 52 builds, 10 transcripts
+mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ 
+
+
+
+--- however, when runnning with ROS, I get this within 5 seconds, which is why I believe transcription is not working ----
+
+
+mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ ros2 run audio_context node
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[INFO] [1790717987.546219363] [audio_context]: publishing /audio_context every 1s
+audio status: input overflow
+^CTraceback (most recent call last):
+  File "/home/mayankk/fri2_f26/audio_signals_FRI_II/install/audio_context/lib/audio_context/node", line 33, in <module>
+    sys.exit(load_entry_point('audio-context==0.1.0', 'console_scripts', 'node')())
+  File "/home/mayankk/fri2_f26/audio_signals_FRI_II/install/audio_context/lib/python3.10/site-packages/audio_context/node.py", line 131, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+[ros2run]: Process exited with failure 1
+mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ ^C
 mayankk@bender:~/fri2_f26/audio_signals_FRI_II$ 
