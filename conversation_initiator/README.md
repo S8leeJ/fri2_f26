@@ -124,6 +124,8 @@ conversation_initiator/
     ├── context.py          schema validation and the audio node adapter
     ├── gate.py             local pre-filter, no network
     ├── test_gate.py        gate and contract tests + a 100-tick simulation
+    ├── postfilter.py       hard rules the model answer cannot override
+    ├── test_postfilter.py  post-filter tests
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
     └── vignettes/          hand-labelled test scenes, 001–009
@@ -179,6 +181,25 @@ greeting cooldown, or being ignored again. After 10 s it asks again
 regardless. At 3 Hz an ungated loop would make about 10,000 calls an hour; the
 gate suppresses 91% of them in the test simulation.
 
+### `postfilter.py`: rules the model cannot override
+
+`enforce(ctx, action)` runs after the model answers. It returns
+`(action, blocked_by)`. It can only change `greet` or `respond` to
+`remain_silent`. It never makes the robot speak.
+
+| Rule | Blocks |
+|---|---|
+| `no_person` | any speech when `target` is `null` |
+| `self_speaking` | any speech while the robot is talking |
+| `R2 ignored twice` | any speech when `consecutive_no_response` is 2 or more |
+| `R1 target in conversation` | `greet` when `target.in_conversation` is true |
+| `R2 spoke recently` | `greet` when the robot spoke less than 30 s ago |
+| `respond without transcript` | `respond` when there is no `partial_transcript` |
+
+R3 and R4 need judgment, so the filter leaves them to the model. `mvp.py`
+still scores the model's own action. It prints each block and the number of
+false greets left after the filter.
+
 ### `vignettes/`: the test set
 
 Each file is one scene plus the answer a person would give, written before
@@ -208,6 +229,7 @@ pip install -r requirements.txt
 cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 
 python3 test_gate.py                 # gate and schema tests, no key needed
+python3 test_postfilter.py           # post-filter tests, no key needed
 python3 mvp.py                       # Anthropic, the default
 python3 mvp.py --provider gemini
 python3 mvp.py --repeat 3            # three passes: steadier latency, and flips
@@ -234,6 +256,5 @@ to noise. `MVP_PLAN.md` covers how to classify them and what counts as a pass.
 ## What's next
 
 Once the MVP passes go/no-go, `IMPLEMENTATION_PLAN.md` wraps this in a ROS 2
-node that subscribes to the fused `/social_context` topic. That adds a
-post-filter that enforces the hard rules, SSML for speech, and Langfuse
-tracing.
+node that subscribes to the fused `/social_context` topic. That adds SSML for
+speech and Langfuse tracing. The node runs `postfilter.py` on every decision.
