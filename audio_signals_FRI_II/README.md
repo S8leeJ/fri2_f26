@@ -54,7 +54,7 @@ it. Change `grep -i camera` if the mic is something else.
 
     ros2 run audio_context node
 
-## Running Locally without ROS (for Testing)
+### Running Locally without ROS (for Testing)
     
     python main.py --show json --engaged
 
