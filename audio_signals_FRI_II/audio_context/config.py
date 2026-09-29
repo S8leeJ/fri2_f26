@@ -19,6 +19,15 @@ CONFIG = {
     "capture_sample_rate": None,   # None = ask the device
     "warmup_blocks":       2,      # some backends open with digital silence
 
+    # How much buffering to ask the audio backend for. "high" gives the
+    # driver a larger internal buffer, which is the usual cure for
+    # "input overflow": the callback is not being reached in time, so audio
+    # is lost before anything sees it. Costs a little extra latency before
+    # a block arrives, which does not matter here because the pipeline is
+    # already working in 128 ms blocks. "low" or a number of seconds also
+    # work; None leaves it to the backend.
+    "input_latency":       "high",
+
     # --- voice detection -------------------------------------------
     "vad_normalise_db":    -25.0,  # Level the detector's copy of the audio is
                                    # scaled to before it is scored. Silero is
