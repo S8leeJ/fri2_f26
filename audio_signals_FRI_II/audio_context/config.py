@@ -83,7 +83,7 @@ CONFIG = {
     # --- ring buffer, in memory only -------------------------------
     "ring_buffer_sec":     20.0,   # long enough for the longest utterance
     "stt_lookback_sec":    10.0,   # how far back to transcribe when engaged
-    "stt_margin_sec":      0.35,   # extra audio either side of an utterance
+    "stt_margin_sec":      0.75,   # extra audio either side of an utterance
                                    # before transcribing. The tracker marks
                                    # the end where the detector last heard a
                                    # voice, but the quiet tail of a sentence

@@ -1,122 +1,293 @@
-mayankk@singularity-1:~/fri2_f26/audio_signals_FRI_II$ python3 main.py --show json --engaged
-capture running, building every 1s, showing json.
-engaged = True.  Enter = toggle robot_speaking, Ctrl+C to stop.
-
-{"stamp": null, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": null, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973179.4142916, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973180.4382894, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973181.462304, "noise_floor_db": null, "noise_level": null, "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973182.4873142, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973183.383313, "noise_floor_db": -40.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973184.4073207, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973185.4313195, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973186.4553287, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973187.4792604, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973188.5033374, "noise_floor_db": -40.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973189.3993313, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973190.4233491, "noise_floor_db": -40.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973191.447353, "noise_floor_db": -40.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973192.471377, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973193.49537, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973194.391372, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973195.4153059, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973196.4394226, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": 13.0, "speech_now": true, "speech_ratio_10s": 0.02, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973197.4634259, "noise_floor_db": -40.3, "noise_level": "moderate", "speech_snr_db": 10.0, "speech_now": true, "speech_ratio_10s": 0.12, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973198.4874048, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 10.6, "speech_now": false, "speech_ratio_10s": 0.16, "seconds_since_speech": 0.7, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -30.9, "seconds": 1.95, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973199.511394, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 10.9, "speech_now": false, "speech_ratio_10s": 0.16, "seconds_since_speech": 1.7, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -30.9, "seconds": 1.95, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973200.4074023, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 11.0, "speech_now": false, "speech_ratio_10s": 0.16, "seconds_since_speech": 2.6, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -30.9, "seconds": 1.95, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973201.431405, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 10.9, "speech_now": false, "speech_ratio_10s": 0.16, "seconds_since_speech": 3.6, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -30.9, "seconds": 1.95, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973202.4554067, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 10.9, "speech_now": true, "speech_ratio_10s": 0.18, "seconds_since_speech": 0.0, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -30.9, "seconds": 1.95, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973203.4793444, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 11.0, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 0.2, "transcript": "Hello, can you hear me?", "tone": {"intensity_db": -31.7, "seconds": 1.34, "active_ratio": 0.91}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973204.503359, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 11.0, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 1.2, "transcript": "Good morning.", "tone": {"intensity_db": -31.7, "seconds": 1.34, "active_ratio": 0.91}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973205.527364, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 10.8, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 2.3, "transcript": "Good morning.", "tone": {"intensity_db": -31.7, "seconds": 1.34, "active_ratio": 0.91}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973206.4234324, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 10.1, "speech_now": false, "speech_ratio_10s": 0.24, "seconds_since_speech": 3.2, "transcript": "Good morning.", "tone": {"intensity_db": -31.7, "seconds": 1.34, "active_ratio": 0.91}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973207.447439, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 10.5, "speech_now": true, "speech_ratio_10s": 0.18, "seconds_since_speech": 0.0, "transcript": "Good morning.", "tone": {"intensity_db": -31.7, "seconds": 1.34, "active_ratio": 0.91}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973208.4714441, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 10.4, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.2, "transcript": "Good morning.", "tone": {"intensity_db": -30.9, "seconds": 1.69, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973209.4954863, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 10.7, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 1.2, "transcript": "Good afternoon.", "tone": {"intensity_db": -30.9, "seconds": 1.69, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973210.519496, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 10.5, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 2.2, "transcript": "Good afternoon.", "tone": {"intensity_db": -30.9, "seconds": 1.69, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973211.415507, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 10.4, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 3.1, "transcript": "Good afternoon.", "tone": {"intensity_db": -30.9, "seconds": 1.69, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973212.4396105, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 10.6, "speech_now": true, "speech_ratio_10s": 0.28, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -30.9, "seconds": 1.69, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973213.4635189, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 11.3, "speech_now": false, "speech_ratio_10s": 0.24, "seconds_since_speech": 0.5, "transcript": "Good evening.", "tone": {"intensity_db": -29.8, "seconds": 1.47, "active_ratio": 0.92}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973214.4875126, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 11.7, "speech_now": false, "speech_ratio_10s": 0.24, "seconds_since_speech": 1.6, "transcript": "Good evening.", "tone": {"intensity_db": -29.8, "seconds": 1.47, "active_ratio": 0.92}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973215.511519, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 11.4, "speech_now": false, "speech_ratio_10s": 0.24, "seconds_since_speech": 2.6, "transcript": "Good evening.", "tone": {"intensity_db": -29.8, "seconds": 1.47, "active_ratio": 0.92}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973216.5355258, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 11.3, "speech_now": true, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.0, "transcript": "Good evening.", "tone": {"intensity_db": -29.8, "seconds": 1.47, "active_ratio": 0.92}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973217.4315248, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 11.4, "speech_now": true, "speech_ratio_10s": 0.3, "seconds_since_speech": 0.0, "transcript": "Good evening.", "tone": {"intensity_db": -29.8, "seconds": 1.47, "active_ratio": 0.92}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973218.455532, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 11.9, "speech_now": false, "speech_ratio_10s": 0.22, "seconds_since_speech": 0.9, "transcript": "Good night.", "tone": {"intensity_db": -31.5, "seconds": 1.53, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973219.4794805, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 11.8, "speech_now": false, "speech_ratio_10s": 0.22, "seconds_since_speech": 2.0, "transcript": "Good night.", "tone": {"intensity_db": -31.5, "seconds": 1.53, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973220.5035543, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 11.7, "speech_now": false, "speech_ratio_10s": 0.22, "seconds_since_speech": 3.0, "transcript": "Good night.", "tone": {"intensity_db": -31.5, "seconds": 1.53, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973221.5274901, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 11.9, "speech_now": false, "speech_ratio_10s": 0.22, "seconds_since_speech": 4.0, "transcript": "Good night.", "tone": {"intensity_db": -31.5, "seconds": 1.53, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973222.4234982, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 12.4, "speech_now": true, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.0, "transcript": "Good night.", "tone": {"intensity_db": -31.5, "seconds": 1.53, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973223.4475203, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 12.2, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.4, "transcript": "Good morning.", "tone": {"intensity_db": -31.0, "seconds": 1.53, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973224.471562, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 12.2, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 1.4, "transcript": "Good morning.", "tone": {"intensity_db": -31.0, "seconds": 1.53, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973225.4955688, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 13.0, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 2.5, "transcript": "Good morning.", "tone": {"intensity_db": -31.0, "seconds": 1.53, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973226.5195715, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 13.1, "speech_now": true, "speech_ratio_10s": 0.22, "seconds_since_speech": 0.0, "transcript": "Good morning.", "tone": {"intensity_db": -31.0, "seconds": 1.53, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973227.5435805, "noise_floor_db": -42.3, "noise_level": "moderate", "speech_snr_db": 13.3, "speech_now": true, "speech_ratio_10s": 0.22, "seconds_since_speech": 0.0, "transcript": "Good morning.", "tone": {"intensity_db": -31.0, "seconds": 1.53, "active_ratio": 0.93}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973228.439527, "noise_floor_db": -41.8, "noise_level": "moderate", "speech_snr_db": 12.8, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 0.5, "transcript": "good afternoon", "tone": {"intensity_db": -29.9, "seconds": 1.76, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973229.4635904, "noise_floor_db": -41.8, "noise_level": "moderate", "speech_snr_db": 12.8, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 1.6, "transcript": "good afternoon", "tone": {"intensity_db": -29.9, "seconds": 1.76, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973230.4875913, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 13.2, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 2.6, "transcript": "good afternoon", "tone": {"intensity_db": -29.9, "seconds": 1.76, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973231.5115619, "noise_floor_db": -42.5, "noise_level": "moderate", "speech_snr_db": 13.5, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 3.6, "transcript": "good afternoon", "tone": {"intensity_db": -29.9, "seconds": 1.76, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973232.535609, "noise_floor_db": -42.4, "noise_level": "moderate", "speech_snr_db": 13.0, "speech_now": true, "speech_ratio_10s": 0.26, "seconds_since_speech": 0.0, "transcript": "good afternoon", "tone": {"intensity_db": -29.9, "seconds": 1.76, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973233.5596137, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 12.8, "speech_now": false, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.5, "transcript": "Good evening.", "tone": {"intensity_db": -29.2, "seconds": 1.47, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973234.4556267, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 12.7, "speech_now": false, "speech_ratio_10s": 0.25, "seconds_since_speech": 1.4, "transcript": "Good evening.", "tone": {"intensity_db": -29.2, "seconds": 1.47, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973235.4795904, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 12.8, "speech_now": false, "speech_ratio_10s": 0.25, "seconds_since_speech": 2.5, "transcript": "Good evening.", "tone": {"intensity_db": -29.2, "seconds": 1.47, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973236.5035846, "noise_floor_db": -42.2, "noise_level": "moderate", "speech_snr_db": 12.9, "speech_now": true, "speech_ratio_10s": 0.33, "seconds_since_speech": 0.0, "transcript": "Good evening.", "tone": {"intensity_db": -29.2, "seconds": 1.47, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973237.5275304, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 12.5, "speech_now": false, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.7, "transcript": "Good evening.", "tone": {"intensity_db": -29.5, "seconds": 1.37, "active_ratio": 0.9}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973238.5515962, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 12.1, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 1.8, "transcript": "Goodness.", "tone": {"intensity_db": -29.5, "seconds": 1.37, "active_ratio": 0.9}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973239.575598, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 11.9, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 2.8, "transcript": "Goodness.", "tone": {"intensity_db": -29.5, "seconds": 1.37, "active_ratio": 0.9}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973240.4716089, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 11.6, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 3.7, "transcript": "Goodness.", "tone": {"intensity_db": -29.5, "seconds": 1.37, "active_ratio": 0.9}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973241.4956017, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 11.4, "speech_now": true, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.0, "transcript": "Goodness.", "tone": {"intensity_db": -29.5, "seconds": 1.37, "active_ratio": 0.9}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973242.519563, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 8.3, "speech_now": false, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.2, "transcript": "Goodness.", "tone": {"intensity_db": -35.6, "seconds": 1.28, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973243.5436113, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 8.8, "speech_now": false, "speech_ratio_10s": 0.19, "seconds_since_speech": 1.2, "transcript": "Good.", "tone": {"intensity_db": -35.6, "seconds": 1.28, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973244.567555, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 8.8, "speech_now": false, "speech_ratio_10s": 0.19, "seconds_since_speech": 2.3, "transcript": "Good.", "tone": {"intensity_db": -35.6, "seconds": 1.28, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973245.46363, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 8.9, "speech_now": false, "speech_ratio_10s": 0.19, "seconds_since_speech": 3.2, "transcript": "Good.", "tone": {"intensity_db": -35.6, "seconds": 1.28, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973246.4875753, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 7.0, "speech_now": true, "speech_ratio_10s": 0.2, "seconds_since_speech": 0.0, "transcript": "Good.", "tone": {"intensity_db": -35.6, "seconds": 1.28, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973247.5115628, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 7.1, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 0.5, "transcript": "Good.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973248.5356493, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 7.6, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 1.6, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973249.5596545, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 7.3, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 2.6, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973250.5836763, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 7.5, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 3.6, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973251.4796655, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 7.4, "speech_now": false, "speech_ratio_10s": 0.2, "seconds_since_speech": 4.5, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973252.5036707, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 7.1, "speech_now": false, "speech_ratio_10s": 0.12, "seconds_since_speech": 5.5, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973253.5276747, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 6.6, "speech_now": true, "speech_ratio_10s": 0.17, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973254.5516772, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 5.6, "speech_now": true, "speech_ratio_10s": 0.27, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973255.5756857, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": 3.7, "speech_now": true, "speech_ratio_10s": 0.37, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973256.5996878, "noise_floor_db": -40.0, "noise_level": "moderate", "speech_snr_db": 2.2, "speech_now": true, "speech_ratio_10s": 0.39, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973257.4956934, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": 2.6, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973258.5196993, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": 2.5, "speech_now": true, "speech_ratio_10s": 0.55, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973259.5437086, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": 2.6, "speech_now": true, "speech_ratio_10s": 0.65, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973260.5677078, "noise_floor_db": -39.9, "noise_level": "moderate", "speech_snr_db": 2.1, "speech_now": true, "speech_ratio_10s": 0.75, "seconds_since_speech": 0.0, "transcript": "Good afternoon.", "tone": {"intensity_db": -33.3, "seconds": 1.56, "active_ratio": 0.97}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973261.5917094, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": 2.4, "speech_now": false, "speech_ratio_10s": 0.79, "seconds_since_speech": 0.7, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973262.6157231, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": 2.4, "speech_now": false, "speech_ratio_10s": 0.79, "seconds_since_speech": 1.7, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973263.5127254, "noise_floor_db": -40.3, "noise_level": "moderate", "speech_snr_db": 2.2, "speech_now": false, "speech_ratio_10s": 0.74, "seconds_since_speech": 2.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973264.5367417, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 2.4, "speech_now": false, "speech_ratio_10s": 0.64, "seconds_since_speech": 3.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973265.560766, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 2.9, "speech_now": false, "speech_ratio_10s": 0.54, "seconds_since_speech": 4.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973266.5846767, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 3.0, "speech_now": false, "speech_ratio_10s": 0.43, "seconds_since_speech": 5.7, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973267.6087463, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 2.5, "speech_now": false, "speech_ratio_10s": 0.33, "seconds_since_speech": 6.7, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973268.504757, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 1.4, "speech_now": false, "speech_ratio_10s": 0.24, "seconds_since_speech": 7.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973269.5287614, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 0.4, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 8.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973270.5528407, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.04, "seconds_since_speech": 9.6, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973271.5768552, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 7.8, "speech_now": true, "speech_ratio_10s": 0.02, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973272.600847, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 5.1, "speech_now": true, "speech_ratio_10s": 0.12, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973273.624853, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 4.7, "speech_now": true, "speech_ratio_10s": 0.23, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973274.5208523, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 3.7, "speech_now": true, "speech_ratio_10s": 0.32, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973275.5448532, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 3.0, "speech_now": true, "speech_ratio_10s": 0.42, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973276.5688684, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 3.6, "speech_now": true, "speech_ratio_10s": 0.52, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973277.5928705, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 3.8, "speech_now": true, "speech_ratio_10s": 0.62, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973278.616743, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 3.6, "speech_now": true, "speech_ratio_10s": 0.73, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973279.6408706, "noise_floor_db": -40.3, "noise_level": "moderate", "speech_snr_db": 2.5, "speech_now": true, "speech_ratio_10s": 0.83, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973280.536889, "noise_floor_db": -39.6, "noise_level": "moderate", "speech_snr_db": 1.8, "speech_now": true, "speech_ratio_10s": 0.92, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973281.5608842, "noise_floor_db": -39.1, "noise_level": "moderate", "speech_snr_db": 1.3, "speech_now": true, "speech_ratio_10s": 1.0, "seconds_since_speech": 0.0, "transcript": "I moved a bit far away and I am trying to test if voice recognition is still working right", "tone": {"intensity_db": -37.4, "seconds": 8.22, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973282.5848625, "noise_floor_db": -39.4, "noise_level": "moderate", "speech_snr_db": 1.3, "speech_now": false, "speech_ratio_10s": 0.93, "seconds_since_speech": 0.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973283.6088872, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": 2.2, "speech_now": false, "speech_ratio_10s": 0.83, "seconds_since_speech": 1.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973284.632897, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 3.4, "speech_now": false, "speech_ratio_10s": 0.73, "seconds_since_speech": 2.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973285.5289075, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 3.9, "speech_now": false, "speech_ratio_10s": 0.64, "seconds_since_speech": 3.6, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973286.5529125, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": 3.3, "speech_now": false, "speech_ratio_10s": 0.54, "seconds_since_speech": 4.6, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973287.5769124, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 2.7, "speech_now": false, "speech_ratio_10s": 0.43, "seconds_since_speech": 5.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973288.600924, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 2.3, "speech_now": false, "speech_ratio_10s": 0.33, "seconds_since_speech": 6.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973289.624922, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 4.0, "speech_now": false, "speech_ratio_10s": 0.23, "seconds_since_speech": 7.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-{"stamp": 1790973290.6489303, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 5.0, "speech_now": false, "speech_ratio_10s": 0.13, "seconds_since_speech": 8.7, "transcript": "The last word of this sentence should be now and I will use this during the bugging to make sure that this is still working.", "tone": {"intensity_db": -37.9, "seconds": 10.91, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
-^C
-stopping
-
-881 blocks, 3524 frames, 113 builds, 13 transcripts
-mayankk@singularity-1:~/fri2_f26/audio_signals_FRI_II$ 
+_10s": 0.0, "seconds_since_speech": null, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974106.9210296, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 10.6, "speech_now": true, "speech_ratio_10s": 0.04, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974107.9450567, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 9.9, "speech_now": true, "speech_ratio_10s": 0.14, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974108.9690611, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": 9.7, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 0.8, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974109.993069, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": 10.1, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 1.8, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974110.889064, "noise_floor_db": -42.0, "noise_level": "moderate", "speech_snr_db": 10.4, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 2.7, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974111.9130735, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 10.3, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 3.7, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974112.937031, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 9.5, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 4.8, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974113.9610536, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 9.2, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 5.8, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974114.9850483, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 9.1, "speech_now": false, "speech_ratio_10s": 0.17, "seconds_since_speech": 6.8, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974115.8809924, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 8.0, "speech_now": false, "speech_ratio_10s": 0.22, "seconds_since_speech": 0.2, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974116.9050014, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 7.4, "speech_now": false, "speech_ratio_10s": 0.18, "seconds_since_speech": 1.2, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974117.9290643, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.08, "seconds_since_speech": 2.3, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974118.95307, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.05, "seconds_since_speech": 3.3, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974119.9770734, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 2.9, "speech_now": true, "speech_ratio_10s": 0.11, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974120.8730688, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 0.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974121.8970854, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 1.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974122.9210877, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 2.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974123.9450953, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 3.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974124.9691033, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 2.9, "speech_now": false, "speech_ratio_10s": 0.14, "seconds_since_speech": 4.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974125.737103, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 3.3, "speech_now": false, "speech_ratio_10s": 0.1, "seconds_since_speech": 5.4, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974126.8891017, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 3.2, "speech_now": false, "speech_ratio_10s": 0.09, "seconds_since_speech": 6.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974127.9131129, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 3.2, "speech_now": false, "speech_ratio_10s": 0.09, "seconds_since_speech": 7.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974128.9371202, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 3.4, "speech_now": false, "speech_ratio_10s": 0.09, "seconds_since_speech": 8.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974129.9611235, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.04, "seconds_since_speech": 9.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+^[[A{"stamp": 1790974130.9851515, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 10.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974131.881135, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 11.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974132.905132, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 12.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974133.929155, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 13.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974134.95315, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 14.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974135.9771483, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 15.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974136.8731637, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 16.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974137.8971639, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 17.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974138.921169, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 18.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974139.945172, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 19.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974140.9691794, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 20.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974141.9931862, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 21.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974142.8891912, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 22.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974143.9131937, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 23.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974144.9372454, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 24.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974145.961257, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 25.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974146.9852493, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 26.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974147.8812551, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 27.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974148.905251, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 28.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974149.929264, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 29.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974150.9532745, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 30.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974151.9772835, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 31.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974152.873286, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 32.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974153.8972867, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 33.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974154.9212904, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 34.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974155.9452999, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 35.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974156.9693067, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 36.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974157.9932652, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 37.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974158.8892763, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 38.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974159.9133215, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 39.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974160.9373155, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 40.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974161.961322, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 41.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974162.9853091, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 42.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974163.8813272, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 43.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974164.905256, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 44.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974165.929262, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 45.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974166.9543045, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 46.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974167.97832, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 47.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974168.8743224, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 48.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974169.8983347, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 49.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974170.9223843, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 50.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974171.946379, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 51.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974172.970412, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 52.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974173.8664389, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 53.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974174.890415, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 54.5, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974175.914404, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 55.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974176.9384117, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 56.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974177.962372, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 57.6, "transcript": "", "tone": null, "engaged": false, "robot_speaking": false}
+---
+{"stamp": 1790974178.9864097, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 58.6, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974179.8824232, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 59.5, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974180.9064224, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 60.5, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974181.9304268, "noise_floor_db": -41.8, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 61.6, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974182.9544399, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 62.6, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974183.978441, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 63.6, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974184.8744411, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 64.5, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974185.898452, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 65.5, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974186.92245, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 66.6, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974187.9464004, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 9.9, "speech_now": true, "speech_ratio_10s": 0.09, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974188.9704382, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 8.5, "speech_now": true, "speech_ratio_10s": 0.19, "seconds_since_speech": 0.0, "transcript": "", "tone": null, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974189.8664846, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 8.5, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 0.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974190.8904748, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 8.6, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 1.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974191.9144866, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 8.4, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 2.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974192.9384806, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 8.6, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 3.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974193.9624891, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 8.6, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 4.8, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974194.986486, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 8.4, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 5.8, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974195.8825014, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": 8.7, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 6.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974196.9065084, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 8.4, "speech_now": false, "speech_ratio_10s": 0.21, "seconds_since_speech": 7.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974197.930514, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 7.4, "speech_now": false, "speech_ratio_10s": 0.13, "seconds_since_speech": 8.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974198.9545107, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.03, "seconds_since_speech": 9.8, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974199.9785266, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 10.8, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974200.874525, "noise_floor_db": -41.3, "noise_level": "moderate", "speech_snr_db": null, "speech_now": false, "speech_ratio_10s": 0.0, "seconds_since_speech": 11.7, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974201.8985252, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 6.6, "speech_now": true, "speech_ratio_10s": 0.08, "seconds_since_speech": 0.0, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974202.9225338, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 4.0, "speech_now": true, "speech_ratio_10s": 0.19, "seconds_since_speech": 0.0, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974203.9465418, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 5.0, "speech_now": true, "speech_ratio_10s": 0.29, "seconds_since_speech": 0.0, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -35.6, "seconds": 3.29, "active_ratio": 0.96}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974204.9705093, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 4.7, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 0.3, "transcript": "Hello can you hear me right?", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974205.8665073, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 1.2, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974206.8905067, "noise_floor_db": -40.4, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 2.2, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974207.7865167, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 4.9, "speech_now": false, "speech_ratio_10s": 0.35, "seconds_since_speech": 3.1, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974208.9385128, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 5.6, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 4.3, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974209.9625301, "noise_floor_db": -41.8, "noise_level": "moderate", "speech_snr_db": 5.5, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 5.3, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974210.9865289, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 4.4, "speech_now": false, "speech_ratio_10s": 0.36, "seconds_since_speech": 6.3, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974211.8825262, "noise_floor_db": -40.8, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": false, "speech_ratio_10s": 0.28, "seconds_since_speech": 7.2, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974212.9065423, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 4.9, "speech_now": true, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974213.9305444, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": true, "speech_ratio_10s": 0.25, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974214.9545412, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": true, "speech_ratio_10s": 0.27, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974215.9785619, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": true, "speech_ratio_10s": 0.38, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974216.874558, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 3.9, "speech_now": true, "speech_ratio_10s": 0.47, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974217.8985636, "noise_floor_db": -40.4, "noise_level": "moderate", "speech_snr_db": 3.1, "speech_now": true, "speech_ratio_10s": 0.56, "seconds_since_speech": 0.0, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -36.9, "seconds": 4.73, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974218.9225018, "noise_floor_db": -40.2, "noise_level": "moderate", "speech_snr_db": 2.9, "speech_now": false, "speech_ratio_10s": 0.65, "seconds_since_speech": 0.2, "transcript": "Wow, it's great that the speech is finally", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974219.946576, "noise_floor_db": -39.7, "noise_level": "moderate", "speech_snr_db": 2.4, "speech_now": false, "speech_ratio_10s": 0.65, "seconds_since_speech": 1.2, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974220.9705873, "noise_floor_db": -39.7, "noise_level": "moderate", "speech_snr_db": 2.4, "speech_now": false, "speech_ratio_10s": 0.65, "seconds_since_speech": 2.2, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974221.8665862, "noise_floor_db": -39.6, "noise_level": "moderate", "speech_snr_db": 2.3, "speech_now": false, "speech_ratio_10s": 0.65, "seconds_since_speech": 3.1, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974222.8905883, "noise_floor_db": -40.1, "noise_level": "moderate", "speech_snr_db": 2.8, "speech_now": false, "speech_ratio_10s": 0.59, "seconds_since_speech": 4.1, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974223.9145944, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 3.8, "speech_now": false, "speech_ratio_10s": 0.49, "seconds_since_speech": 5.2, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974224.9386048, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 3.5, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974225.9626107, "noise_floor_db": -41.9, "noise_level": "moderate", "speech_snr_db": 4.5, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974226.9866152, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.3, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974227.8826065, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.6, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -37.7, "seconds": 7.71, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974228.906616, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 4.5, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 0.0, "transcript": "I'm still a bit confused on why this speech is not showing up on the last", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974229.9306262, "noise_floor_db": -41.4, "noise_level": "moderate", "speech_snr_db": 4.5, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 1.1, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974230.9546325, "noise_floor_db": -41.2, "noise_level": "moderate", "speech_snr_db": 4.3, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 2.1, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974231.978638, "noise_floor_db": -41.1, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 3.1, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974232.8745902, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 4.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974233.8986526, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 5.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974234.9226656, "noise_floor_db": -40.9, "noise_level": "moderate", "speech_snr_db": 4.4, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974235.9466746, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974236.9706786, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 3.9, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974237.8666837, "noise_floor_db": -40.5, "noise_level": "moderate", "speech_snr_db": 3.8, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974238.890797, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 3.6, "speech_now": true, "speech_ratio_10s": 0.44, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974239.9147024, "noise_floor_db": -41.0, "noise_level": "moderate", "speech_snr_db": 3.4, "speech_now": true, "speech_ratio_10s": 0.55, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974240.938716, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.3, "speech_now": true, "speech_ratio_10s": 0.65, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974241.9627104, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.5, "speech_now": true, "speech_ratio_10s": 0.75, "seconds_since_speech": 0.0, "transcript": "It's so coincidental that it's always the last...", "tone": {"intensity_db": -38.2, "seconds": 5.66, "active_ratio": 1.0}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974242.9867334, "noise_floor_db": -40.6, "noise_level": "moderate", "speech_snr_db": 3.6, "speech_now": false, "speech_ratio_10s": 0.8, "seconds_since_speech": 0.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974243.882728, "noise_floor_db": -40.7, "noise_level": "moderate", "speech_snr_db": 3.7, "speech_now": false, "speech_ratio_10s": 0.8, "seconds_since_speech": 1.4, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974244.9067457, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.3, "speech_now": false, "speech_ratio_10s": 0.75, "seconds_since_speech": 2.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974245.9307387, "noise_floor_db": -41.7, "noise_level": "moderate", "speech_snr_db": 4.4, "speech_now": false, "speech_ratio_10s": 0.65, "seconds_since_speech": 3.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974246.9547527, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 4.1, "speech_now": false, "speech_ratio_10s": 0.55, "seconds_since_speech": 4.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974247.9787652, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.2, "speech_now": false, "speech_ratio_10s": 0.45, "seconds_since_speech": 5.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974248.8748488, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 4.6, "speech_now": false, "speech_ratio_10s": 0.37, "seconds_since_speech": 6.4, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974249.8998559, "noise_floor_db": -41.6, "noise_level": "moderate", "speech_snr_db": 5.5, "speech_now": false, "speech_ratio_10s": 0.26, "seconds_since_speech": 7.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+{"stamp": 1790974250.9238708, "noise_floor_db": -41.5, "noise_level": "moderate", "speech_snr_db": 5.4, "speech_now": false, "speech_ratio_10s": 0.15, "seconds_since_speech": 8.5, "transcript": "I am sure that I will end this sentence with word and that word will not show up as the", "tone": {"intensity_db": -38.2, "seconds": 9.15, "active_ratio": 0.99}, "engaged": true, "robot_speaking": false}
+---
+^Cmayankk@singularity-1:~/fri2_f26$ 
