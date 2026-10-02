@@ -83,7 +83,7 @@ CONFIG = {
     # --- ring buffer, in memory only -------------------------------
     "ring_buffer_sec":     20.0,   # long enough for the longest utterance
     "stt_lookback_sec":    10.0,   # how far back to transcribe when engaged
-    "stt_margin_sec":      0.75,   # extra audio either side of an utterance
+    "stt_margin_sec":      0.85,   # extra audio either side of an utterance
                                    # before transcribing. The tracker marks
                                    # the end where the detector last heard a
                                    # voice, but the quiet tail of a sentence
@@ -97,6 +97,15 @@ CONFIG = {
                                    # here will not match the robot
     "stt_compute_type":    "int8",
     "stt_threads":         1,
+    "stt_beam_size":       5,      # 1 is greedy decoding, which stops early
+                                   # on quiet endings: at 3 to 5 dB SNR the
+                                   # last word or two went missing even
+                                   # though the audio was there. A wider
+                                   # search costs time but keeps the tail.
+    "stt_tail_pad_sec":    0.5,    # silence appended before transcribing.
+                                   # Whisper decides where speech ends, and
+                                   # audio that stops abruptly reads as cut
+                                   # off, so it drops the final word.
     "tone_enabled":        True,   # level and timing only; see tone.py
 
     # --- robot hearing itself --------------------------------------
