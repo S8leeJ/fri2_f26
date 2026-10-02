@@ -37,7 +37,7 @@ silently falls back to the built-in mic. Symptom: `arecord -l` shows
 `Subdevices: 0/1`. Needed on every machine, after every reboot.
 
     pactl list cards short
-    pactl set-card-profile "$(pactl list cards short | grep -i camera | cut -f2)" off
+    pactl set-card-profile "$(pactl list cards short | awk '/alsa_card.usb/ {print $2}')" off
     arecord -l                     # want Subdevices: 1/1
     python3 tools/check_devices.py
     python3 tools/check_levels.py
