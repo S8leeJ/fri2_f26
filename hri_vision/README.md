@@ -146,6 +146,46 @@ ros2 launch hri_vision vision_pipeline.launch.py \
 
 That is the normal final launch command.
 
+## On the BWI robot `flexo` (tested October 6, 2026)
+
+This setup works on flexo with the Azure Kinect.
+Run all commands at the robot's own screen. The Kinect depth engine needs a display.
+
+Install the Python packages with `--user`. Do not use a virtualenv, because `ros2 run` does not see its packages.
+From the repository root:
+
+```bash
+pip install --user --upgrade packaging && pip install --user setuptools==58.2.0
+pip install --user -r hri_vision/requirements.txt
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install --packages-select hri_vision
+```
+
+Terminal 1, the Kinect driver. It uses the existing driver build in Justin's workspace.
+Use `ros2 run`. The driver launch file fails, because it writes into that workspace.
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/justin/bwi_ros2/install/setup.bash
+export ROS_LOCALHOST_ONLY=1
+ros2 run azure_kinect_ros_driver node --ros-args -p color_enabled:=true -p depth_enabled:=true -p color_resolution:=720P -p fps:=15 -p depth_mode:=NFOV_UNBINNED -p depth_unit:=16UC1 -p point_cloud:=false -p rgb_point_cloud:=false
+```
+
+Wait for `K4A Started`. Then start Terminal 2, the pipeline, from the repository root:
+
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+export ROS_LOCALHOST_ONLY=1
+ros2 launch hri_vision vision_pipeline.launch.py camera_backend:=external rgb_topic:=/rgb/image_raw depth_topic:=/depth_to_rgb/image_raw
+```
+
+Wait for `Orientation ready`. The context builder then logs one JSON line each second.
+
+- `NFOV_UNBINNED` sees to about 3.9 m. The driver default, `WFOV_UNBINNED`, sees to about 2.2 m.
+- If a `ros2` command says a topic "does not appear to be published", run `ros2 daemon stop` and try again.
+- The `CUDA unknown error` warning is normal. flexo has no NVIDIA GPU, so YOLO runs on the CPU.
+
 ## Optional: direct Azure Kinect capture with pyk4a
 
 Only use this if the robot does NOT already expose usable ROS RGB/depth topics.
