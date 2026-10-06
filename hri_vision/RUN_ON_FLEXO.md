@@ -146,6 +146,18 @@ source /opt/ros/humble/setup.bash && python3 -c "import numpy, cv2, cv_bridge, m
 - Expected: `numpy 1.26.4 | cv2 4.11.0 | solutions True`
 - If you see an error, find it in Part D.
 
+### A7.5. Set setuptools again
+
+The A6 install can replace `setuptools` with a newer version.
+The newer version breaks `colcon build --symlink-install`, so set it back:
+
+```bash
+pip install --user setuptools==58.2.0
+```
+
+- Expected: `Successfully installed setuptools-58.2.0`, or `Requirement already satisfied`.
+- A red warning that a package "requires" a newer setuptools is not a problem.
+
 ### A8. Build the package
 
 ```bash
@@ -171,6 +183,7 @@ source /opt/ros/humble/setup.bash && source /home/justin/bwi_ros2/install/setup.
 
 - Expected: `Found 1 sensors`, then `STARTING CAMERAS`, then `K4A Started`. The command keeps running.
 - Two yellow `WARN` lines about the "realtime offset" are normal.
+- Paste the command. Do not type it. `720P` must have a capital `P`.
 
 Keep Terminal 3 running. Do not type in it until you stop everything. Wait 5 seconds.
 
@@ -268,6 +281,10 @@ For each pane: click it, press **Ctrl+C**, wait for the prompt, and press **Ctrl
 2. Terminal 1 (GENERAL), if a command still runs there
 3. Terminal 3 (DRIVER). Always stop the driver last, so that the Kinect closes correctly.
 
+Then log out of flexo.
+A driver that still runs in your session blocks the Kinect for every other account.
+Other users cannot stop it without `sudo`.
+
 ---
 
 ## Part D: Problems and fixes
@@ -275,12 +292,13 @@ For each pane: click it, press **Ctrl+C**, wait for the prompt, and press **Ctrl
 | You see | Do this |
 |---|---|
 | `canonicalize_version() got an unexpected keyword argument` | Do A5 again, then A8. |
-| `option --editable not recognized` | Run `pip install --user setuptools==58.2.0`, then do A8. |
+| `option --editable not recognized` | Do A7.5, then A8. |
 | `module 'mediapipe' has no attribute 'solutions'` | Run `pip install --user "mediapipe==0.10.14"`. |
 | `_ARRAY_API not found` or `numpy.core.multiarray failed to import` | Run `pip install --user "numpy<2" "opencv-python==4.11.0.86" "opencv-contrib-python==4.11.0.86"`. |
 | `package 'hri_vision' not found` | Do A8 again. |
 | Driver: `Permission denied` for `azure_kinect.urdf` | You used `ros2 launch`. Use the `ros2 run` command in B1. |
-| Driver: `Failed to open device` | Another program or login session uses the Kinect. Close it. |
+| Driver: `LIBUSB_ERROR_BUSY` or `Failed to open a K4A device` | Another program has the Kinect open. Run `ps aux \| grep -i azure_kinect \| grep -v grep`. If the line starts with your username, run `pkill -f azure_kinect_ros_driver`. If it starts with another username, log in to that account, stop its driver, and log out. If nothing shows, unplug the Kinect USB cable for 5 seconds. |
+| Driver: `Invalid RGB Camera Resolution` or `Floating point exception` | The command has `720p`. Use `720P`, with a capital `P`. |
 | Driver: an error about the `depth engine` | You are not at flexo's own screen. |
 | Driver: `No such file` for `/home/justin/...` | The driver build moved. Ask the lab admin to install `libk4a1.4-dev`, so that you can build your own driver. |
 | `topic ... does not appear to be published yet` | Run `ros2 daemon stop` and try again. Make sure that Terminal 3 still runs. |
