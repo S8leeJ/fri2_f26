@@ -2,7 +2,7 @@
 """Ask an LLM whether the robot should speak, for each vignette in vignettes/.
 
 Usage:  python3 mvp.py [--provider anthropic|gemini] [--model MODEL] [--repeat N]
-                       [--rubric 3|6] [--timeout SECONDS]
+                       [--rubric 3|6] [--timeout SECONDS] [--tts [--play]]
 """
 
 import argparse
@@ -565,6 +565,9 @@ def main() -> None:
                     help="minimum seconds between calls, to stay under a free-tier rate limit")
     ap.add_argument("--busy-retries", type=int, default=0,
                     help="retries after a 429/503, waiting 15, 30, then 60 s")
+    ap.add_argument("--tts", action="store_true",
+                    help="synthesize each line with Azure (needs AZURE_SPEECH_KEY)")
+    ap.add_argument("--play", action="store_true", help="with --tts, play each line")
     ap.add_argument("--gentle", action="store_true",
                     help="free-tier preset: --pace 5 --busy-retries 3 --timeout 15")
     args = ap.parse_args()
@@ -582,6 +585,14 @@ def main() -> None:
 
     model = args.model or DEFAULT_MODEL[args.provider]
     client = make_client(args.provider, args.timeout)
+    tts = None
+    if args.tts:
+        from tts import TTS, play
+
+        try:
+            tts = TTS.from_env()
+        except RuntimeError as e:
+            sys.exit(str(e))
 
     vignettes = []
     for v in load_vignettes():
@@ -623,6 +634,7 @@ def main() -> None:
     filtered = []        # (vignette, action after the post-filter)
     ms1s, ms2s, thoughts = [], [], []
     timeouts = errors = blocked = 0
+    tts_ms, tts_cached = [], 0
     actions_by_id = {}
 
     for _ in range(args.repeat):
@@ -660,6 +672,19 @@ def main() -> None:
             if r.speech is not None:
                 s = r.speech
                 print("     says: \"%s\"  (%s, %s, %s)" % (s.text, s.volume, s.rate, s.pitch))
+                if tts is not None:
+                    try:
+                        path, ms = tts.synthesize(s)
+                    except Exception as e:  # noqa: BLE001 - audio failure should not end the run
+                        print("     tts failed: %s" % str(e)[:200])
+                    else:
+                        if ms is None:
+                            tts_cached += 1
+                        else:
+                            tts_ms.append(ms)
+                        print("     audio: %s" % ("cached" if ms is None else "%.0f ms" % ms))
+                        if args.play:
+                            play(path)
             elif r.speech_error:
                 print("     speech call failed: %s" % r.speech_error)
             if blocked_by:
@@ -686,6 +711,8 @@ def main() -> None:
         print("post-filter blocked: %d   false greets after it: %d"
               % (blocked, sum(1 for v, a in filtered if a in SPEAKS and v["expect"] not in SPEAKS)))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
+    if tts is not None:
+        print("tts (azure):       %s   cached: %d" % (fmt_ms(tts_ms), tts_cached))
     if busy_retries_used:
         print("busy retries: %d (waits not counted in latency)" % busy_retries_used)
     if args.rubric == 6:

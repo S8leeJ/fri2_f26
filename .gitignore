@@ -11,6 +11,7 @@ install/
 log/
 
 # Python
+tts_cache/
 __pycache__/
 *.py[cod]
 *.egg-info/

@@ -130,6 +130,9 @@ conversation_initiator/
     ├── test_gate.py        gate and contract tests + a 100-tick simulation
     ├── postfilter.py       hard rules the model answer cannot override
     ├── test_postfilter.py  post-filter tests
+    ├── prosody.py          speech enums to Azure SSML
+    ├── tts.py              Azure text to speech with a disk cache
+    ├── test_tts.py         prosody and TTS tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
     └── vignettes/          hand-labelled test scenes, 001–009
@@ -204,6 +207,20 @@ R3 and R4 need judgment, so the filter leaves them to the model. `mvp.py`
 still scores the model's own action. It prints each block and the number of
 false greets left after the filter.
 
+### `tts.py`: text to speech
+
+`prosody.py` turns the `volume`, `rate`, and `pitch` enums into SSML for
+Azure. The model never writes SSML. `tts.py` sends the SSML to Azure and
+saves the audio in `tts_cache/`, named by a hash of the SSML. The same line
+at the same volume plays from disk with no network call.
+
+The greeting is a fixed line with three volumes, so `python3 tts.py --warm`
+caches all three. After that, a greet needs no TTS call. Only `respond`
+lines call Azure live.
+
+Add `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` to `.env`.
+`AZURE_SPEECH_VOICE` is optional. The default is `en-US-JennyNeural`.
+
 ### `vignettes/`: the test set
 
 Each file is one scene plus the answer a person would give, written before
@@ -234,6 +251,10 @@ cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 
 python3 test_gate.py                 # gate and schema tests, no key needed
 python3 test_postfilter.py           # post-filter tests, no key needed
+python3 test_tts.py                  # prosody and TTS tests, no key needed
+python3 tts.py --warm                # cache the 3 greetings (needs Azure key)
+python3 tts.py "Hello there"         # say one line
+python3 mvp.py --provider jev --tts --play   # decide, then speak each line
 python3 mvp.py                       # Anthropic, the default
 python3 mvp.py --provider gemini
 python3 mvp.py --repeat 3            # three passes: steadier latency, and flips
