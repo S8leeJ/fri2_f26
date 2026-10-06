@@ -1,0 +1,25 @@
+{
+  "id": "025",
+  "expect": "remain_silent",
+  "note": "No target. The gate suppresses this before any LLM call, so on the robot it never reaches the model; here it checks the model does not invent a person when target is null.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -58.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": null,
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}

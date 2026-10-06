@@ -1,0 +1,38 @@
+{
+  "id": "023",
+  "expect": "wait",
+  "note": "Twin of 022, but the person is still talking and the sentence is unfinished. The robot must not talk over them. respond here is the failure: it is the turn-taking mistake humans notice most.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -52.0,
+      "noise_level": "quiet",
+      "speech_snr_db": 20.0,
+      "speech_now": true,
+      "speech_ratio_10s": 0.4,
+      "seconds_since_speech": 0.0
+    },
+    "target": {
+      "distance_m": 1.4,
+      "facing_robot": true,
+      "gaze_at_robot_s": 4.5,
+      "motion": "stationary",
+      "in_conversation": false,
+      "activity": "idle",
+      "speech": {
+        "detected": true,
+        "partial_transcript": "So I was wondering if you could",
+        "syntactically_complete": false
+      }
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": true,
+      "last_spoke_s_ago": 5.0,
+      "last_utterance": "Hi! Can I help you find something?",
+      "consecutive_no_response": 0
+    }
+  }
+}

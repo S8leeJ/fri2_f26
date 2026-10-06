@@ -235,6 +235,23 @@
           "reason": { "type": ["string", "null"], "default": null }
         }
       }
+    },
+
+    "conversation": {
+      "description": "What was said in the current interaction, oldest first. Written by the initiator from the person's transcripts and the robot's own lines. Lets a reply follow on from earlier turns. Empty or absent when there is no interaction.",
+      "type": "array",
+      "default": [],
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["speaker", "text"],
+        "properties": {
+          "speaker": { "type": "string", "enum": ["person", "robot"] },
+          "text": { "type": "string" },
+          "s_ago": { "type": ["number", "null"], "minimum": 0, "default": null }
+        }
+      }
     }
   }
 }

@@ -52,6 +52,10 @@
     "recent_decisions": [
       { "s_ago": 3.5, "action": "greet", "reason": "R5 facing and stationary" },
       { "s_ago": 11.0, "action": "wait", "reason": "person_in_conversation" }
+    ],
+    "conversation": [
+      { "speaker": "robot", "text": "Hi there!", "s_ago": 3.5 },
+      { "speaker": "person", "text": "sorry do you know where", "s_ago": 0.0 }
     ]
   },
 

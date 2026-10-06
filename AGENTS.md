@@ -84,6 +84,7 @@ Every object sets `additionalProperties: false`, so the validator rejects unknow
 | `bystanders[]` | vision node | Other people. Each has `distance_m` (required), `facing_robot`, `in_conversation`. An empty list means "looked, saw nobody." |
 | `robot` | initiator only | `is_speaking`, `last_spoke_s_ago` (`null` means never), `last_utterance`, `consecutive_no_response` (times the robot was ignored). |
 | `recent_decisions[]` | initiator only | Newest first. Each has `s_ago`, `action`, and optional `reason`. It stops the robot from repeating itself. |
+| `conversation[]` | initiator only | Oldest first, at most 20. Each has `speaker` (`person` or `robot`), `text`, and optional `s_ago`. It lets a reply follow earlier turns. Added Oct 6 with no version bump. |
 
 There is no location or room field. This is a decision (`SCHEMA.md` §8).
 
@@ -132,6 +133,7 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 | 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Not started. |
 | 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | Not started. |
 | 6: evaluation | Oct 30 to Nov 12 | 60 to 100 labeled vignettes, kappa, ablations | Not started. Scope is open (`SCHEMA_COMPARISON.md` §5). |
+| Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. It is a probe tool. It does not measure accuracy. |
 
 `.gitignore` already ignores `.env`. Item 4 in `IMPLEMENTATION_PLAN.md` §14 is done.
 
