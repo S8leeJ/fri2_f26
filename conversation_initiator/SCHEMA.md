@@ -49,6 +49,7 @@ the sensor nodes exist.
 | `bystanders` | array | no | `[]` | vision |
 | `robot` | object | no | `{}` | initiator |
 | `recent_decisions` | array | no | `[]` | initiator |
+| `conversation` | array | no | `[]` | initiator |
 
 `target: null` means nobody is present. The gate keys off this and suppresses without
 spending an LLM call.
@@ -101,7 +102,7 @@ All optional. **It is `null` until the audio node emits transcripts, and the `re
 action is unreachable until it is populated** — without knowing what was said, the robot
 can only initiate, never reply.
 
-### 2.4 `bystanders[]`, `robot`, `recent_decisions[]`
+### 2.4 `bystanders[]`, `robot`, `recent_decisions[]`, `conversation[]`
 
 `bystanders[]` — `distance_m` (required), `facing_robot`, `in_conversation`. An empty
 list means nobody else is present, which is a different claim from the vision node being
@@ -113,6 +114,13 @@ unable to tell; use `[]` only when you actually looked.
 whether to transcribe, so an empty transcript while `engaged` is false is not silence.
 
 `recent_decisions[]` — `s_ago` and `action` required, `reason` optional. Newest first.
+
+`conversation[]` — what was said in the current interaction, **oldest first**, at most
+20 entries. Each entry has `speaker` (`person` or `robot`) and `text`, both required,
+and an optional `s_ago`. Written by the initiator only: it appends the person's finished
+transcripts and its own lines, and clears the list when the interaction ends. It is what
+lets a reply follow on from an earlier turn, such as "why?" after a joke.
+`robot.last_utterance` stays as the quick view of the robot's latest line.
 
 ---
 
@@ -296,6 +304,7 @@ recognise rather than guessing.
 |---|---|---|
 | 1.0 | Sep 18 | First freeze |
 | 2.0 | Sep 22 | `ambient.noise_db` no longer required; audio node fields and `robot.engaged` added; `ambient_fit` redefined (§4, changes 8–10). Major because a required field became optional and a rubric dimension changed meaning. |
+| 2.0 | Oct 6 | Optional top-level `conversation[]` added (§2.4). No bump: it is optional. A consumer on the older 2.0 file rejects a message that carries it, because of `additionalProperties: false`, so update the schema file everywhere before a node publishes it. |
 
 - **Adding an optional field** — no version bump. This is why almost everything is
   optional.

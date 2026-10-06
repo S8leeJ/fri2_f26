@@ -135,6 +135,10 @@ robot
   last_spoke_s_ago  seconds since the robot last spoke. null means never.
   consecutive_no_response  times this person was addressed and did not respond.
 
+conversation  what was said in this interaction, oldest first. The last person entry is
+              usually the current transcript. Read a short remark like "why?" in light
+              of the robot's previous line.
+
 Score ambient_fit from ambient.noise_level. Quiet or moderate is audible; loud may
 be inaudible. A quiet room where someone is working is still a high ambient_fit;
 put the cost of speaking in interruption_cost. A high speech_ratio_10s raises
@@ -147,7 +151,11 @@ R2 Never greet if robot.last_spoke_s_ago is under 30, or consecutive_no_response
 R3 Do not greet someone moving past without facing the robot; they are in transit.
 R4 Do not greet someone absorbed in work unless they look at the robot.
 R5 Greet when the person faces the robot, is stationary or approaching, and is within ~3 m.
-R6 When evidence is thin or contradictory, remain silent. Silence is the safe default."""
+R6 When evidence is thin or contradictory, remain silent. Silence is the safe default.
+
+R1 to R5 decide whether to greet. They do not limit respond. When the robot is engaged
+and the person has finished saying something to it, respond, even if the robot spoke
+a few seconds ago."""
 
 ACTIONS_3 = """Actions
 remain_silent  say nothing, do not expect this to change soon
@@ -183,8 +191,10 @@ SPEECH_SYSTEM = """A mobile robot in a university building has decided to speak 
 nearby person. You are given the scene and the decision.
 
 Write one short line for it to say: under 12 words, friendly and plain. If the action \
-is respond, answer what the person said. Match the room: soft when ambient.noise_level \
-is quiet, medium when moderate, loud only when the room is loud."""
+is respond, answer what the person said. context.conversation holds the earlier turns, \
+oldest first; continue from them, so a follow-up like "why?" gets the rest of what the \
+robot started. Do not repeat a line the robot already said. Match the room: soft when \
+ambient.noise_level is quiet, medium when moderate, loud only when the room is loud."""
 
 
 VOLUME_FOR_NOISE = {"quiet": "soft", "moderate": "medium", "loud": "loud"}
@@ -360,6 +370,10 @@ def _ask_groq(client, model, system, user, schema, max_tokens):
         body["reasoning_effort"] = "low"
         body["include_reasoning"] = False
     response = client.post("/chat/completions", json=body)
+    # gpt-oss sometimes returns an empty generation that fails Groq's JSON check.
+    # The same request usually passes on the next try.
+    if response.status_code == 400 and "json_validate_failed" in response.text:
+        response = client.post("/chat/completions", json=body)
     if response.status_code != 200:
         raise ApiError(response.status_code, response.text)
     data = response.json()
@@ -499,6 +513,7 @@ class Result:
     thoughts: Optional[int]
     speech: Optional[Speech]
     speech_error: Optional[str]
+    decision: Optional[dict] = None
 
 
 def line_to_say(provider, client, model, ctx, d):
@@ -525,7 +540,7 @@ def decide(provider, client, model, ctx, rubric) -> Result:
     if rubric == 3:
         d, ms, thoughts = ask(provider, client, model, SYSTEM_3, user, Decision3, 400)
         return Result(d.action, [d.invitation, d.interruption_cost, d.ambient_fit],
-                      ms, None, thoughts, None, None)
+                      ms, None, thoughts, None, None, d.model_dump())
 
     d, ms, thoughts = ask(provider, client, model, SYSTEM_6, user, Decision6, 400)
     speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
@@ -533,7 +548,7 @@ def decide(provider, client, model, ctx, rubric) -> Result:
     return Result(d.action,
                   [r.invitation, r.interruption_cost, r.urgency, r.redundancy,
                    r.ambient_fit, r.addressivity],
-                  ms, ms2, thoughts, speech, speech_error)
+                  ms, ms2, thoughts, speech, speech_error, d.model_dump())
 
 
 def is_timeout(e: BaseException) -> bool:

@@ -123,6 +123,9 @@ conversation_initiator/
 ├── MVP_PLAN.md             the four-day plan, results so far, go/no-go
 ├── IMPLEMENTATION_PLAN.md  the full ROS 2 build, after the MVP passes
 ├── schema/                 the JSON Schemas and a round-trip example
+├── playground/             local chat UI: change the scene, talk to the robot
+│   ├── server.py           FastAPI wrapper around mvp.py and postfilter.py
+│   └── web/                React app (Vite)
 └── mvp/
     ├── mvp.py              runs every vignette through the LLM, prints a table
     ├── context.py          schema validation and the audio node adapter
@@ -135,7 +138,7 @@ conversation_initiator/
     ├── test_tts.py         prosody and TTS tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
-    └── vignettes/          test scenes, 001–021. 010–021 need labels
+    └── vignettes/          test scenes, 001–025. 009–021 need labels
 ```
 
 ### `mvp.py`: the decision
@@ -270,6 +273,39 @@ python3 mvp.py --rubric 3            # the original three-score decision
 A disagreement row is marked `<-- disagrees`. Read all of them before
 changing the prompt. With nine cases, patching after each one fits the prompt
 to noise. `MVP_PLAN.md` covers how to classify them and what counts as a pass.
+
+## Playground
+
+A local chat UI for probing the model one field at a time. You type as the
+person in front of the robot. Switches on the left set the scene. Each robot
+reply shows the action, the line, the rule fired, the rubric, any post-filter
+block, the latency, and the fields you changed since the last turn.
+
+```bash
+cd conversation_initiator/mvp && source .venv/bin/activate
+pip install -r ../playground/requirements.txt
+cd ../playground && uvicorn server:app --host 127.0.0.1 --port 8000   # terminal 1
+cd web && npm install && npm run dev                                  # terminal 2
+```
+
+Open <http://localhost:5173>. The server reads keys from `mvp/.env`. The keys
+never reach the browser.
+
+- **Send** puts your text in `target.speech.partial_transcript`. It also sets
+  `robot.engaged`, because the audio node only transcribes while engaged.
+- **Check scene** sends the scene with no speech. Use it to test greetings.
+- After each turn the app writes `last_utterance`, `last_spoke_s_ago` and
+  `recent_decisions`, as the initiator node would.
+- **+5 s** and **+30 s** move time forward. Use them to test the 30 s
+  greeting cooldown. **Ignored** adds one to `consecutive_no_response`.
+- **Save as vignette** writes the current scene to `mvp/vignettes/` with
+  `expect: null`. Label it before you use it.
+- With nobody present, the server returns `no_person` and makes no model call.
+
+[`playground/README.md`](playground/README.md) explains each part and has a
+test checklist. The playground does not measure accuracy. Use `mvp.py` on
+labelled vignettes for that. Groq's free tier allows about 4 turns a minute. The server retries
+once after a rate limit, so a fast click can wait about 15 s.
 
 ## Adding a vignette
 

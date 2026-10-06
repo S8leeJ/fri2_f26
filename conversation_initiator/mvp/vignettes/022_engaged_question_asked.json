@@ -1,0 +1,38 @@
+{
+  "id": "022",
+  "expect": "respond",
+  "note": "Already engaged, and the person has finished a question. R2 is about greeting, so the robot having spoken 6 s ago must not block a reply. Only runs as a real test in 6-score mode; in 3-action mode the closest answer is greet.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -52.0,
+      "noise_level": "quiet",
+      "speech_snr_db": 21.0,
+      "speech_now": false,
+      "speech_ratio_10s": 0.25,
+      "seconds_since_speech": 0.8
+    },
+    "target": {
+      "distance_m": 1.4,
+      "facing_robot": true,
+      "gaze_at_robot_s": 4.5,
+      "motion": "stationary",
+      "in_conversation": false,
+      "activity": "idle",
+      "speech": {
+        "detected": true,
+        "partial_transcript": "Where is the elevator?",
+        "syntactically_complete": true
+      }
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": true,
+      "last_spoke_s_ago": 6.0,
+      "last_utterance": "Hi! Can I help you find something?",
+      "consecutive_no_response": 0
+    }
+  }
+}

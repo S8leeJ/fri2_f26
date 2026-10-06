@@ -1,0 +1,35 @@
+{
+  "id": "024",
+  "expect": "greet",
+  "note": "Contrast with 008. The room has conversation in it, but it belongs to two bystanders 4 m away; the target is alone, idle and looking at the robot. The field guide says speech_ratio_10s does not prove the target is in a conversation. Tests that the model reads target.in_conversation, not the room.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -46.0,
+      "noise_level": "moderate",
+      "speech_snr_db": 9.0,
+      "speech_now": true,
+      "speech_ratio_10s": 0.65,
+      "seconds_since_speech": 0.0
+    },
+    "target": {
+      "distance_m": 2.0,
+      "facing_robot": true,
+      "gaze_at_robot_s": 1.8,
+      "motion": "stationary",
+      "in_conversation": false,
+      "activity": "idle"
+    },
+    "bystanders": [
+      { "distance_m": 4.1, "facing_robot": false, "in_conversation": true },
+      { "distance_m": 4.3, "facing_robot": false, "in_conversation": true }
+    ],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}
