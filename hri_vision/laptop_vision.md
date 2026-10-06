@@ -57,4 +57,4 @@ ls -d /home/*/bwi_ros2/install/azure_kinect_ros_driver 2>/dev/null
 
 lsb_release -ds ; find / \( -name "libk4a.so*" -o -iname "k4a*config*.cmake" \) 2>/dev/null | head
 
-source /opt/ros/humble/setup.bash && source /home/justin/bwi_ros2/install/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 launch azure_kinect_ros_driver driver.launch.py color_resolution:=720P fps:=15 depth_mode:=NFOV_UNBINNED depth_unit:=16UC1 point_cloud:=false rgb_point_cloud:=false
+source /opt/ros/humble/setup.bash && source /home/justin/bwi_ros2/install/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 run azure_kinect_ros_driver node --ros-args -p color_enabled:=true -p depth_enabled:=true -p color_resolution:=720P -p fps:=15 -p depth_mode:=NFOV_UNBINNED -p depth_unit:=16UC1 -p point_cloud:=false -p rgb_point_cloud:=false
