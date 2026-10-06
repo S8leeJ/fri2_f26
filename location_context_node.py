@@ -15,7 +15,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
-from location_context import get_location_context
+from location_context import LocationSmoother
 
 TOPIC_NAME = "/amcl_pose"
 
@@ -23,6 +23,7 @@ TOPIC_NAME = "/amcl_pose"
 class LocationContextNode(Node):
     def __init__(self):
         super().__init__("location_context_node")
+        self.smoother = LocationSmoother()
         self.subscription = self.create_subscription(
             PoseWithCovarianceStamped,
             TOPIC_NAME,
@@ -34,8 +35,11 @@ class LocationContextNode(Node):
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
 
-        context = get_location_context(x, y)
-        self.get_logger().info(f"Position ({x:.2f}, {y:.2f}) -> {context}")
+        context = self.smoother.update(x, y)
+        self.get_logger().info(
+            f"Position ({x:.2f}, {y:.2f}) -> {context} "
+            f"(confidence: {context['confidence']})"
+        )
 
 
 def main():
