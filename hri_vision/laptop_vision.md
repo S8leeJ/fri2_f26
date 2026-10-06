@@ -54,3 +54,5 @@ lsusb | grep -i -E "045e|microsoft"
 dpkg -l | grep -i k4a ; ls /usr/lib/cmake/ | grep -i k4a ; which k4aviewer
 
 ls -d /home/*/bwi_ros2/install/azure_kinect_ros_driver 2>/dev/null
+
+lsb_release -ds ; find / \( -name "libk4a.so*" -o -iname "k4a*config*.cmake" \) 2>/dev/null | head
