@@ -10,23 +10,48 @@ build/
 install/
 log/
 
-# Python
+# Audio: recordings of people must not reach a public repo
+*.wav
+*.mp3
+clips/
 tts_cache/
+
+# Model weights, downloaded at run time
+*.pt
+*.onnx
+*.tflite
+*.task
+
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 venv/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Node
 node_modules/
 .vite/
 dist/
 *.tsbuildinfo
+npm-debug.log*
 
-# macOS
+# Logs
+*.log
+
+# Local agent config
+.claude/
+
+# OS
 .DS_Store
+Thumbs.db
+desktop.ini
 
 # Editor
 *.swp
+.idea/
