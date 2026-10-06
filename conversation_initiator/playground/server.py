@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional
 
 import dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 MVP = pathlib.Path(__file__).resolve().parent.parent / "mvp"
@@ -33,6 +34,7 @@ from mvp import (  # noqa: E402
     make_client,
 )
 from postfilter import SPEAKS, enforce  # noqa: E402
+from tts import from_env as tts_from_env  # noqa: E402
 
 dotenv.load_dotenv(MVP / ".env")
 
@@ -57,6 +59,26 @@ class Turn(BaseModel):
     provider: str
     model: Optional[str] = None
     context: Dict[str, Any]
+
+
+class SpeechReq(BaseModel):
+    text: str
+    volume: str
+    rate: str
+    pitch: str
+
+
+_tts: Any = None
+
+
+def _tts_engine():
+    global _tts
+    if _tts is None:
+        try:
+            _tts = tts_from_env()
+        except RuntimeError:
+            _tts = False
+    return _tts or None
 
 
 class NewVignette(BaseModel):
@@ -110,6 +132,27 @@ def turn(req: Turn):
     return {"action_raw": r.action, "action_final": final, "blocked_by": blocked_by,
             "decision": r.decision, "speech": speech, "speech_error": r.speech_error,
             "ms1": r.ms1, "ms2": r.ms2, "model": model}
+
+
+@app.get("/api/tts")
+def tts_engine():
+    engine = _tts_engine()
+    return {"engine": engine.name if engine else None}
+
+
+@app.post("/api/speak")
+def speak(req: SpeechReq):
+    engine = _tts_engine()
+    if engine is None:
+        raise HTTPException(503, "no TTS key in mvp/.env")
+    try:
+        path, ms = engine.synthesize(req)
+    except (KeyError, ValueError) as e:
+        raise HTTPException(422, "bad speech setting: %s" % e)
+    except Exception as e:  # noqa: BLE001 - shown to the user, not swallowed
+        raise HTTPException(502, "%s TTS failed: %s" % (engine.name, str(e)[:300]))
+    return FileResponse(path, media_type="audio/wav",
+                        headers={"X-TTS": "cached" if ms is None else "%.0f ms" % ms})
 
 
 @app.post("/api/vignettes")

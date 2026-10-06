@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Rubric, TurnResult } from "./api";
+import { play, type Rubric, type TurnResult } from "./api";
 import { TIPS } from "./tips";
 
 export type Message =
@@ -13,6 +13,7 @@ interface Props {
   messages: Message[];
   busy: boolean;
   canSpeak: boolean;
+  canPlay: boolean;
   onSend: (text: string, unfinished: boolean) => void;
   onCheck: () => void;
   onAdvance: (s: number) => void;
@@ -48,7 +49,7 @@ export default function ChatPanel(p: Props) {
   return (
     <section className="panel chat">
       <div className="log">
-        {p.messages.map((m, i) => <Bubble key={i} m={m} />)}
+        {p.messages.map((m, i) => <Bubble key={i} m={m} canPlay={p.canPlay} />)}
         {!hasTurns && !p.busy && (
           <div className="empty">
             <p><b>Talk to the robot</b>, or press <b>Check scene</b> to see if it would start a conversation.</p>
@@ -97,7 +98,7 @@ export default function ChatPanel(p: Props) {
   );
 }
 
-function Bubble({ m }: { m: Message }) {
+function Bubble({ m, canPlay }: { m: Message; canPlay: boolean }) {
   switch (m.kind) {
     case "person":
       return (
@@ -113,7 +114,7 @@ function Bubble({ m }: { m: Message }) {
     case "error":
       return <div className="note error">⚠ {m.text}</div>;
     case "robot":
-      return <RobotBubble result={m.result} provider={m.provider} changes={m.changes} />;
+      return <RobotBubble result={m.result} provider={m.provider} changes={m.changes} canPlay={canPlay} />;
   }
 }
 
@@ -122,8 +123,10 @@ const NO_LINE: Record<string, string> = {
   wait: "(waits)",
 };
 
-function RobotBubble({ result: r, provider, changes }: { result: TurnResult; provider: string; changes: string[] }) {
+function RobotBubble({ result: r, provider, changes, canPlay }:
+  { result: TurnResult; provider: string; changes: string[]; canPlay: boolean }) {
   const d = r.decision;
+  const [timing, setTiming] = useState("");
   let line = NO_LINE[r.action_final];
   let failed = false;
   if (!line) {
@@ -149,6 +152,12 @@ function RobotBubble({ result: r, provider, changes }: { result: TurnResult; pro
         <span className={`badge ${r.action_final}`} data-tip={TIPS.action[r.action_final]}>{r.action_final}</span>
         {r.speech && (
           <span className="pill" data-tip={TIPS.voice}>{r.speech.volume} · {r.speech.rate} · {r.speech.pitch}</span>
+        )}
+        {r.speech && canPlay && (
+          <button className="small" data-tip={TIPS.play}
+            onClick={() => play(r.speech!).then(setTiming).catch((e) => setTiming((e as Error).message))}>
+            ▶ play{timing && ` · ${timing}`}
+          </button>
         )}
         {r.blocked_by && (
           <span className="blocked" data-tip={TIPS.blocked}>

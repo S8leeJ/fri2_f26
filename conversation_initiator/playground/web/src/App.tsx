@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type Ctx, type Preset, type Provider } from "./api";
+import { api, play, type Ctx, type Preset, type Provider } from "./api";
 import ChatPanel, { type Message } from "./ChatPanel";
 import HelpModal from "./HelpModal";
 import ScenePanel from "./ScenePanel";
@@ -25,6 +25,8 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sceneWidth, setSceneWidth] = useSceneWidth();
+  const [ttsEngine, setTtsEngine] = useState<string | null>(null);
+  const [voice, setVoice] = useState(true);
 
   const push = (...m: Message[]) => setMessages((prev) => [...prev, ...m]);
 
@@ -39,6 +41,7 @@ export default function App() {
         if (first) loadPreset(first);
       })
       .catch((e) => setLoadError(`Cannot reach the server: ${e.message}. Is uvicorn running on port 8000?`));
+    api.tts().then((t) => setTtsEngine(t.engine)).catch(() => setTtsEngine(null));
   }, []);
 
   const loadPreset = (p: Preset) => {
@@ -57,6 +60,9 @@ export default function App() {
     try {
       const result = await api.turn(provider, model.trim() || null, sent);
       push({ kind: "robot", result, provider, changes });
+      if (voice && ttsEngine && result.speech) {
+        play(result.speech).catch((e) => push({ kind: "error", text: `voice: ${(e as Error).message}` }));
+      }
       const next = applyResult(sent, result);
       setCtx(next);
       setLastCtx(next);
@@ -103,6 +109,12 @@ export default function App() {
           <span>model</span>
           <input value={model} placeholder={current?.model ?? ""} onChange={(e) => setModel(e.target.value)} />
         </label>
+        {ttsEngine && (
+          <label className="head-field" data-tip={TIPS.voice_toggle}>
+            <input type="checkbox" checked={voice} onChange={(e) => setVoice(e.target.checked)} />
+            <span>voice ({ttsEngine})</span>
+          </label>
+        )}
         <button data-tip={TIPS.save} onClick={saveVignette}>Save as vignette</button>
         <button className="help-btn" data-tip={TIPS.help} onClick={() => setHelpOpen(true)}>? Help</button>
       </header>
@@ -116,7 +128,7 @@ export default function App() {
           onPreset={(id) => { const p = presets.find((x) => x.id === id); if (p) loadPreset(p); }}
           onChange={setCtx} />
         <Splitter onResize={setSceneWidth} />
-        <ChatPanel messages={messages} busy={busy} canSpeak={ctx.target != null}
+        <ChatPanel messages={messages} busy={busy} canSpeak={ctx.target != null} canPlay={ttsEngine != null}
           onSend={(t, u) => runTurn(t, u)}
           onCheck={() => runTurn(null)}
           onAdvance={(s) => { setCtx(advance(ctx, s)); push({ kind: "note", text: `${s} s pass.` }); }}

@@ -4,6 +4,8 @@ export const TIPS = {
   model: "Leave empty to use the provider's default model. Type a model ID to try another one.",
   save: "Save the current scene as a new vignette file with no label. Label it later, then mvp.py tests it.",
   help: "How to use the playground.",
+  voice_toggle: "Speak each robot line out loud. Lines already in mvp/tts_cache play with no network call.",
+  play: "Play this line again. It shows whether the audio came from the cache or from the TTS engine.",
 
   // Scene
   preset: "Load a test scene from mvp/vignettes. The scenes are grouped by the answer a person expects.",
@@ -63,7 +65,7 @@ export const TIPS = {
     wait: "wait: a good moment may come soon. Stay ready, but say nothing.",
     remain_silent: "remain_silent: say nothing. Nothing is likely to change soon.",
   } as Record<string, string>,
-  voice: "Volume / rate / pitch the model chose for the line. Later these become SSML for text to speech.",
+  voice: "Volume, rate and pitch the model chose for the line. Deepgram ignores pitch.",
   rule: "The rule that most drove the decision, as the model reports it.",
   category: "The kind of situation the model saw.",
   confidence: "The model's own confidence. It is poorly calibrated, so do not trust it as a score.",

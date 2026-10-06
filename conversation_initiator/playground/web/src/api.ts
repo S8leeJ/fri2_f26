@@ -63,12 +63,34 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
   return data as T;
 }
 
+async function speak(speech: Speech): Promise<{ url: string; timing: string }> {
+  const res = await fetch("/api/speak", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(speech),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(`${res.status}: ${data.detail ?? res.statusText}`);
+  }
+  return { url: URL.createObjectURL(await res.blob()), timing: res.headers.get("X-TTS") ?? "" };
+}
+
+export async function play(speech: Speech): Promise<string> {
+  const { url, timing } = await speak(speech);
+  const audio = new Audio(url);
+  audio.onended = () => URL.revokeObjectURL(url);
+  await audio.play();
+  return timing;
+}
+
 export const api = {
   providers: () => call<Provider[]>("/api/providers"),
   presets: () => call<Preset[]>("/api/presets"),
   schema: () => call<Ctx>("/api/schema"),
   turn: (provider: string, model: string | null, context: Ctx) =>
     call<TurnResult>("/api/turn", { provider, model, context }),
+  tts: () => call<{ engine: string | null }>("/api/tts"),
   saveVignette: (context: Ctx, note: string) =>
     call<{ file: string }>("/api/vignettes", { context, note }),
 };

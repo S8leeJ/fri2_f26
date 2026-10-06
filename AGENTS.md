@@ -131,7 +131,7 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 | 2: latency | Oct 2 to 8 | Benchmark P50 and P95, pick one model | Not started. `MVP_PLAN.md` has free-tier numbers only. |
 | 3: gate, safety | Oct 9 to 15 | Gate, timeout, post-filter, Langfuse, daily cap | Not started. |
 | 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Not started. |
-| 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | Not started. |
+| 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | `mvp/tts.py`: Deepgram by default, Azure as an option, with a disk cache. The playground plays the lines. Not tested on the robot's speakers. |
 | 6: evaluation | Oct 30 to Nov 12 | 60 to 100 labeled vignettes, kappa, ablations | Not started. Scope is open (`SCHEMA_COMPARISON.md` §5). |
 | Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. It is a probe tool. It does not measure accuracy. |
 
