@@ -184,6 +184,7 @@ class AudioCapture:
         self._stream = sd.InputStream(
             device=device, channels=self.channels, samplerate=self.source_rate,
             blocksize=in_block, dtype="float32", callback=callback,
+            latency=self.cfg.get("input_latency", "high"),
         )
         self._stream.start()
 

@@ -96,7 +96,14 @@ class Processor:
         self.spans.append(span)
         if not state.engaged():
             return
-        samples = self.ring.slice(span.start, span.end)
+        # A little either side of the span. The detector loses the quiet
+        # end of a sentence before the speaker actually stops, so slicing
+        # exactly to the utterance clips the last word or two.
+        margin = self.cfg.get("stt_margin_sec", 0.0)
+        samples = self.ring.slice(span.start - margin, span.end + margin)
+        if samples is None:
+            samples = self.ring.slice(span.start, span.end)   # margin fell
+                                                              # outside the ring
         if samples is not None:
             # Transcription goes to its own thread; tone is quick enough to
             # run here, about 30 ms against several hundred for the text.

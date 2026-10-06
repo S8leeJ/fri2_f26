@@ -122,8 +122,20 @@ class Transcriber:
             t0 = time.perf_counter()
             try:
                 model = _get_model(self.cfg)
-                segments, _ = model.transcribe(samples, language="en",
-                                               beam_size=1)
+
+                # A little silence on the end. Whisper decides for itself
+                # where speech stops, and audio that ends abruptly looks
+                # truncated to it, so it drops the last word. Giving it a
+                # clear ending is cheaper than guessing at the boundary.
+                pad = self.cfg.get("stt_tail_pad_sec", 0.0)
+                if pad:
+                    samples = np.concatenate([
+                        samples,
+                        np.zeros(round(pad * self.rate), dtype=np.float32)])
+
+                segments, _ = model.transcribe(
+                    samples, language="en",
+                    beam_size=self.cfg.get("stt_beam_size", 5))
                 text = " ".join(s.text.strip() for s in segments).strip()
             except Exception as e:
                 # One failure should not kill the thread, or every later

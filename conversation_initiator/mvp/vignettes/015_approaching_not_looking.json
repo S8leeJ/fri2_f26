@@ -1,0 +1,32 @@
+{
+  "id": "015",
+  "expect": null,
+  "note": "Walks toward the robot but does not look at it. They may only be heading past it.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 2.0,
+      "facing_robot": false,
+      "gaze_at_robot_s": 0.0,
+      "motion": "approaching",
+      "activity": "transiting"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}

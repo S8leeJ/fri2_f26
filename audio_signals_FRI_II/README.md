@@ -1,9 +1,19 @@
+
 # Lab Machine Setup
+
+    avenue.goat.report (if restarted, and asking for passcode)
+
+    Username: mayankk
+    Password: arrogance.underwire.rely
 
 ## New Setup — First Time Only
 
-    git clone https://github.com/S8leeJ/fri2_f26.git
-    cd fri2_f26/audio_signals_FRI_II
+    git clone https://github.com/S8leeJ/fri2_f26.git (on terminal)
+    cd fri2_f26/audio_signals_FRI_II (on terminal)
+    code . (should open VSCode)
+
+    git config --global user.email "mayank.konduri@gmail.com"
+    git config --global user.name "MayankKonduri"
 
     source /opt/ros/humble/setup.bash
 
@@ -21,19 +31,32 @@
     git pull
 
 ### Free the USB microphone from PulseAudio
-    pactl set-card-profile alsa_card.usb-1415_USB_Camera-B4.09.24.1-01 off
-    arecord -l
+
+Only one program can open it. PulseAudio grabs it at login, so the node
+silently falls back to the built-in mic. Symptom: `arecord -l` shows
+`Subdevices: 0/1`. Needed on every machine, after every reboot.
+
+    pactl list cards short
+    pactl set-card-profile "$(pactl list cards short | awk '/alsa_card.usb/ {print $2}')" off
+    arecord -l                     # want Subdevices: 1/1
     python3 tools/check_devices.py
     python3 tools/check_levels.py
 
+The card name changes across replugs, so look it up rather than hardcoding
+it. Change `grep -i camera` if the mic is something else.
+
 ### Change Audio Enhancements
-    Settings->Sound->Input->(Select the current microphone input)->Turn Audio Enhancements OFF!
+    Settings->Sound->Input->(Select the current camera-b4 microphone input)->Turn Audio Enhancements OFF!
 
     source /opt/ros/humble/setup.bash
     colcon build --packages-select audio_context
     source install/setup.bash
 
     ros2 run audio_context node
+
+### Running Locally without ROS (for Testing)
+    
+    python main.py --show json --engaged
 
 ## Updating Code
 
@@ -60,3 +83,32 @@ Run:
     source /opt/ros/humble/setup.bash
     source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
     ros2 topic echo /audio_context --field data
+
+
+## Third Terminal — Drive the Flags
+
+Nothing publishes these yet, so set them by hand. Each holds until Ctrl+C.
+
+    cd ~/fri2_f26
+    source /opt/ros/humble/setup.bash
+    source ~/fri2_f26/audio_signals_FRI_II/install/setup.bash
+
+Turn transcription on:
+
+    ros2 topic pub /engaged std_msgs/Bool "data: true"
+
+Tell the node the robot is talking, so it stops measuring:
+
+    ros2 topic pub /robot_speaking std_msgs/Bool "data: true"
+
+One topic per terminal, so a fourth is needed to hold both at once.
+
+What to expect in the echo terminal:
+
+| flag | effect |
+|---|---|
+| `engaged: true` | speak, and `transcript` fills within a second or two |
+| `robot_speaking: true` | every measurement goes `null` until you stop publishing |
+| both false | numbers flow, `transcript` stays empty |
+
+`null` everywhere with `robot_speaking: true` means suppressed, not broken.

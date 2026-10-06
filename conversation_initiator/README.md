@@ -135,7 +135,7 @@ conversation_initiator/
     ├── test_tts.py         prosody and TTS tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
-    └── vignettes/          hand-labelled test scenes, 001–009
+    └── vignettes/          test scenes, 001–021. 010–021 need labels
 ```
 
 ### `mvp.py`: the decision

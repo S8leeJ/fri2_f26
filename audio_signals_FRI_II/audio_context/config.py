@@ -14,10 +14,19 @@ CONFIG = {
     # "USB Audio" finds both "Microphone (USBAudio1.0)" on Windows and
     # "USB Audio Device" on Linux. Falls back to the default if it is not
     # found, so a missing device never stops the node.
-    "input_device":        None,
+    "input_device":        "Camera-B4",
     "input_channels":      None,   # None = ask the device
     "capture_sample_rate": None,   # None = ask the device
     "warmup_blocks":       2,      # some backends open with digital silence
+
+    # How much buffering to ask the audio backend for. "high" gives the
+    # driver a larger internal buffer, which is the usual cure for
+    # "input overflow": the callback is not being reached in time, so audio
+    # is lost before anything sees it. Costs a little extra latency before
+    # a block arrives, which does not matter here because the pipeline is
+    # already working in 128 ms blocks. "low" or a number of seconds also
+    # work; None leaves it to the backend.
+    "input_latency":       "high",
 
     # --- voice detection -------------------------------------------
     "vad_normalise_db":    -25.0,  # Level the detector's copy of the audio is
@@ -74,6 +83,13 @@ CONFIG = {
     # --- ring buffer, in memory only -------------------------------
     "ring_buffer_sec":     20.0,   # long enough for the longest utterance
     "stt_lookback_sec":    10.0,   # how far back to transcribe when engaged
+    "stt_margin_sec":      0.85,   # extra audio either side of an utterance
+                                   # before transcribing. The tracker marks
+                                   # the end where the detector last heard a
+                                   # voice, but the quiet tail of a sentence
+                                   # drops below it first, so slicing exactly
+                                   # to the span cuts the last word or two.
+                                   # The ring already holds this audio.
 
     # --- gated path, only runs when engaged ------------------------
     "stt_model":           "tiny.en",
@@ -81,6 +97,15 @@ CONFIG = {
                                    # here will not match the robot
     "stt_compute_type":    "int8",
     "stt_threads":         1,
+    "stt_beam_size":       5,      # 1 is greedy decoding, which stops early
+                                   # on quiet endings: at 3 to 5 dB SNR the
+                                   # last word or two went missing even
+                                   # though the audio was there. A wider
+                                   # search costs time but keeps the tail.
+    "stt_tail_pad_sec":    0.5,    # silence appended before transcribing.
+                                   # Whisper decides where speech ends, and
+                                   # audio that stops abruptly reads as cut
+                                   # off, so it drops the final word.
     "tone_enabled":        True,   # level and timing only; see tone.py
 
     # --- robot hearing itself --------------------------------------

@@ -1,0 +1,32 @@
+{
+  "id": "021",
+  "expect": null,
+  "note": "Stands idle nearby, as if waiting for an elevator, and does not look at the robot.",
+  "context": {
+    "schema_version": "2.0",
+    "t": 1727020800.0,
+    "ambient": {
+      "noise_floor_db": -60.0,
+      "noise_level": "quiet",
+      "speech_snr_db": null,
+      "speech_now": false,
+      "speech_ratio_10s": 0.0,
+      "seconds_since_speech": null
+    },
+    "target": {
+      "in_conversation": false,
+      "distance_m": 1.8,
+      "facing_robot": false,
+      "gaze_at_robot_s": 0.0,
+      "motion": "stationary",
+      "activity": "idle"
+    },
+    "bystanders": [],
+    "robot": {
+      "is_speaking": false,
+      "engaged": false,
+      "last_spoke_s_ago": null,
+      "consecutive_no_response": 0
+    }
+  }
+}
