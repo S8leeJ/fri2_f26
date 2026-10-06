@@ -1,3 +1,7 @@
+lsusb | grep -i microsoft
+--------------
+t-l
+
 source /opt/ros/humble/setup.bash && python3 -c "import ultralytics, mediapipe, cv_bridge, numpy; print('ok', numpy.__version__)"
 
 cd ~/fri2_f26 && colcon build --symlink-install --packages-select hri_vision
@@ -7,6 +11,7 @@ ls ~/bwi_ros2/install | grep azure
 mkdir -p ~/bwi_ros2/src && cd ~/bwi_ros2/src && git clone --branch humble https://github.com/microsoft/Azure_Kinect_ROS_Driver.git && cd ~/bwi_ros2 && colcon build --packages-select azure_kinect_ros_driver
 
 ------------
+t-r
 
 source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 topic list | grep -i image
 
