@@ -131,7 +131,7 @@ conversation_initiator/
     ├── postfilter.py       hard rules the model answer cannot override
     ├── test_postfilter.py  post-filter tests
     ├── prosody.py          speech enums to Azure SSML
-    ├── tts.py              Azure text to speech with a disk cache
+    ├── tts.py              Deepgram or Azure text to speech, with a disk cache
     ├── test_tts.py         prosody and TTS tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
@@ -209,17 +209,23 @@ false greets left after the filter.
 
 ### `tts.py`: text to speech
 
-`prosody.py` turns the `volume`, `rate`, and `pitch` enums into SSML for
-Azure. The model never writes SSML. `tts.py` sends the SSML to Azure and
-saves the audio in `tts_cache/`, named by a hash of the SSML. The same line
-at the same volume plays from disk with no network call.
+`tts.py` turns each line into audio and saves it in `tts_cache/`. A line
+already in the cache plays from disk with no network call.
 
-The greeting is a fixed line with three volumes, so `python3 tts.py --warm`
-caches all three. After that, a greet needs no TTS call. Only `respond`
-lines call Azure live.
+Deepgram Aura-2 is the default engine. It supports `rate` through its speed
+setting. It has no volume control, so `tts.py` scales the samples itself.
+That way one Deepgram clip serves every volume. Deepgram has no pitch
+control, so `pitch` is ignored.
 
-Add `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` to `.env`.
-`AZURE_SPEECH_VOICE` is optional. The default is `en-US-JennyNeural`.
+Set `TTS_PROVIDER=azure` to use Azure instead. Azure supports all three
+settings through SSML, which `prosody.py` builds. The model never writes SSML.
+
+The greeting is a fixed line, so `python3 tts.py --warm` caches it at all
+three volumes with one Deepgram call. After that, a greet needs no TTS call.
+Only `respond` lines call the engine live.
+
+Add `DEEPGRAM_API_KEY` to `.env`. `DEEPGRAM_VOICE` is optional. The default
+is `aura-2-thalia-en`.
 
 ### `vignettes/`: the test set
 
@@ -252,7 +258,7 @@ cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 python3 test_gate.py                 # gate and schema tests, no key needed
 python3 test_postfilter.py           # post-filter tests, no key needed
 python3 test_tts.py                  # prosody and TTS tests, no key needed
-python3 tts.py --warm                # cache the 3 greetings (needs Azure key)
+python3 tts.py --warm                # cache the 3 greetings (needs Deepgram key)
 python3 tts.py "Hello there"         # say one line
 python3 mvp.py --provider jev --tts --play   # decide, then speak each line
 python3 mvp.py                       # Anthropic, the default

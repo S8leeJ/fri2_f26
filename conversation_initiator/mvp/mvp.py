@@ -566,7 +566,7 @@ def main() -> None:
     ap.add_argument("--busy-retries", type=int, default=0,
                     help="retries after a 429/503, waiting 15, 30, then 60 s")
     ap.add_argument("--tts", action="store_true",
-                    help="synthesize each line with Azure (needs AZURE_SPEECH_KEY)")
+                    help="synthesize each line (needs DEEPGRAM_API_KEY, see tts.py)")
     ap.add_argument("--play", action="store_true", help="with --tts, play each line")
     ap.add_argument("--gentle", action="store_true",
                     help="free-tier preset: --pace 5 --busy-retries 3 --timeout 15")
@@ -587,10 +587,10 @@ def main() -> None:
     client = make_client(args.provider, args.timeout)
     tts = None
     if args.tts:
-        from tts import TTS, play
+        from tts import from_env, play
 
         try:
-            tts = TTS.from_env()
+            tts = from_env()
         except RuntimeError as e:
             sys.exit(str(e))
 
@@ -712,7 +712,7 @@ def main() -> None:
               % (blocked, sum(1 for v, a in filtered if a in SPEAKS and v["expect"] not in SPEAKS)))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
     if tts is not None:
-        print("tts (azure):       %s   cached: %d" % (fmt_ms(tts_ms), tts_cached))
+        print("tts (%s): %s   cached: %d" % (tts.name, fmt_ms(tts_ms), tts_cached))
     if busy_retries_used:
         print("busy retries: %d (waits not counted in latency)" % busy_retries_used)
     if args.rubric == 6:
