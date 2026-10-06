@@ -58,3 +58,8 @@ ls -d /home/*/bwi_ros2/install/azure_kinect_ros_driver 2>/dev/null
 lsb_release -ds ; find / \( -name "libk4a.so*" -o -iname "k4a*config*.cmake" \) 2>/dev/null | head
 
 source /opt/ros/humble/setup.bash && source /home/justin/bwi_ros2/install/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 run azure_kinect_ros_driver node --ros-args -p color_enabled:=true -p depth_enabled:=true -p color_resolution:=720P -p fps:=15 -p depth_mode:=NFOV_UNBINNED -p depth_unit:=16UC1 -p point_cloud:=false -p rgb_point_cloud:=false
+
+
+pip install --user "numpy<2" "opencv-python==4.11.0.86" "opencv-contrib-python==4.11.0.86"
+
+source /opt/ros/humble/setup.bash && python3 -c "import numpy, cv2, cv_bridge, matplotlib.pyplot, mediapipe as mp; print('numpy', numpy.__version__, '| cv2', cv2.__version__, '| solutions', hasattr(mp, 'solutions'))"
