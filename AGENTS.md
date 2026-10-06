@@ -180,7 +180,7 @@ It was tested on the robot `flexo` with the Azure Kinect on October 6, 2026.
 - Start the driver with `ros2 run`. `ros2 launch` fails, because the launch file writes a URDF into the build folder.
 - Pass the Azure topics: `rgb_topic:=/rgb/image_raw depth_topic:=/depth_to_rgb/image_raw`. The launch defaults are RealSense names.
 - `hri_vision/requirements.txt` pins mediapipe, OpenCV, and NumPy. Newer versions fail on ROS 2 Humble.
-- `hri_vision/README.md` has the robot steps. `hri_vision/laptop_vision.md` holds raw notes and logs from the first run.
+- `hri_vision/RUN_ON_FLEXO.md` has the robot steps. `hri_vision/laptop_vision.md` holds raw notes and logs from the first run.
 
 ---
 
