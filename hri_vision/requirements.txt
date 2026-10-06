@@ -1,4 +1,11 @@
-# Keep NumPy 1.x for maximum compatibility with ROS 2 Humble cv_bridge wheels.
+# Keep NumPy 1.x. ROS 2 Humble cv_bridge and the Ubuntu 22.04 matplotlib
+# fail to import with NumPy 2.
 numpy<2
 ultralytics>=8.3
-mediapipe>=0.10,<0.11
+# 0.10.14 still has mp.solutions, which orientation_node.py uses.
+# Newer 0.10.x releases removed it.
+mediapipe==0.10.14
+# Newer OpenCV wheels require NumPy 2. Pin both packages, because
+# ultralytics installs one and mediapipe installs the other.
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
