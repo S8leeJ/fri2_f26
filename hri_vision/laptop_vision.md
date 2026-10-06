@@ -44,3 +44,15 @@ ros2 topic echo /hri/vision/context --field data
 b-r
 
 source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && python3 ~/box_viewer.py
+
+
+ERRORS
+----------
+
+lsusb | grep -i -E "045e|microsoft"
+
+dpkg -l | grep -i k4a ; ls /usr/lib/cmake/ | grep -i k4a ; which k4aviewer
+
+ls -d /home/*/bwi_ros2/install/azure_kinect_ros_driver 2>/dev/null
+
+source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 topic list | grep -i -E "image|depth|color|camera"
