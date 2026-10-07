@@ -21,7 +21,7 @@ The repo has four parts:
 |---|---|---|---|
 | FRI homework stack | `follower_robot/`, `nav_goals/`, `spatial_transforms/`, `spatial_utils/` | C++, `ament_cmake` | Finished homework. Not used by the study. |
 | LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. ROS node not started. |
-| Audio subsystem | `audio_signals_FRI_II/` | Python | Runs standalone. No ROS node yet. |
+| Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Not connected to the LLM. See §4.2. |
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Not connected to the LLM. See §4.5. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
@@ -142,12 +142,13 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 
 A standalone Python 3.10 program. `python main.py` runs it.
 It captures a microphone or a WAV file and runs Silero voice detection and loudness measurement.
-Once per second it builds an `audio` JSON object with these fields: `stamp`, `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech`, `transcript`, `engaged`, `robot_speaking`.
+Once per second it builds an `audio` JSON object with these fields: `stamp`, `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech`, `transcript`, `tone`, `engaged`, `robot_speaking`.
 Transcription uses local `faster-whisper`. It runs only while `engaged` is true.
 All tunable numbers are in `audio_context/config.py`.
 Its own `README.md` covers setup.
-There is no ROS node. `main.py` and `state.py` refer to a future `node.py`.
-Tone output is not written yet.
+`audio_context/node.py` is the ROS node (`ros2 run audio_context node`). It publishes the JSON on `/audio_context` and subscribes to `/engaged` and `/robot_speaking` (`std_msgs/Bool`).
+It ran on `flexo` on October 6, 2026. `audio_signals_FRI_II/RUN_ON_FLEXO.md` has the robot steps.
+`tone` holds the level, length, and active ratio of the last utterance. Pitch was removed, because it was wrong on real speech (see `audio_context/tone.py`).
 
 ### 4.3 Homework packages
 
