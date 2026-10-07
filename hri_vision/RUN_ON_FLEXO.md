@@ -305,6 +305,7 @@ Other users cannot stop it without `sudo`.
 | `"orientation":"unknown"` and `"orientation_fresh":false` in every line | The orientation node stopped. In Terminal 1, run `source ~/fri2_f26/install/setup.bash && ros2 run hri_vision orientation_node` to see the error. Then find the error in this table. |
 | `"distance_m":null` | The person is more than about 3.9 m away, or the B2 encoding check did not show `16UC1`. |
 | `"depth_fresh":false` | No depth images arrive. Do the B2 checks again. |
+| All "ready" lines appear, but no JSON ever appears, and `ros2 topic hz /hri/vision/detections` says the topic is not published | Known issue, seen on October 6, 2026. It happened in one new account on flexo. The same code worked in another account at the same time. The cause is not known yet. Use an account where the pipeline works. To help find the cause, compare the output of `env \| grep -E "ROS\|RMW\|DDS"` and `pip freeze --user` between the two accounts. |
 
 ---
 
