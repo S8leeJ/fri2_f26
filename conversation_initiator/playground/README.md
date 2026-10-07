@@ -51,6 +51,8 @@ browser.
      The gate does the same on the robot.
    - Otherwise it runs `mvp.decide()` with the 6-score rubric. When the
      action is `greet` or `respond`, that makes a second call for the line.
+     With `jev`, a greet uses a fixed line and makes no second call. Jev
+     cannot write a reply to `respond`.
    - It runs `postfilter.enforce()`. If the post-filter blocks the action,
      the server drops the line, because the robot would never say it.
 4. **The app shows a robot bubble** with:
@@ -60,6 +62,11 @@ browser.
    - the rule fired, the category, the confidence and `recheck_in_ms`
    - six rubric bars from 1 to 5
    - the provider, the model and the latency of each call
+   - a **▶ play** button, if a TTS key is in `mvp/.env`. It shows whether
+     the audio came from the cache or from the TTS engine.
+5. **The app speaks the line** when the **voice** box in the header is on.
+   The server sends the line to `mvp/tts.py` and returns a WAV file. The
+   TTS key stays on the server.
    - "Changed since last turn": the fields you edited between turns
 5. **The app writes history back** into the scene, as the initiator node
    would:
@@ -101,7 +108,8 @@ npm install
 ```
 
 The server uses the keys in `conversation_initiator/mvp/.env`. The provider
-list only shows providers that have a key.
+list only shows providers that have a key. Add `DEEPGRAM_API_KEY` to hear the
+lines. Without it, the voice box and the play button do not appear.
 
 ## Run
 
@@ -182,7 +190,7 @@ Delete a test vignette when you are done with it, or label it and keep it.
 
 | File | Purpose |
 |---|---|
-| `server.py` | FastAPI app. Endpoints: `/api/providers`, `/api/presets`, `/api/schema`, `/api/turn`, `/api/vignettes`. |
+| `server.py` | FastAPI app. Endpoints: `/api/providers`, `/api/presets`, `/api/schema`, `/api/turn`, `/api/tts`, `/api/speak`, `/api/vignettes`. |
 | `requirements.txt` | The MVP requirements plus FastAPI and uvicorn |
 | `web/src/App.tsx` | Page layout, turn flow, provider picker, save |
 | `web/src/ScenePanel.tsx` | Scene controls and the raw JSON box |

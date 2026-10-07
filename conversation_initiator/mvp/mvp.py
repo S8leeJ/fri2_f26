@@ -2,7 +2,7 @@
 """Ask an LLM whether the robot should speak, for each vignette in vignettes/.
 
 Usage:  python3 mvp.py [--provider anthropic|gemini] [--model MODEL] [--repeat N]
-                       [--rubric 3|6] [--timeout SECONDS]
+                       [--rubric 3|6] [--timeout SECONDS] [--tts [--play]]
 """
 
 import argparse
@@ -20,7 +20,7 @@ import dotenv
 from pydantic import BaseModel, Field
 
 from context import validate
-from postfilter import enforce
+from postfilter import blocking_rule, enforce
 
 VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 
@@ -195,6 +195,16 @@ is respond, answer what the person said. context.conversation holds the earlier 
 oldest first; continue from them, so a follow-up like "why?" gets the rest of what the \
 robot started. Do not repeat a line the robot already said. Match the room: soft when \
 ambient.noise_level is quiet, medium when moderate, loud only when the room is loud."""
+
+
+VOLUME_FOR_NOISE = {"quiet": "soft", "moderate": "medium", "loud": "loud"}
+
+
+def fixed_greeting(ctx) -> Speech:
+    """A greet line with no second call. Volume follows the room, as SPEECH_SYSTEM asks."""
+    level = (ctx.get("ambient") or {}).get("noise_level")
+    return Speech(text="Hi there! Can I help you with anything?",
+                  volume=VOLUME_FOR_NOISE.get(level, "medium"), rate="medium", pitch="medium")
 
 
 def load_vignettes() -> list:
@@ -506,6 +516,25 @@ class Result:
     decision: Optional[dict] = None
 
 
+def line_to_say(provider, client, model, ctx, d):
+    """Returns (speech, elapsed_ms, error). Skips the call when nothing will be said."""
+    if d.action not in SPEAKS or blocking_rule(ctx, d.action):
+        return None, None, None
+    if provider == "jev":
+        # Jev answers typed questions only, so it cannot write a line.
+        if d.action == "greet":
+            return fixed_greeting(ctx), None, None
+        return None, None, "jev cannot write a reply"
+    # A failed line should not cost the decision, which is what is being scored.
+    try:
+        speech, ms, _ = ask(provider, client, model, SPEECH_SYSTEM,
+                            json.dumps({"context": ctx, "decision": d.model_dump()}),
+                            Speech, 150)
+        return speech, ms, None
+    except Exception as e:  # noqa: BLE001
+        return None, None, "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+
+
 def decide(provider, client, model, ctx, rubric) -> Result:
     user = json.dumps(ctx)
     if rubric == 3:
@@ -514,16 +543,7 @@ def decide(provider, client, model, ctx, rubric) -> Result:
                       ms, None, thoughts, None, None, d.model_dump())
 
     d, ms, thoughts = ask(provider, client, model, SYSTEM_6, user, Decision6, 400)
-    speech = ms2 = speech_error = None
-    # Jev only answers typed questions; it cannot write the line to say.
-    if d.action in SPEAKS and provider != "jev":
-        # A failed line should not cost the decision, which is what is being scored.
-        try:
-            speech, ms2, _ = ask(provider, client, model, SPEECH_SYSTEM,
-                                 json.dumps({"context": ctx, "decision": d.model_dump()}),
-                                 Speech, 150)
-        except Exception as e:  # noqa: BLE001
-            speech_error = "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+    speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
     r = d.rubric
     return Result(d.action,
                   [r.invitation, r.interruption_cost, r.urgency, r.redundancy,
@@ -560,6 +580,9 @@ def main() -> None:
                     help="minimum seconds between calls, to stay under a free-tier rate limit")
     ap.add_argument("--busy-retries", type=int, default=0,
                     help="retries after a 429/503, waiting 15, 30, then 60 s")
+    ap.add_argument("--tts", action="store_true",
+                    help="synthesize each line (needs DEEPGRAM_API_KEY, see tts.py)")
+    ap.add_argument("--play", action="store_true", help="with --tts, play each line")
     ap.add_argument("--gentle", action="store_true",
                     help="free-tier preset: --pace 5 --busy-retries 3 --timeout 15")
     args = ap.parse_args()
@@ -577,6 +600,14 @@ def main() -> None:
 
     model = args.model or DEFAULT_MODEL[args.provider]
     client = make_client(args.provider, args.timeout)
+    tts = None
+    if args.tts:
+        from tts import from_env, play
+
+        try:
+            tts = from_env()
+        except RuntimeError as e:
+            sys.exit(str(e))
 
     vignettes = []
     for v in load_vignettes():
@@ -598,6 +629,7 @@ def main() -> None:
             ask(args.provider, client, model, SYSTEM_3, json.dumps(warm_ctx), Decision3, 400)
         else:
             ask(args.provider, client, model, SYSTEM_6, json.dumps(warm_ctx), Decision6, 400)
+        if args.rubric == 6 and args.provider != "jev":
             ask(args.provider, client, model, SPEECH_SYSTEM,
                 json.dumps({"context": warm_ctx, "decision": {"action": "greet"}}), Speech, 150)
     except Exception as e:  # noqa: BLE001 - a cold-start failure shouldn't end the run
@@ -617,6 +649,7 @@ def main() -> None:
     filtered = []        # (vignette, action after the post-filter)
     ms1s, ms2s, thoughts = [], [], []
     timeouts = errors = blocked = 0
+    tts_ms, tts_cached = [], 0
     actions_by_id = {}
 
     for _ in range(args.repeat):
@@ -654,6 +687,19 @@ def main() -> None:
             if r.speech is not None:
                 s = r.speech
                 print("     says: \"%s\"  (%s, %s, %s)" % (s.text, s.volume, s.rate, s.pitch))
+                if tts is not None:
+                    try:
+                        path, ms = tts.synthesize(s)
+                    except Exception as e:  # noqa: BLE001 - audio failure should not end the run
+                        print("     tts failed: %s" % str(e)[:200])
+                    else:
+                        if ms is None:
+                            tts_cached += 1
+                        else:
+                            tts_ms.append(ms)
+                        print("     audio: %s" % ("cached" if ms is None else "%.0f ms" % ms))
+                        if args.play:
+                            play(path)
             elif r.speech_error:
                 print("     speech call failed: %s" % r.speech_error)
             if blocked_by:
@@ -680,6 +726,8 @@ def main() -> None:
         print("post-filter blocked: %d   false greets after it: %d"
               % (blocked, sum(1 for v, a in filtered if a in SPEAKS and v["expect"] not in SPEAKS)))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
+    if tts is not None:
+        print("tts (%s): %s   cached: %d" % (tts.name, fmt_ms(tts_ms), tts_cached))
     if busy_retries_used:
         print("busy retries: %d (waits not counted in latency)" % busy_retries_used)
     if args.rubric == 6:

@@ -56,6 +56,10 @@ the audio and vision nodes are wired together.
 6. **Only if the action is `greet` or `respond`,** a second call writes the
    line and picks its volume, rate, and pitch. Keeping it separate means the
    silent cases, which are most of them, never pay for generating text.
+   The call is skipped when the post-filter blocks the action. With
+   `--provider jev`, a greet uses a fixed line with the volume set by
+   `noise_level`, so there is no second call. Jev cannot write a reply to
+   `respond`.
 
 Scores come before the action in the schema on purpose. The model commits to
 its reading of the scene first, and then picks the action.
@@ -129,6 +133,9 @@ conversation_initiator/
     ├── test_gate.py        gate and contract tests + a 100-tick simulation
     ├── postfilter.py       hard rules the model answer cannot override
     ├── test_postfilter.py  post-filter tests
+    ├── prosody.py          speech enums to Azure SSML
+    ├── tts.py              Deepgram or Azure text to speech, with a disk cache
+    ├── test_tts.py         prosody and TTS tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
     └── vignettes/          test scenes, 001–025. 009–021 need labels
@@ -203,6 +210,26 @@ R3 and R4 need judgment, so the filter leaves them to the model. `mvp.py`
 still scores the model's own action. It prints each block and the number of
 false greets left after the filter.
 
+### `tts.py`: text to speech
+
+`tts.py` turns each line into audio and saves it in `tts_cache/`. A line
+already in the cache plays from disk with no network call.
+
+Deepgram Aura-2 is the default engine. It supports `rate` through its speed
+setting. It has no volume control, so `tts.py` scales the samples itself.
+That way one Deepgram clip serves every volume. Deepgram has no pitch
+control, so `pitch` is ignored.
+
+Set `TTS_PROVIDER=azure` to use Azure instead. Azure supports all three
+settings through SSML, which `prosody.py` builds. The model never writes SSML.
+
+The greeting is a fixed line, so `python3 tts.py --warm` caches it at all
+three volumes with one Deepgram call. After that, a greet needs no TTS call.
+Only `respond` lines call the engine live.
+
+Add `DEEPGRAM_API_KEY` to `.env`. `DEEPGRAM_VOICE` is optional. The default
+is `aura-2-thalia-en`.
+
 ### `vignettes/`: the test set
 
 Each file is one scene plus the answer a person would give, written before
@@ -233,6 +260,10 @@ cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 
 python3 test_gate.py                 # gate and schema tests, no key needed
 python3 test_postfilter.py           # post-filter tests, no key needed
+python3 test_tts.py                  # prosody and TTS tests, no key needed
+python3 tts.py --warm                # cache the 3 greetings (needs Deepgram key)
+python3 tts.py "Hello there"         # say one line
+python3 mvp.py --provider jev --tts --play   # decide, then speak each line
 python3 mvp.py                       # Anthropic, the default
 python3 mvp.py --provider gemini
 python3 mvp.py --repeat 3            # three passes: steadier latency, and flips
