@@ -35,23 +35,25 @@ This is a real message from flexo:
   If another account is logged in, log it out first.
 - Open one Terminator window and maximize it.
 
-## The three terminals
+## The four terminals
 
-Split one Terminator window into three panes:
+Split one Terminator window into four panes:
 
 ```
 ┌──────────────────────────┬──────────────────────────┐
-│ 1 · GENERAL  (top-left)  │ 3 · DRIVER  (right side) │
-│ setup and checks         │ Kinect camera            │
-├──────────────────────────┤ keep it running          │
-│ 2 · JSONS  (bottom-left) │                          │
-│ vision pipeline          │                          │
-│ keep it running          │                          │
+│ 1 · GENERAL  (top-left)  │ 3 · DRIVER  (top-right)  │
+│ setup and checks         │ starts the Kinect camera │
+│                          │ keep it running          │
+├──────────────────────────┼──────────────────────────┤
+│ 2 · JSONS  (bottom-left) │ 4 · SUBSCRIBE            │
+│ vision pipeline,         │     (bottom-right)       │
+│ publishes the JSON       │ reads the JSON           │
+│ keep it running          │ optional                 │
 └──────────────────────────┴──────────────────────────┘
 ```
 
-- Start order: 1 (setup), then 3 (driver), then 1 (checks), then 2 (pipeline).
-- Stop order: 2, then 1, then 3. The driver always stops last.
+- Start order: 1 (setup), then 3 (driver), then 1 (checks), then 2 (pipeline), then 4 (subscriber).
+- Stop order: 4, then 2, then 1, then 3. The driver always stops last.
 
 | To do this | Press |
 |---|---|
@@ -268,10 +270,35 @@ Watch the JSON lines in Terminal 2.
 | Stand still | `"direction":"stationary"`, and `"dwell_time_s"` increases |
 | Leave | `"person_count":0` again |
 
-Optional: to see every message, not only one each second, run this in Terminal 1:
+### B5. Terminal 4 (SUBSCRIBE): read the JSON
+
+Terminal 2 publishes the JSON on `/hri/vision/context`. Terminal 4 subscribes to it.
+Terminal 2 prints only one message each second. Terminal 4 shows every message.
+
+Click Terminal 3 and press **Ctrl+Shift+O**. The new pane at the bottom right is Terminal 4.
+Do not type in Terminal 3 itself.
 
 ```bash
-ros2 topic echo /hri/vision/context --field data
+source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 daemon stop ; ros2 topic echo /hri/vision/context --field data
+```
+
+- Expected: JSON lines scroll fast, about one for each camera frame.
+- Every part of this command is necessary. Without `ROS_LOCALHOST_ONLY=1`, or with an old ROS helper process, the pane shows nothing.
+
+To subscribe from your own program, use the same topic name, the message type `std_msgs/String`, and `ROS_LOCALHOST_ONLY=1`.
+This is a minimal Python subscriber:
+
+```python
+import json
+import rclpy
+from std_msgs.msg import String
+
+rclpy.init()
+node = rclpy.create_node("vision_reader")
+node.create_subscription(
+    String, "/hri/vision/context",
+    lambda msg: print(json.loads(msg.data)["person_count"]), 10)
+rclpy.spin(node)
 ```
 
 ---
@@ -280,9 +307,10 @@ ros2 topic echo /hri/vision/context --field data
 
 For each pane: click it, press **Ctrl+C**, wait for the prompt, and press **Ctrl+Shift+W**.
 
-1. Terminal 2 (JSONS)
-2. Terminal 1 (GENERAL), if a command still runs there
-3. Terminal 3 (DRIVER). Always stop the driver last, so that the Kinect closes correctly.
+1. Terminal 4 (SUBSCRIBE)
+2. Terminal 2 (JSONS)
+3. Terminal 1 (GENERAL), if a command still runs there
+4. Terminal 3 (DRIVER). Always stop the driver last, so that the Kinect closes correctly.
 
 Then log out of flexo.
 A driver that still runs in your session blocks the Kinect for every other account.
@@ -308,7 +336,8 @@ Other users cannot stop it without `sudo`.
 | `"orientation":"unknown"` and `"orientation_fresh":false` in every line | The orientation node stopped. In Terminal 1, run `source ~/fri2_f26/install/setup.bash && ros2 run hri_vision orientation_node` to see the error. Then find the error in this table. |
 | `"distance_m":null` | The person is more than about 3.9 m away, or the B2 encoding check did not show `16UC1`. |
 | `"depth_fresh":false` | No depth images arrive. Do the B2 checks again. |
-| All "ready" lines appear, but no JSON ever appears, and `ros2 topic hz /hri/vision/detections` says the topic is not published | Another account on flexo still runs ROS programs. This happened on October 6, 2026, and logging out the other account fixed it. Stop your three panes, log out every other account, and start again from B1. |
+| All "ready" lines appear, but no JSON ever appears, and `ros2 topic hz /hri/vision/detections` says the topic is not published | Another account on flexo still runs ROS programs. This happened on October 6, 2026, and logging out the other account fixed it. Stop your panes, log out every other account, and start again from B1. |
+| Terminal 4 shows nothing | Make sure that Terminal 2 still prints JSON. Then run the complete B5 command again, including `export ROS_LOCALHOST_ONLY=1` and `ros2 daemon stop`. |
 | `requirements: Ultralytics requirement ['lap>=0.5.12'] not found, attempting AutoUpdate` | `lap` was not installed in A6. Ultralytics installs it by itself, and the pipeline still works. To avoid it, run `pip install --user "lap>=0.5.12"`. |
 
 ---
@@ -321,7 +350,8 @@ Use this after you complete Part A once.
 2. Terminal 3 (DRIVER): press **Ctrl+Shift+E** and run the B1 command. Wait for `K4A Started`.
 3. Terminal 2 (JSONS): click the left pane, press **Ctrl+Shift+O**, and run the B3 command. Wait for `Orientation ready`.
 4. Test with the B4 table.
-5. Stop Terminal 2 first, then Terminal 3.
+5. Optional, Terminal 4 (SUBSCRIBE): click Terminal 3, press **Ctrl+Shift+O**, and run the B5 command.
+6. Stop Terminal 4, then Terminal 2, then Terminal 3. Then log out.
 
 To get the newest code before a run, update and rebuild in Terminal 1:
 
