@@ -1,7 +1,7 @@
 """Hard-rule post-filter: the rules a model answer cannot override.
 
 No network, no API key. Runs on every decision after the LLM returns. It can
-only turn speech into silence. It never makes the robot speak.
+only turn speech into silence or waiting. It never makes the robot speak.
 
     from postfilter import enforce
 
@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional, Tuple
 from gate import DEFAULTS, greeted_recently
 
 SPEAKS = ("greet", "respond")
+MID_SENTENCE = "person mid-sentence"
 
 
 def blocking_rule(
@@ -40,8 +41,12 @@ def blocking_rule(
             return "R1 target in conversation"
         if greeted_recently(robot, cfg):
             return "R2 spoke recently"
-    if action == "respond" and not (target.get("speech") or {}).get("partial_transcript"):
-        return "respond without transcript"
+    if action == "respond":
+        speech = target.get("speech") or {}
+        if not speech.get("partial_transcript"):
+            return "respond without transcript"
+        if speech.get("syntactically_complete") is False:
+            return MID_SENTENCE
     return None
 
 
@@ -52,4 +57,7 @@ def enforce(
 ) -> Tuple[str, Optional[str]]:
     """Return (action to take, rule that blocked the model's action or None)."""
     rule = blocking_rule(ctx, action, cfg)
-    return ("remain_silent", rule) if rule else (action, None)
+    if rule is None:
+        return action, None
+    # The person is still talking to the robot, so the reply comes once they finish.
+    return ("wait" if rule == MID_SENTENCE else "remain_silent"), rule
