@@ -258,3 +258,5 @@ textarea {
 .modal td:first-child { font-weight: 600; color: var(--accent); width: 36px; }
 
 .fatal { padding: 40px; color: var(--faint); }
+
+button.recording { background: #d93b3b; border-color: #d93b3b; color: white; }

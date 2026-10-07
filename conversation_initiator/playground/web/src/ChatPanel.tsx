@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { play, type Rubric, type TurnResult } from "./api";
+import MicButton from "./MicButton";
 import { TIPS } from "./tips";
 
 export type Message =
@@ -14,6 +15,9 @@ interface Props {
   busy: boolean;
   canSpeak: boolean;
   canPlay: boolean;
+  canListen: boolean;
+  onAudio: (audio: Blob) => void;
+  onMicError: (message: string) => void;
   onSend: (text: string, unfinished: boolean) => void;
   onCheck: () => void;
   onAdvance: (s: number) => void;
@@ -73,6 +77,9 @@ export default function ChatPanel(p: Props) {
           onKeyDown={(e) => e.key === "Enter" && send()} />
         <button className="primary" data-tip={TIPS.send}
           disabled={!p.canSpeak || p.busy || !text.trim()} onClick={() => send()}>Send</button>
+        {p.canListen && (
+          <MicButton disabled={!p.canSpeak || p.busy} onAudio={p.onAudio} onError={p.onMicError} />
+        )}
         <button data-tip={TIPS.check} disabled={p.busy} onClick={p.onCheck}>Check scene</button>
       </div>
 
@@ -133,9 +140,7 @@ function RobotBubble({ result: r, provider, changes, canPlay }:
     if (r.speech) line = `"${r.speech.text}"`;
     else {
       failed = true;
-      line = provider === "jev"
-        ? "(jev decides only; it cannot write the line)"
-        : `(no line: ${r.speech_error ?? "speech call returned nothing"})`;
+      line = `(no line: ${r.speech_error ?? "speech call returned nothing"})`;
     }
   }
 

@@ -26,6 +26,7 @@ export default function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sceneWidth, setSceneWidth] = useSceneWidth();
   const [ttsEngine, setTtsEngine] = useState<string | null>(null);
+  const [sttEngine, setSttEngine] = useState<string | null>(null);
   const [voice, setVoice] = useState(true);
 
   const push = (...m: Message[]) => setMessages((prev) => [...prev, ...m]);
@@ -41,7 +42,7 @@ export default function App() {
         if (first) loadPreset(first);
       })
       .catch((e) => setLoadError(`Cannot reach the server: ${e.message}. Is uvicorn running on port 8000?`));
-    api.tts().then((t) => setTtsEngine(t.engine)).catch(() => setTtsEngine(null));
+    api.voice().then((v) => { setTtsEngine(v.tts); setSttEngine(v.stt); }).catch(() => {});
   }, []);
 
   const loadPreset = (p: Preset) => {
@@ -71,6 +72,20 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const listen = async (audio: Blob) => {
+    setBusy(true);
+    let text = "";
+    try {
+      text = (await api.listen(audio)).text;
+      if (!text) push({ kind: "note", text: "Heard nothing. Try again closer to the mic." });
+    } catch (e) {
+      push({ kind: "error", text: `mic: ${(e as Error).message}` });
+    } finally {
+      setBusy(false);
+    }
+    if (text) await runTurn(text);
   };
 
   const saveVignette = async () => {
@@ -129,6 +144,8 @@ export default function App() {
           onChange={setCtx} />
         <Splitter onResize={setSceneWidth} />
         <ChatPanel messages={messages} busy={busy} canSpeak={ctx.target != null} canPlay={ttsEngine != null}
+          canListen={sttEngine != null} onAudio={listen}
+          onMicError={(m) => push({ kind: "error", text: `mic: ${m}` })}
           onSend={(t, u) => runTurn(t, u)}
           onCheck={() => runTurn(null)}
           onAdvance={(s) => { setCtx(advance(ctx, s)); push({ kind: "note", text: `${s} s pass.` }); }}

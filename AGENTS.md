@@ -134,7 +134,7 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 | 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Not started. |
 | 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | `mvp/tts.py`: Deepgram by default, Azure as an option, with a disk cache. The playground plays the lines. Not tested on the robot's speakers. |
 | 6: evaluation | Oct 30 to Nov 12 | 60 to 100 labeled vignettes, kappa, ablations | Not started. Scope is open (`SCHEMA_COMPARISON.md` §5). |
-| Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. It is a probe tool. It does not measure accuracy. |
+| Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. You can type or talk (Deepgram STT), and it speaks the replies. It is a probe tool. It does not measure accuracy. |
 
 `.gitignore` already ignores `.env`. Item 4 in `IMPLEMENTATION_PLAN.md` §14 is done.
 

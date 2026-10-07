@@ -76,6 +76,17 @@ async function speak(speech: Speech): Promise<{ url: string; timing: string }> {
   return { url: URL.createObjectURL(await res.blob()), timing: res.headers.get("X-TTS") ?? "" };
 }
 
+async function listen(audio: Blob): Promise<{ text: string; ms: number }> {
+  const res = await fetch("/api/listen", {
+    method: "POST",
+    headers: { "Content-Type": audio.type || "application/octet-stream" },
+    body: audio,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`${res.status}: ${data.detail ?? res.statusText}`);
+  return data;
+}
+
 export async function play(speech: Speech): Promise<string> {
   const { url, timing } = await speak(speech);
   const audio = new Audio(url);
@@ -90,7 +101,8 @@ export const api = {
   schema: () => call<Ctx>("/api/schema"),
   turn: (provider: string, model: string | null, context: Ctx) =>
     call<TurnResult>("/api/turn", { provider, model, context }),
-  tts: () => call<{ engine: string | null }>("/api/tts"),
+  voice: () => call<{ tts: string | null; stt: string | null }>("/api/voice"),
+  listen,
   saveVignette: (context: Ctx, note: string) =>
     call<{ file: string }>("/api/vignettes", { context, note }),
 };
