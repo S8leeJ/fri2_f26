@@ -2,6 +2,9 @@
 # fail to import with NumPy 2.
 numpy<2
 ultralytics>=8.3
+# The ByteTrack tracker needs lap. Without it, ultralytics installs it
+# during the first run in each account.
+lap>=0.5.12
 # 0.10.14 still has mp.solutions, which orientation_node.py uses.
 # Newer 0.10.x releases removed it.
 mediapipe==0.10.14
