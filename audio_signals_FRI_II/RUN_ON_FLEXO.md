@@ -42,6 +42,51 @@ This is a real message from the audio node (October 2, 2026):
 - Plug the PlayStation Eye camera into flexo. Its microphone name contains `Camera-B4`, which is the name that `config.py` looks for.
 - Open one Terminator window and maximize it.
 
+## Fast path: two scripts
+
+If you only want the node running, use the two scripts in `tools/`.
+The rest of this guide explains each step, and Part F lists fixes.
+
+1. Get the code, one time:
+
+   ```bash
+   cd ~ && git clone https://github.com/S8leeJ/fri2_f26.git
+   ```
+
+   If the folder already exists, run `cd ~/fri2_f26 && git switch main && git pull` instead.
+
+2. Do the setup, one time. The script does steps A1 and A3 to A7, downloads the speech model, and runs the microphone check (B1).
+
+   ```bash
+   bash ~/fri2_f26/audio_signals_FRI_II/tools/setup_flexo.sh
+   ```
+
+   - Expected: the last lines say `Setup complete.`
+   - If the script stops with `FAILED:`, read the message after it. Then find the problem in Part F.
+   - You can run the script again at any time. It does not download again what is already installed.
+
+3. Open a new terminal, and start the node:
+
+   ```bash
+   bash ~/fri2_f26/audio_signals_FRI_II/tools/run_node.sh
+   ```
+
+   - Expected: `publishing /audio_context every 1s`
+
+4. Open a second new terminal, and read the JSON:
+
+   ```bash
+   ros2 daemon stop ; ros2 topic echo /audio_context --field data
+   ```
+
+5. Turn transcription on from a third terminal, and talk:
+
+   ```bash
+   ros2 topic pub -t 3 /engaged std_msgs/Bool "data: true"
+   ```
+
+New terminals already have ROS loaded and `ROS_LOCALHOST_ONLY=1`, because the setup script adds both to `~/.bashrc`.
+
 ## The three terminals
 
 ```
