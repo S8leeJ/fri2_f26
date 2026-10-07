@@ -30,6 +30,9 @@ This is a real message from flexo:
   ```
 
 - The Kinect has two cables. One goes to its power supply. The other goes into a blue (USB 3) port.
+- Make sure that no other account is logged in on flexo.
+  ROS programs that still run in another account's session can stop your pipeline from getting camera images.
+  If another account is logged in, log it out first.
 - Open one Terminator window and maximize it.
 
 ## The three terminals
@@ -140,7 +143,7 @@ pip install --user -r ~/fri2_f26/hri_vision/requirements.txt
 ### A7. Check the packages
 
 ```bash
-source /opt/ros/humble/setup.bash && python3 -c "import numpy, cv2, cv_bridge, matplotlib.pyplot, ultralytics, mediapipe as mp; print('numpy', numpy.__version__, '| cv2', cv2.__version__, '| solutions', hasattr(mp, 'solutions'))"
+source /opt/ros/humble/setup.bash && python3 -c "import numpy, cv2, cv_bridge, matplotlib.pyplot, ultralytics, lap, mediapipe as mp; print('numpy', numpy.__version__, '| cv2', cv2.__version__, '| solutions', hasattr(mp, 'solutions'))"
 ```
 
 - Expected: `numpy 1.26.4 | cv2 4.11.0 | solutions True`
@@ -305,7 +308,8 @@ Other users cannot stop it without `sudo`.
 | `"orientation":"unknown"` and `"orientation_fresh":false` in every line | The orientation node stopped. In Terminal 1, run `source ~/fri2_f26/install/setup.bash && ros2 run hri_vision orientation_node` to see the error. Then find the error in this table. |
 | `"distance_m":null` | The person is more than about 3.9 m away, or the B2 encoding check did not show `16UC1`. |
 | `"depth_fresh":false` | No depth images arrive. Do the B2 checks again. |
-| All "ready" lines appear, but no JSON ever appears, and `ros2 topic hz /hri/vision/detections` says the topic is not published | Known issue, seen on October 6, 2026. It happened in one new account on flexo. The same code worked in another account at the same time. The cause is not known yet. Use an account where the pipeline works. To help find the cause, compare the output of `env \| grep -E "ROS\|RMW\|DDS"` and `pip freeze --user` between the two accounts. |
+| All "ready" lines appear, but no JSON ever appears, and `ros2 topic hz /hri/vision/detections` says the topic is not published | Another account on flexo still runs ROS programs. This happened on October 6, 2026, and logging out the other account fixed it. Stop your three panes, log out every other account, and start again from B1. |
+| `requirements: Ultralytics requirement ['lap>=0.5.12'] not found, attempting AutoUpdate` | `lap` was not installed in A6. Ultralytics installs it by itself, and the pipeline still works. To avoid it, run `pip install --user "lap>=0.5.12"`. |
 
 ---
 
