@@ -15,15 +15,16 @@ The robot is a BWIbot on ROS 2 Humble.
 The research question: can an LLM decide when it is polite for a robot to start a conversation?
 The LLM gets a small JSON description of the scene. It returns a structured decision.
 
-The repo has three unrelated parts:
+The repo has four parts:
 
 | Part | Directories | Language | Status |
 |---|---|---|---|
 | FRI homework stack | `follower_robot/`, `nav_goals/`, `spatial_transforms/`, `spatial_utils/` | C++, `ament_cmake` | Finished homework. Not used by the study. |
 | LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. ROS node not started. |
-| Audio subsystem | `audio_signals_FRI_II/` | Python | Runs standalone. No ROS node yet. |
+| Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Not connected to the LLM. See §4.2. |
+| Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Not connected to the LLM. See §4.5. |
 
-Most future work touches `conversation_initiator/` and `audio_signals_FRI_II/`.
+Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
 The homework packages are old. Do not change them unless a person asks.
 The study runs the robot at one fixed spot, so the navigation code has no part in it (`conversation_initiator/SCHEMA_COMPARISON.md` §6).
 
@@ -141,12 +142,13 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 
 A standalone Python 3.10 program. `python main.py` runs it.
 It captures a microphone or a WAV file and runs Silero voice detection and loudness measurement.
-Once per second it builds an `audio` JSON object with these fields: `stamp`, `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech`, `transcript`, `engaged`, `robot_speaking`.
+Once per second it builds an `audio` JSON object with these fields: `stamp`, `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech`, `transcript`, `tone`, `engaged`, `robot_speaking`.
 Transcription uses local `faster-whisper`. It runs only while `engaged` is true.
 All tunable numbers are in `audio_context/config.py`.
 Its own `README.md` covers setup.
-There is no ROS node. `main.py` and `state.py` refer to a future `node.py`.
-Tone output is not written yet.
+`audio_context/node.py` is the ROS node (`ros2 run audio_context node`). It publishes the JSON on `/audio_context` and subscribes to `/engaged` and `/robot_speaking` (`std_msgs/Bool`).
+It ran on `flexo` on October 6, 2026. `audio_signals_FRI_II/RUN_ON_FLEXO.md` has the robot steps.
+`tone` holds the level, length, and active ratio of the last utterance. Pitch was removed, because it was wrong on real speech (see `audio_context/tone.py`).
 
 ### 4.3 Homework packages
 
@@ -164,10 +166,23 @@ No build was run for this doc.
 
 | Branch | Content |
 |---|---|
-| `origin/swathi-vision-pipeline` | `hri_vision/`, an `ament_python` package. Kinect and webcam detection, orientation, and a person-context node that publishes on `/hri/vision/person_context`. |
 | `origin/location-context`, `origin/decision-logic` | `location_context.py` matches the robot's pose to room rectangles. It outputs a `location` block with `room_label` and `room_type`. `decision-logic` adds a ROS node for it. |
 
 Do not commit to these branches unless the owner asks you to.
+
+### 4.5 `hri_vision/`
+
+An `ament_python` package. It was merged from `swathi-vision-pipeline` on October 6, 2026.
+It runs YOLO with ByteTrack for people, aligned depth for distance, and MediaPipe for orientation.
+It publishes compact JSON on `/hri/vision/context` (`std_msgs/String`).
+It was tested on the robot `flexo` with the Azure Kinect on October 6, 2026.
+
+- The Kinect driver comes from an existing build in `/home/justin/bwi_ros2` on flexo. `libk4a1.4-dev` is not installed, so a new account cannot build the driver.
+- Start the driver with `ros2 run`. `ros2 launch` fails, because the launch file writes a URDF into the build folder.
+- Pass the Azure topics: `rgb_topic:=/rgb/image_raw depth_topic:=/depth_to_rgb/image_raw`. The launch defaults are RealSense names.
+- `hri_vision/requirements.txt` pins mediapipe, OpenCV, and NumPy. Newer versions fail on ROS 2 Humble.
+- Only one account at a time can run ROS on flexo. ROS programs in another logged-in session stopped the pipeline from getting camera images on October 6, 2026.
+- `hri_vision/RUN_ON_FLEXO.md` has the robot steps. `hri_vision/laptop_vision.md` holds raw notes and logs from the first run.
 
 ---
 
@@ -178,7 +193,7 @@ Do not fix these without asking. Report them to a person.
 ### 5.1 Interface mismatches
 
 1. **The audio output does not match `ambient`.** The audio node emits `noise_floor_db` in dBFS, which can be `null`. The schema needs `ambient.noise_db`, A-weighted and required. The audio README calls its output the `"audio"` block, but the schema has no `audio` key. `seconds_since_speech`, `speech_ratio_10s`, and `speech_snr_db` have no schema field.
-2. **The vision branch does not match `target`.** It publishes `people[]` with `id`, `bbox`, `distance_m`, `direction`, and `dwell_time_s` on `/hri/vision/person_context`. The schema expects one `target` with `facing_robot`, `motion`, and more.
+2. **The vision output does not match `target`.** It publishes `people[]` with `id`, `distance_m`, `direction`, `dwell_time_s`, `orientation`, `gaze`, and `face_visible` on `/hri/vision/context`. The schema expects one `target` with `facing_robot`, `motion`, and more. `direction` uses `receding`. The schema `motion` uses `leaving`.
 3. **No fusion node exists.** No plan names its owner. Something must turn the audio and vision outputs into `/social_context`.
 4. **Location.** `SCHEMA.md` §8 says the schema has no location field and the robot stays at one fixed spot. The `location-context` and `decision-logic` branches build room labels. `audio_context/config.py` tells the user to measure "all three locations."
 5. **`/speech_request` key.** `IMPLEMENTATION_PLAN.md` §2 uses `target_id`. `SCHEMA.md` and `decision.schema.json` use `target_person_id`.
