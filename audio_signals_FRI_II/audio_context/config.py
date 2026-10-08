@@ -37,17 +37,28 @@ CONFIG = {
                                    # brought up. Applied only to the detector:
                                    # loudness.py still measures the real level.
                                    # None disables it.
-    "vad_threshold":       0.35,   # TUNE. Lower catches quieter and more
+    "vad_max_gain_db":     25.0,   # TUNE. The most that scaling may raise a
+                                   # block. The Kinect records a quiet room
+                                   # near -59 dBFS, so without a limit its
+                                   # noise was raised about 34 dB, and fan
+                                   # noise read as speech. None removes the
+                                   # limit.
+    "vad_threshold":       0.45,   # TUNE. Lower catches quieter and more
                                    # distant speech; too low and the detector
-                                   # starts firing on noise. Check against a
-                                   # Hallway clip after changing it.
+                                   # starts firing on noise. 0.35 made
+                                   # speech_ratio_10s about 0.5 in a room
+                                   # where nobody was near the robot.
 
     # --- noise floor -----------------------------------------------
-    "quiet_max_db":        -50.0,  # TUNE. Placeholders, not measurements.
-    "moderate_max_db":     -40.0,  # TUNE. Read the floor in all three
-                                   # locations with the robot running, then
-                                   # put the cutoffs in the gaps.
-    "level_hysteresis_db": 2.0,    # stops the label flickering at a cutoff
+    "quiet_max_db":        -58.0,  # Kinect, October 8: a quiet room is about
+                                   # -59.5, a room where people talk normally
+                                   # is about -56. This is halfway.
+    "moderate_max_db":     -40.0,  # TUNE. Placeholder. Measure a loud room
+                                   # (a busy hallway), then put the cutoff
+                                   # halfway between it and -56.
+    "level_hysteresis_db": 1.0,    # stops the label flickering at a cutoff.
+                                   # The quiet and moderate rooms are only
+                                   # 3.5 dB apart, so it must stay small.
     "floor_percentile":    20,     # not the median: while someone talks, the
                                    # background store fills with the pauses
                                    # inside their speech, which sit well above
