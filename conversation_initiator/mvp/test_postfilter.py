@@ -52,6 +52,19 @@ class PostfilterUnitTests(unittest.TestCase):
         self.assertEqual(enforce(base_ctx(robot={"last_spoke_s_ago": 45.0}), "greet"),
                          ("greet", None))
 
+    def test_respond_waits_while_mid_sentence(self):
+        ctx = base_ctx(target={"speech": {"partial_transcript": "So I was wondering if you could",
+                                          "syntactically_complete": False}})
+        self.assertEqual(enforce(ctx, "respond"), ("wait", "person mid-sentence"))
+
+    def test_respond_passes_when_complete_or_unknown(self):
+        for complete in (True, None):
+            speech = {"partial_transcript": "Where is the elevator?"}
+            if complete is not None:
+                speech["syntactically_complete"] = complete
+            self.assertEqual(enforce(base_ctx(target={"speech": speech}), "respond"),
+                             ("respond", None))
+
     def test_respond_needs_transcript(self):
         self.assertBlocked(base_ctx(), "respond", "respond without transcript")
         self.assertBlocked(base_ctx(target={"speech": None}), "respond",

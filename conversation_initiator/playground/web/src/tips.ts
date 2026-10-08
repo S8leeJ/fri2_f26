@@ -5,6 +5,7 @@ export const TIPS = {
   save: "Save the current scene as a new vignette file with no label. Label it later, then mvp.py tests it.",
   help: "How to use the playground.",
   voice_toggle: "Speak each robot line out loud. Lines already in mvp/tts_cache play with no network call.",
+  mic: "Click, speak, then click Stop. Deepgram writes down what you said and sends it as your message.",
   play: "Play this line again. It shows whether the audio came from the cache or from the TTS engine.",
 
   // Scene

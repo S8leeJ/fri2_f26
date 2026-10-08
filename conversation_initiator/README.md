@@ -58,8 +58,10 @@ the audio and vision nodes are wired together.
    silent cases, which are most of them, never pay for generating text.
    The call is skipped when the post-filter blocks the action. With
    `--provider jev`, a greet uses a fixed line with the volume set by
-   `noise_level`, so there is no second call. Jev cannot write a reply to
-   `respond`.
+   `noise_level`, so there is no second call. Jev cannot write text, so a
+   `respond` line comes from the first of Groq, Gemini, and Anthropic that
+   has a key. If that call fails, the next one is tried.
+   `JEV_REPLY_PROVIDER` picks which one goes first.
 
 Scores come before the action in the schema on purpose. The model commits to
 its reading of the scene first, and then picks the action.
@@ -136,6 +138,8 @@ conversation_initiator/
     ├── prosody.py          speech enums to Azure SSML
     ├── tts.py              Deepgram or Azure text to speech, with a disk cache
     ├── test_tts.py         prosody and TTS tests, no key needed
+    ├── stt.py              Deepgram speech to text for the playground mic
+    ├── test_stt.py         STT tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
     └── vignettes/          test scenes, 001–025. 009–021 need labels
@@ -195,7 +199,7 @@ gate suppresses 91% of them in the test simulation.
 
 `enforce(ctx, action)` runs after the model answers. It returns
 `(action, blocked_by)`. It can only change `greet` or `respond` to
-`remain_silent`. It never makes the robot speak.
+`remain_silent` or `wait`. It never makes the robot speak.
 
 | Rule | Blocks |
 |---|---|
@@ -205,6 +209,7 @@ gate suppresses 91% of them in the test simulation.
 | `R1 target in conversation` | `greet` when `target.in_conversation` is true |
 | `R2 spoke recently` | `greet` when the robot spoke less than 30 s ago |
 | `respond without transcript` | `respond` when there is no `partial_transcript` |
+| `person mid-sentence` | `respond` when `syntactically_complete` is false. The action becomes `wait`, so the robot replies once the person finishes. |
 
 R3 and R4 need judgment, so the filter leaves them to the model. `mvp.py`
 still scores the model's own action. It prints each block and the number of
@@ -261,6 +266,7 @@ cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 python3 test_gate.py                 # gate and schema tests, no key needed
 python3 test_postfilter.py           # post-filter tests, no key needed
 python3 test_tts.py                  # prosody and TTS tests, no key needed
+python3 test_stt.py                  # STT tests, no key needed
 python3 tts.py --warm                # cache the 3 greetings (needs Deepgram key)
 python3 tts.py "Hello there"         # say one line
 python3 mvp.py --provider jev --tts --play   # decide, then speak each line

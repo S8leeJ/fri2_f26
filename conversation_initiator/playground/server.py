@@ -15,9 +15,10 @@ import sys
 from typing import Any, Dict, Optional
 
 import dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 MVP = pathlib.Path(__file__).resolve().parent.parent / "mvp"
 sys.path.insert(0, str(MVP))
@@ -34,6 +35,7 @@ from mvp import (  # noqa: E402
     make_client,
 )
 from postfilter import SPEAKS, enforce  # noqa: E402
+from stt import from_env as stt_from_env  # noqa: E402
 from tts import from_env as tts_from_env  # noqa: E402
 
 dotenv.load_dotenv(MVP / ".env")
@@ -68,17 +70,17 @@ class SpeechReq(BaseModel):
     pitch: str
 
 
-_tts: Any = None
+_engines: Dict[str, Any] = {}
 
 
-def _tts_engine():
-    global _tts
-    if _tts is None:
+def _engine(kind: str):
+    """The TTS or STT engine, or None when its key is missing."""
+    if kind not in _engines:
         try:
-            _tts = tts_from_env()
+            _engines[kind] = (tts_from_env if kind == "tts" else stt_from_env)()
         except RuntimeError:
-            _tts = False
-    return _tts or None
+            _engines[kind] = None
+    return _engines[kind]
 
 
 class NewVignette(BaseModel):
@@ -134,15 +136,30 @@ def turn(req: Turn):
             "ms1": r.ms1, "ms2": r.ms2, "model": model}
 
 
-@app.get("/api/tts")
-def tts_engine():
-    engine = _tts_engine()
-    return {"engine": engine.name if engine else None}
+@app.get("/api/voice")
+def voice():
+    return {kind: (e.name if (e := _engine(kind)) else None) for kind in ("tts", "stt")}
+
+
+@app.post("/api/listen")
+async def listen(request: Request):
+    engine = _engine("stt")
+    if engine is None:
+        raise HTTPException(503, "no DEEPGRAM_API_KEY in mvp/.env")
+    audio = await request.body()
+    if not audio:
+        raise HTTPException(422, "no audio in the request")
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    try:
+        text, ms = await run_in_threadpool(engine.transcribe, audio, content_type)
+    except Exception as e:  # noqa: BLE001 - shown to the user, not swallowed
+        raise HTTPException(502, "%s STT failed: %s" % (engine.name, str(e)[:300]))
+    return {"text": text, "ms": ms}
 
 
 @app.post("/api/speak")
 def speak(req: SpeechReq):
-    engine = _tts_engine()
+    engine = _engine("tts")
     if engine is None:
         raise HTTPException(503, "no TTS key in mvp/.env")
     try:

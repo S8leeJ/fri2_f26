@@ -10,6 +10,7 @@ import json
 import math
 import os
 import pathlib
+import re
 import statistics
 import sys
 import time
@@ -403,8 +404,7 @@ def _score_levels(ends: str) -> List[str]:
 
 
 DIMENSION_ENDS = _parse_block("\n" + DIMENSIONS_6.split("\n\n", 1)[1])
-RULE_TEXT = {line.split(" ", 1)[0]: line.split(" ", 1)[1]
-             for line in RULES.splitlines()[1:] if line.strip()}
+RULE_TEXT = dict(re.findall(r"^(R\d+) (.+)$", RULES.split("\n\n")[0], re.MULTILINE))
 ACTION_TEXT = _parse_block(ACTIONS_6.split("\n\nCategories")[0])
 CATEGORY_TEXT = _parse_block(ACTIONS_6.split("\n\n")[1])
 
@@ -516,23 +516,48 @@ class Result:
     decision: Optional[dict] = None
 
 
+REPLY_WRITERS = ("groq", "gemini", "anthropic")
+_reply_writers = None
+
+
+def reply_writers() -> list:
+    """(provider, client, model) for each LLM that can write Jev's replies, in the order to try.
+
+    JEV_REPLY_PROVIDER goes first. Then each of REPLY_WRITERS with a key.
+    """
+    global _reply_writers
+    if _reply_writers is None:
+        names = [os.environ.get("JEV_REPLY_PROVIDER") or ""] + list(REPLY_WRITERS)
+        names = [n for n in dict.fromkeys(names) if n in REPLY_WRITERS and os.environ.get(ENV_KEY[n])]
+        _reply_writers = [(n, make_client(n, 5.0), DEFAULT_MODEL[n]) for n in names]
+    return _reply_writers
+
+
 def line_to_say(provider, client, model, ctx, d):
     """Returns (speech, elapsed_ms, error). Skips the call when nothing will be said."""
     if d.action not in SPEAKS or blocking_rule(ctx, d.action):
         return None, None, None
+    writers = [(provider, client, model)]
     if provider == "jev":
         # Jev answers typed questions only, so it cannot write a line.
         if d.action == "greet":
             return fixed_greeting(ctx), None, None
-        return None, None, "jev cannot write a reply"
+        writers = reply_writers()
+        if not writers:
+            return None, None, "jev cannot write a reply. Add a GROQ, GEMINI, or ANTHROPIC key."
     # A failed line should not cost the decision, which is what is being scored.
-    try:
-        speech, ms, _ = ask(provider, client, model, SPEECH_SYSTEM,
-                            json.dumps({"context": ctx, "decision": d.model_dump()}),
-                            Speech, 150)
-        return speech, ms, None
-    except Exception as e:  # noqa: BLE001
-        return None, None, "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+    error = None
+    for provider, client, model in writers:
+        try:
+            speech, ms, _ = ask(provider, client, model, SPEECH_SYSTEM,
+                                json.dumps({"context": ctx, "decision": d.model_dump()}),
+                                Speech, 150)
+            return speech, ms, None
+        except Exception as e:  # noqa: BLE001
+            error = "TIMEOUT" if is_timeout(e) else str(e)[:200] or type(e).__name__
+            if len(writers) > 1:
+                error = "%s: %s" % (provider, error)
+    return None, None, error
 
 
 def decide(provider, client, model, ctx, rubric) -> Result:

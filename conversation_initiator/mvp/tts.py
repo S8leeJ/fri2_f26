@@ -145,7 +145,7 @@ class AzureTTS(_CachedTTS):
         return path, ms
 
 
-def _require(name: str) -> str:
+def require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
         raise RuntimeError("%s not set in .env." % name)
@@ -156,10 +156,10 @@ def from_env(**kwargs):
     dotenv.load_dotenv(HERE / ".env")
     provider = os.environ.get("TTS_PROVIDER") or "deepgram"
     if provider == "deepgram":
-        return DeepgramTTS(_require("DEEPGRAM_API_KEY"),
+        return DeepgramTTS(require_env("DEEPGRAM_API_KEY"),
                            os.environ.get("DEEPGRAM_VOICE") or DEFAULT_DEEPGRAM_VOICE, **kwargs)
     if provider == "azure":
-        return AzureTTS(_require("AZURE_SPEECH_KEY"), _require("AZURE_SPEECH_REGION"),
+        return AzureTTS(require_env("AZURE_SPEECH_KEY"), require_env("AZURE_SPEECH_REGION"),
                         os.environ.get("AZURE_SPEECH_VOICE") or DEFAULT_VOICE, **kwargs)
     raise RuntimeError("TTS_PROVIDER must be deepgram or azure, not %r." % provider)
 

@@ -52,7 +52,8 @@ browser.
    - Otherwise it runs `mvp.decide()` with the 6-score rubric. When the
      action is `greet` or `respond`, that makes a second call for the line.
      With `jev`, a greet uses a fixed line and makes no second call. Jev
-     cannot write a reply to `respond`.
+     cannot write text, so a `respond` line comes from Groq, Gemini, or
+     Anthropic, whichever has a key first.
    - It runs `postfilter.enforce()`. If the post-filter blocks the action,
      the server drops the line, because the robot would never say it.
 4. **The app shows a robot bubble** with:
@@ -109,7 +110,16 @@ npm install
 
 The server uses the keys in `conversation_initiator/mvp/.env`. The provider
 list only shows providers that have a key. Add `DEEPGRAM_API_KEY` to hear the
-lines. Without it, the voice box and the play button do not appear.
+lines and to talk with the mic. Without it, the voice box, the play button,
+and the **🎤 Talk** button do not appear.
+
+### Talk instead of typing
+
+Click **🎤 Talk**, speak, then click **■ Stop**. The browser records the
+clip and sends it to `/api/listen`. Deepgram writes down what you said, and
+the app sends the text as your message, the same as **Send**. With the voice
+box on, the robot's answer is spoken back. The browser asks for mic access
+the first time.
 
 ## Run
 
@@ -190,11 +200,12 @@ Delete a test vignette when you are done with it, or label it and keep it.
 
 | File | Purpose |
 |---|---|
-| `server.py` | FastAPI app. Endpoints: `/api/providers`, `/api/presets`, `/api/schema`, `/api/turn`, `/api/tts`, `/api/speak`, `/api/vignettes`. |
+| `server.py` | FastAPI app. Endpoints: `/api/providers`, `/api/presets`, `/api/schema`, `/api/turn`, `/api/voice`, `/api/listen`, `/api/speak`, `/api/vignettes`. |
 | `requirements.txt` | The MVP requirements plus FastAPI and uvicorn |
 | `web/src/App.tsx` | Page layout, turn flow, provider picker, save |
 | `web/src/ScenePanel.tsx` | Scene controls and the raw JSON box |
 | `web/src/ChatPanel.tsx` | Chat log, robot bubbles, rubric bars, buttons |
+| `web/src/MicButton.tsx` | Records a clip from the mic for `/api/listen` |
 | `web/src/scene.ts` | Context helpers: set fields, diff, apply a result, move time |
 | `web/src/api.ts` | Types and fetch calls for the server |
 | `web/src/tips.ts` | The hover text for every control |
