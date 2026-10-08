@@ -137,3 +137,32 @@ ros2 daemon stop ; ros2 topic echo /social_context --field data
 
 The first command prints one audio message and one vision message. The second shows `/social_context` as it arrives.
 A terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts add both to `~/.bashrc`.
+
+### 4. Simulate the flags (optional)
+
+Until the decision layer sets them, set the audio node's two flags by hand from a third terminal.
+
+Turn transcription on or off:
+
+```bash
+ros2 topic pub -t 1 /engaged std_msgs/Bool "data: true"
+```
+
+```bash
+ros2 topic pub -t 1 /engaged std_msgs/Bool "data: false"
+```
+
+Tell the audio node that the robot talks, or that it stopped:
+
+```bash
+ros2 topic pub -t 1 /robot_speaking std_msgs/Bool "data: true"
+```
+
+```bash
+ros2 topic pub -t 1 /robot_speaking std_msgs/Bool "data: false"
+```
+
+- The audio node keeps the last value that it received. Send `"data: false"` to switch a flag off.
+- `"engaged": true` makes the transcript fill in. `"robot_speaking": true` makes every audio measurement `null`.
+- The audio log shows `engaged = True` or `robot_speaking = True` when a value changes. If it does not change, send the command again.
+- Write `"data: true"` with a space after the colon.
