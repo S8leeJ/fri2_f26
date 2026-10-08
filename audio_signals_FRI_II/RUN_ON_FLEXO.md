@@ -87,7 +87,7 @@ The rest of this guide explains each step, and Part F lists fixes.
 5. Turn transcription on from a third terminal, and talk:
 
    ```bash
-   ros2 topic pub -t 3 /engaged std_msgs/Bool "data: true"
+   ros2 topic pub -t 1 /engaged std_msgs/Bool "data: true"
    ```
 
 New terminals already have ROS loaded and `ROS_LOCALHOST_ONLY=1`, because the setup script adds both to `~/.bashrc`.
