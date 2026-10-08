@@ -244,15 +244,48 @@ This section separates a demo that survives a live FAIR presentation from one th
 
 ## 9. Evaluating the LLM layer
 
-Perform this **offline on frozen JSON vignettes**, not on the live robot. It is roughly two orders of magnitude cheaper and is the only route to real statistics.
+**Decision, October 8, 2026: the participant decides what is right.** The study does not use labeled vignettes or human–human agreement (kappa). This replaces the offline labeling plan that was here before. `conversation_initiator/SCHEMA_COMPARISON.md` §5 called this option "live only".
 
-1. Build 60–100 context JSON snapshots covering the target scenarios. Harvest real ones from logs, then hand-perturb.
-2. Have **three or more humans label each** snapshot with the correct action.
-3. **Report human–human agreement first** (Fleiss' kappa, or Krippendorff's alpha if annotator counts vary). This establishes the ceiling. Omitting it is the most common methodological error: if humans agree at only kappa = 0.5, an LLM at 70% accuracy is performing well, and that cannot be known without the measurement.
-4. Evaluate the LLM against the adjudicated reference: accuracy, per-class precision/recall/F1, and a confusion matrix.
-5. Use **Spearman's rho** for the ordinal rubric scores. The comparable HRI study (arXiv:2403.05701) found GPT-4 at rho ~ 0.82–0.83 against human social intuitions, a reasonable target to cite.
-6. Implement the two baselines as **prompt ablations on the identical vignette set**: context-unaware (rules only, no JSON) and single-context (audio-only, vision-only). Same model, same schema, ablated input.
-7. Report **P50 and P95 latency measured with the actual schema and thinking level**, not vendor benchmark numbers.
+A person who was in the interaction is the best judge of whether the robot's choice was polite. Raters who read a JSON snapshot afterwards were never in the room.
+
+### 9.1 Procedure (proposed)
+
+1. A participant meets the robot at its fixed spot and interacts with it.
+2. The robot logs every decision: the context JSON, the action, the line it said, the latency, the condition, and a participant ID.
+3. The participant judges the robot's choices. They rate each time the robot spoke. They also report each time it should have spoken but did not.
+
+The open items in §12 must be settled before the first session.
+
+### 9.2 Measures
+
+- **Appropriate initiations:** the share of robot greetings and replies that the participant rated as appropriate.
+- **False initiations:** robot speech that the participant rated as inappropriate. This is the costly error.
+- **Missed opportunities:** moments the participant reports where the robot should have spoken.
+- **Latency:** P50 and P95 from the logs, measured with the shipped schema and model, not vendor numbers.
+- **Questionnaire:** a standard post-session scale for perceived social behavior, if the team picks one.
+
+### 9.3 Conditions
+
+The baselines become live conditions with the same robot, the same spot, and the same schema:
+
+- full context JSON
+- audio only
+- vision only
+- context unaware: rules only, no JSON
+
+Whether each participant sees one condition or all of them is an open item (§12).
+
+### 9.4 What the vignettes are for now
+
+The JSON vignettes stay. They are development and regression fixtures. They are not study data.
+
+- They test a prompt or rule change before it reaches a participant.
+- `expect` is optional. It records what a developer expects, not ground truth.
+- A vignette that a participant session exposes is a good addition to the set.
+
+### 9.5 Human-subjects review
+
+A study with participants may need IRB review at UT Austin. Confirm this with the course staff before the first session.
 
 ---
 
@@ -268,8 +301,8 @@ Mapped onto the existing project timeline, with LLM work front-loaded to avoid b
 | Oct 15 | The gate, cooldowns, timeout fallback, full logging |
 | Oct 22 | Replace hand-written JSON with the real fusion node. End-to-end integration |
 | Oct 29 | Prosody-to-SSML mapper and TTS wired up |
-| Nov 5 | Human labeling round on 60–100 vignettes; compute kappa |
-| Nov 12 | Baseline ablations, confusion matrices, Spearman correlations |
+| Nov 5 | Pilot sessions with participants. Fix the logging and the rating procedure |
+| Nov 12 | Study sessions under each condition. Analyze participant ratings and latency |
 
 **Critical structural point:** stub the fusion node's output independently. Hand-write the JSON files. The entire LLM layer then becomes testable and can be completed before teammates' sensor nodes exist, turning integration day into a configuration change rather than a crisis.
 
@@ -287,6 +320,11 @@ Mapped onto the existing project timeline, with LLM work front-loaded to avoid b
 
 1. **Library list.** The list of freely available libraries was not received. If it includes an emotion-recognition package, a turn-taking model, or a TTS with an existing student license, several recommendations above would change.
 2. **Turn-taking ownership.** Is the millisecond-level turn-taking layer in scope for this component or assigned elsewhere? If in scope, a lightweight VAP-style model is the highest-value addition and the most direct through-line to the recommended paper.
+3. **When participants rate.** After each robot action, or after the session from the log or a video. Rating during the interaction can change how the participant behaves.
+4. **Rating scale.** Appropriate or not, a 1–5 scale, or categories such as "too early", "right", "too late", "should not have spoken".
+5. **Missed opportunities.** How a participant reports a moment when the robot stayed silent but should have spoken. For example, a button during the session, or a review of the timeline afterwards.
+6. **Conditions per participant.** One condition each (between subjects) or all conditions each (within subjects), and how many participants that needs.
+7. **IRB.** Whether the study needs review, and how long that takes.
 
 ---
 
