@@ -148,7 +148,7 @@ All tunable numbers are in `audio_context/config.py`.
 Its own `README.md` covers setup.
 `audio_context/node.py` is the ROS node (`ros2 run audio_context node`). It publishes the JSON on `/audio_context` and subscribes to `/engaged` and `/robot_speaking` (`std_msgs/Bool`).
 It ran on `flexo` on October 6, 2026. `audio_signals_FRI_II/RUN_ON_FLEXO.md` has the robot steps.
-Since October 8, 2026, the default microphone is the Azure Kinect's 7-mic array (`input_device: "Azure Kinect"`). The bands in `audio_context/Ranges.md` come from the PlayStation Eye.
+Since October 8, 2026, the default microphone is the Azure Kinect's 7-mic array (`input_device: "Azure Kinect"`). `audio_context/Ranges.md` explains every JSON field, with the Kinect values measured so far.
 `tools/setup_flexo.sh` does the one-time setup and checks that the microphone records. `tools/run_node.sh` builds the package, then starts the node.
 `tone` holds the level, length, and active ratio of the last utterance. Pitch was removed, because it was wrong on real speech (see `audio_context/tone.py`).
 
