@@ -17,7 +17,6 @@ October 8, 2026, on flexo.
 | Field | Condition | Value |
 |---|---|---|
 | `noise_floor_db` | quiet room, nobody talks | about −59.5 dBFS |
-| `noise_floor_db` | room where people talk normally | about −56 dBFS |
 | `speech_snr_db` | quiet voice | about 5 dB |
 | `speech_snr_db` | loud voice, close to the robot | about 12 dB |
 | `tone.intensity_db` | quiet voice | about −54 dBFS |
@@ -27,40 +26,11 @@ The values agree. In a quiet room, a loud voice is about 12.5 dB above the floor
 
 The `speech_ratio_10s` bands in `Ranges.md` come from the PlayStation Eye. They come from voice detection, so the microphone has little effect on them.
 
-## The `noise_level` cutoffs
-
-- `quiet_max_db` is −58, halfway between the quiet room (−59.5) and the room where people talk normally (−56).
-- `level_hysteresis_db` is 1 dB. The label changes from `quiet` to `moderate` at −57, and back to `quiet` below −59. The two rooms are only 3.5 dB apart, so a larger margin would keep the label stuck.
-- `moderate_max_db` is −40. It is still a placeholder.
-
-## Voice detection
-
-On October 8, 2026, background noise read as speech. `speech_now` became `true` when nobody was near the robot, and `speech_ratio_10s` was about 0.5.
-
-The cause: the detector scales each block to −25 dBFS before it scores it. A quiet room on the Kinect is near −59 dBFS, so its noise was raised about 34 dB, to the level of speech.
-
-The fix, in `config.py`:
-
-- `vad_max_gain_db` is 25. Scaling raises a block by 25 dB at most.
-- `vad_threshold` is 0.45. It was 0.35.
-
-In a simulation with the test clip at the Kinect levels, and five kinds of fan and hum noise at −56 dBFS:
-
-| Setting | `speech_now` on noise | Voice frames found, loud voice | Voice frames found, quiet voice |
-|---|---|---|---|
-| Old: no limit, 0.35 | up to 0.56 of the time | 96% | 75% |
-| New: 25 dB, 0.45 | 0 | 88% | 65% |
-
-Check it on flexo. Run `python3 main.py --show builder --seconds 60` in `~/fri2_f26/audio_signals_FRI_II`, and do not talk for 30 seconds. Then talk at 1 to 2 m.
-
-- Noise still reads as speech: set `vad_threshold` to 0.5, or `vad_max_gain_db` to 20.
-- A quiet voice is missed: set `vad_threshold` to 0.4.
-
 ## Not measured yet
 
-- `noise_floor_db` in a loud room (a busy hallway).
+- `noise_floor_db` in a moderate room (people talk nearby) and in a loud room (a busy hallway).
+- So the `noise_level` cutoffs in `config.py` are still placeholders: `quiet_max_db` is −50, and `moderate_max_db` is −40. A 2 dB margin stops the label from switching back and forth at a cutoff.
 - `speech_snr_db` at known distances.
-- The new voice detection settings on flexo.
 
 ## How to measure
 
@@ -72,8 +42,8 @@ Do these on flexo, with the Kinect microphone, at the place where the robot will
    cd ~/fri2_f26/audio_signals_FRI_II && python3 main.py --show builder --seconds 60
    ```
 
-   The quiet room and the room where people talk are done. Do this in a loud room.
-2. **The `noise_level` cutoffs.** Put `moderate_max_db` halfway between the moderate floor (−56) and the loud floor. Keep `level_hysteresis_db` smaller than half the distance between two floors.
+   Do this in a quiet room, a moderate room, and a loud room.
+2. **The `noise_level` cutoffs.** Put `quiet_max_db` halfway between the quiet and moderate floors. Put `moderate_max_db` halfway between the moderate and loud floors.
 3. **`speech_snr_db` at distances.** In the quiet room, talk in a normal voice at 1 m, 2 m, and 4 m from the robot. Write down `snr` for each distance.
 
 `tools/check_levels.py` says "Very low" for the Kinect, because speech peaks near −30 dBFS. Transcription still works. To raise the level, run `alsamixer -c 2`, press F4, and raise the capture control. Then measure everything again.
