@@ -30,7 +30,7 @@ from context import AMBIENT_FIELDS, SCHEMA_VERSION
 VISION_STALE_S = 2.0
 AUDIO_STALE_S = 3.0
 # A transcript older than this when first seen is left over from before; skip it.
-TRANSCRIPT_FRESH_S = 3.0
+TRANSCRIPT_FRESH_S = 6.0
 # A transcript waits this long for the gate to let an LLM call through.
 PENDING_MAX_S = 15.0
 NO_REPLY_S = 8.0
