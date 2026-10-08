@@ -101,14 +101,16 @@ The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in b
 
 ## Fuse the topics into `/social_context`
 
-With the audio node and the vision pipeline running, start the fusion node on flexo:
+With the audio node and the vision pipeline running, start the publisher on flexo:
 
 ```bash
-pip install --user "jsonschema>=4.18" && python3 ~/fri2_f26/conversation_initiator/ros/fusion_node.py
+python3 ~/fri2_f26/fusion/fusion_publisher.py
 ```
 
-It publishes one schema v2.0 message on `/social_context`, 10 times each second, from the newest audio and vision messages. It publishes nothing while either input is old. To see one message:
+It publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. To check it, run the subscriber in another terminal:
 
 ```bash
-ros2 daemon stop ; ros2 topic echo --once /social_context --field data
+ros2 daemon stop ; python3 ~/fri2_f26/fusion/fusion_subscriber.py
 ```
+
+It prints `10 messages in the last second` and both messages with their ages. Add `--all` to print every message.
