@@ -32,6 +32,12 @@ Levels are in dBFS. 0 dBFS is the loudest sound that the microphone can record, 
 - `null` means that nobody spoke yet. It does not mean a long pause.
 - After the robot talks, it includes the time that the robot talked.
 
+**`speech_bearing_deg`**: the direction of the voice in the last second, in degrees.
+- 0 is straight ahead of the robot. Negative values are to the robot's left, and positive values are to its right. ±180 is behind.
+- The field exists only when the robot uses the Kinect's microphone array. With another microphone, the message has no such field.
+- `null` when nobody spoke in the last second.
+- The average error is about 12 to 14 degrees for one speaker. When two people talk at the same time, the value can point to the louder one, or between them.
+
 **`transcript`**: the last finished sentence, as text.
 - It exists only while `engaged` is `true`.
 - It stays until the next sentence. So the same text in several messages can be one sentence that the robot already answered.

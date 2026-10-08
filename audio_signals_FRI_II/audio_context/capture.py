@@ -26,7 +26,9 @@ import numpy as np
 import soundfile as sf
 from scipy.signal import firwin, lfilter, resample_poly
 
-Block = namedtuple("Block", "t samples")
+# channels is the raw block before the mix to mono: one column for each
+# microphone, at the device rate. bearing.py uses it.
+Block = namedtuple("Block", "t samples channels", defaults=(None,))
 
 
 def resolve_device(spec):
@@ -232,7 +234,7 @@ class AudioCapture:
             # which is not a reading of the room.
             if self._seen <= self._warmup:
                 continue
-            return Block(item.t, resampled)
+            return Block(item.t, resampled, item.samples)
         return None
 
     # -- one consumer ------------------------------------------------------

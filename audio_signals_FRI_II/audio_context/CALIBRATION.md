@@ -61,6 +61,33 @@ Details that `Ranges.md` leaves out:
 - `syntactically_complete` is `true` when the transcript ends in `.`, `?`, or `!`, and `false` when it ends in `...` or `…`, or has no end mark. It was tested on transcripts from October 2 and 8.
 - The node ignores audio while `robot_speaking` is `true`, and for 0.5 seconds after.
 
+## Voice direction (`speech_bearing_deg`)
+
+`audio_context/bearing.py` estimates the direction of a voice with SRP-PHAT.
+It runs only when the capture device name contains `Azure Kinect` and the device has 7 channels, and `bearing_enabled` is `True` in `config.py`.
+The audio log then shows `speech_bearing_deg on: ...`. With any other microphone, the JSON has no `speech_bearing_deg` field.
+
+- Microphone positions come from `param/azure_kinect.yaml` in ssloc_ros (Universität Hamburg, MIT/Apache-2.0). Channel 0 is the centre. Channels 1 to 6 are a hexagon of 40 mm radius.
+- It uses 300 Hz to 4 kHz, a 5° grid, and the voiced blocks of the last second (`bearing_window_sec`). Louder blocks and sharper peaks count more.
+- In a simulation without echoes (the test clip, from 24 directions), the average error was 3.5° at 10 dB SNR and 4.9° at 5 dB SNR.
+- On a real Azure Kinect, a 2023 thesis with the same method (Fredenhagen, Universität Hamburg) measured about 12° to 14° average error for one speaker. A second speaker at the same time gave unreliable results.
+- The convention follows `bearing_deg` in the schema: negative is left. ROS REP 103 uses the opposite sign (see `AGENTS.md` §5.2).
+
+### Calibrate the direction
+
+The rotation of the microphone hexagon relative to the camera is not known, so calibrate once. Do it on flexo, at the place where the robot will stand.
+
+1. In `audio_context/config.py`, set `bearing_offset_deg` to `0.0` and `bearing_mirror` to `False`.
+2. Stop the audio node. Then run `python3 main.py --show json --engaged` in `~/fri2_f26/audio_signals_FRI_II`.
+3. Stand about 1.5 m straight in front of the camera, and talk for 5 seconds. Write down `speech_bearing_deg` as F.
+4. Stand about 1.5 m to the robot's left, and talk for 5 seconds. Write down `speech_bearing_deg` as L.
+5. Compute L − F, and bring it into the range −180 to 180. If it is near −90, keep `bearing_mirror` at `False`. If it is near +90, set `bearing_mirror` to `True`, and change the sign of F.
+6. Set `bearing_offset_deg` to −F.
+7. Check: in front reads about 0, left about −90, right about +90, and behind about ±180.
+8. Write down the two values here, and commit them on a branch.
+
+Not calibrated yet.
+
 ## Known limits
 
 - The transcript does not clear when the robot replies. `Ranges.md` says that the same text can be a sentence that was already answered. `transcript_age_s` shows how old it is.
