@@ -101,18 +101,16 @@ The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in b
 
 ## Fuse the topics into `/social_context`
 
-With the audio node and the vision pipeline running, start the publisher in any terminal on flexo:
+First run the setup script in each folder once, and test audio and vision separately (see above). Then one command starts everything:
 
 ```bash
 python3 ~/fri2_f26/fusion/fusion_publisher.py
 ```
 
-It publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. To check it, run the subscriber in another terminal:
+It starts the audio node, the Kinect driver, and the vision pipeline with their run scripts. It waits for the Kinect before it starts the pipeline. Then it publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. A program that already runs is used as it is. Each program writes its output to `fusion/logs/`. Ctrl+C stops everything that the script started, the driver last.
+
+To test it, from another terminal:
 
 ```bash
-python3 ~/fri2_f26/fusion/fusion_subscriber.py
+ros2 daemon stop ; ros2 topic echo /social_context --field data
 ```
-
-It prints `10 messages in the last second` and both messages with their ages. Add `--all` to print every message.
-
-Both scripts connect to ROS by themselves, like the audio and vision run scripts. They load ROS 2 Humble if the terminal has not, and set `ROS_LOCALHOST_ONLY=1`. You can also run them without `python3`, for example `~/fri2_f26/fusion/fusion_subscriber.py`.
