@@ -110,6 +110,9 @@ def materially_changed(
             return True
         if p.get("motion") != p0.get("motion"):
             return True
+        heard = (p.get("speech") or {}).get("partial_transcript")
+        if heard and heard != (p0.get("speech") or {}).get("partial_transcript"):
+            return True
 
     a, a0 = _ambient(ctx), _ambient(prev)
     if a.get("noise_level") != a0.get("noise_level"):

@@ -41,8 +41,9 @@ dist/
 *.tsbuildinfo
 npm-debug.log*
 
-# Logs
+# Logs. live_logs/ holds transcripts of what people said.
 *.log
+live_logs/
 
 # Local agent config
 .claude/
