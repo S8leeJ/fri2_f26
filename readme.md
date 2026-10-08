@@ -98,3 +98,17 @@ ros2 daemon stop ; ros2 topic echo --once /audio_context --field data ; ros2 top
 ```
 
 The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in both folders add these to `~/.bashrc`.
+
+## Fuse the topics into `/social_context`
+
+With the audio node and the vision pipeline running, start the fusion node on flexo:
+
+```bash
+pip install --user "jsonschema>=4.18" && python3 ~/fri2_f26/conversation_initiator/ros/fusion_node.py
+```
+
+It publishes one schema v2.0 message on `/social_context`, 10 times each second, from the newest audio and vision messages. It publishes nothing while either input is old. To see one message:
+
+```bash
+ros2 daemon stop ; ros2 topic echo --once /social_context --field data
+```

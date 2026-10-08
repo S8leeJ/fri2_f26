@@ -20,7 +20,7 @@ The repo has four parts:
 | Part | Directories | Language | Status |
 |---|---|---|---|
 | FRI homework stack | `follower_robot/`, `nav_goals/`, `spatial_transforms/`, `spatial_utils/` | C++, `ament_cmake` | Finished homework. Not used by the study. |
-| LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. ROS node not started. |
+| LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. `ros/fusion_node.py` publishes `/social_context`. The initiator ROS node is not started. |
 | Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Not connected to the LLM. See §4.2. |
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Not connected to the LLM. See §4.5. |
 
@@ -198,7 +198,7 @@ Do not fix these without asking. Report them to a person.
 
 1. **The audio output does not match `ambient`.** The audio node emits `noise_floor_db` in dBFS, which can be `null`. The schema needs `ambient.noise_db`, A-weighted and required. The audio README calls its output the `"audio"` block, but the schema has no `audio` key. `seconds_since_speech`, `speech_ratio_10s`, and `speech_snr_db` have no schema field.
 2. **The vision output does not match `target`.** It publishes `people[]` with `id`, `distance_m`, `direction`, `dwell_time_s`, `orientation`, `gaze`, and `face_visible` on `/hri/vision/context`. The schema expects one `target` with `facing_robot`, `motion`, and more. `direction` uses `receding`. The schema `motion` uses `leaving`.
-3. **No fusion node exists.** No plan names its owner. Something must turn the audio and vision outputs into `/social_context`.
+3. **Fusion.** `conversation_initiator/ros/fusion_node.py` (October 8, 2026) publishes `/social_context` at 10 Hz from the newest audio and vision messages. The schema forces two guesses: `facing_robot` cannot be unknown, so unknown becomes `false`, and people without `distance_m` are left out.
 4. **Location.** `SCHEMA.md` §8 says the schema has no location field and the robot stays at one fixed spot. The `location-context` and `decision-logic` branches build room labels. `audio_context/config.py` tells the user to measure "all three locations."
 5. **`/speech_request` key.** `IMPLEMENTATION_PLAN.md` §2 uses `target_id`. `SCHEMA.md` and `decision.schema.json` use `target_person_id`.
 
