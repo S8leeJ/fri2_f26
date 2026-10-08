@@ -75,7 +75,8 @@ The rest of this guide explains each step, and Part F lists fixes.
    bash ~/fri2_f26/audio_signals_FRI_II/tools/run_node.sh
    ```
 
-   - Expected: `publishing /audio_context every 1s`
+   - Expected: `✅ audio_context built`, then `publishing /audio_context every 1s`
+   - The script builds the package each time before it starts the node, so the node always uses the current code.
 
 4. Open a second new terminal, and read the JSON:
 
@@ -334,6 +335,7 @@ source /opt/ros/humble/setup.bash && cd ~/fri2_f26 && git pull && cd audio_signa
 
 Then stop the node in Terminal 2 and start it again with the C1 command.
 Do this after every change to the code, because this build copies the code into `install/`.
+`tools/run_node.sh` does this build for you each time it starts the node.
 
 ---
 
