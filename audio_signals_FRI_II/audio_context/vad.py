@@ -16,6 +16,10 @@
 # spot once brought up: in testing, detection at 2 dB SNR went from 69% to
 # 93%, with no increase in false positives on footsteps, carts or hum. Only
 # the detector sees the scaled copy; loudness.py measures the real level.
+#
+# The gain has a limit. The Kinect records a quiet room near -59 dBFS, and
+# raising that noise all the way to speech level made fan noise read as a
+# voice.
 
 import numpy as np
 
@@ -32,7 +36,7 @@ def _get_model():
     return _model
 
 
-def normalise(samples, target_db):
+def normalise(samples, target_db, max_gain_db=None):
     # Scale a block to a fixed RMS level. Whole block rather than per frame,
     # so the relative levels within it are preserved.
     if target_db is None:
@@ -41,6 +45,8 @@ def normalise(samples, target_db):
     if rms < 1e-9:
         return samples          # digital silence, nothing to scale
     gain = 10.0 ** (target_db / 20.0) / rms
+    if max_gain_db is not None:
+        gain = min(gain, 10.0 ** (max_gain_db / 20.0))
     return np.clip(samples * gain, -1.0, 1.0).astype(np.float32)
 
 
@@ -77,5 +83,5 @@ def from_block(block, frame_samples=None, threshold=None, target_db=...):
     if target_db is ...:
         target_db = CONFIG["vad_normalise_db"]
 
-    samples = normalise(block.samples, target_db)
+    samples = normalise(block.samples, target_db, CONFIG.get("vad_max_gain_db"))
     return is_voice(to_frames(samples, frame_samples), threshold)
