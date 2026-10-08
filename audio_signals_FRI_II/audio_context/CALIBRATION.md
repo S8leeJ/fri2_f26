@@ -2,6 +2,7 @@
 
 These notes are for people. `Ranges.md` is the short version for the LLM system prompt.
 When a measurement here changes, update `Ranges.md` too.
+`Ranges.md` only describes what values mean. It never tells the LLM what to do, because the LLM weighs the audio with the other fields.
 
 ## Microphone
 
@@ -59,8 +60,8 @@ Details that `Ranges.md` leaves out:
 
 ## Known limits
 
-- The transcript does not clear when the robot replies. `Ranges.md` tells the LLM to check for a repeated transcript.
-- `tone` does not clear when `engaged` becomes `false`. `Ranges.md` tells the LLM to ignore `tone` then.
+- The transcript does not clear when the robot replies. `Ranges.md` says that the same text can be a sentence that was already answered.
+- `tone` does not clear when `engaged` becomes `false`. `Ranges.md` says that `tone` can hold a value from an earlier conversation.
 - The node cannot tell who is talking. The Kinect's 7 microphones could give the direction of a voice later.
 - Sound shows how activated a person is, not if that is good or bad. The words show that.
 - There is no pitch. The earlier pitch values were wrong on real speech (see `tone.py`).
