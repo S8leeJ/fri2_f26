@@ -13,7 +13,9 @@ It starts these run scripts, in this order:
                                              (starts when the driver says "K4A Started")
 
 A program that already runs is used as it is, and is not started again.
-Each program writes its output to fusion/logs/<name>.log.
+Each run clears fusion/logs/ first. Each program writes its output to
+fusion/logs/<name>.log. audio.log also gets every /audio_context message, one
+JSON object per line. pipeline.log has the vision JSON.
 
 Then it publishes the newest audio and vision messages together, 10 times each second:
 
@@ -87,10 +89,22 @@ def already_runs(name):
     return subprocess.run(["pgrep", "-f", pattern], capture_output=True).returncode == 0
 
 
+def clear_logs():
+    LOGS.mkdir(parents=True, exist_ok=True)
+    for name in PROGRAMS:
+        (LOGS / f"{name}.log").write_text("")
+
+
+def note(name, text):
+    with open(LOGS / f"{name}.log", "a") as log:
+        log.write(f"[fusion] {text}\n")
+
+
 def start(name):
     script = PROGRAMS[name][0]
-    LOGS.mkdir(parents=True, exist_ok=True)
-    log = open(LOGS / f"{name}.log", "w")
+    # Append, so that the program's output and the audio JSON that this script
+    # adds to audio.log do not write over each other.
+    log = open(LOGS / f"{name}.log", "a")
     # A new session, so that Ctrl+C reaches only this script. It then stops
     # the programs in the right order.
     return subprocess.Popen(["bash", str(script)], stdout=log, stderr=subprocess.STDOUT,
@@ -155,6 +169,7 @@ def run(node, latest, started):
     def launch(name):
         if already_runs(name):
             reused.add(name)
+            note(name, "This program ran before fusion started, so its output is not in this file.")
         else:
             started[name] = start(name)
 
@@ -189,16 +204,20 @@ def main():
     rclpy.init()
     node = rclpy.create_node("fusion_publisher")
     latest = {"audio": (None, None), "vision": (None, None)}
+    clear_logs()
+    audio_log = open(LOGS / "audio.log", "a", buffering=1)
 
-    def keep(name):
+    def keep(name, log=None):
         def callback(msg):
             try:
                 latest[name] = (json.loads(msg.data), time.time())
             except json.JSONDecodeError:
-                pass
+                return
+            if log is not None:
+                log.write(msg.data + "\n")
         return callback
 
-    node.create_subscription(String, "/audio_context", keep("audio"), 10)
+    node.create_subscription(String, "/audio_context", keep("audio", audio_log), 10)
     node.create_subscription(String, "/hri/vision/context", keep("vision"), 10)
 
     # Ctrl+C ends spin with KeyboardInterrupt, or with ExternalShutdownException
@@ -214,6 +233,7 @@ def main():
         for name in ("pipeline", "audio", "driver"):
             if name in started:
                 stop(name, started[name])
+        audio_log.close()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
