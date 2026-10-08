@@ -81,3 +81,20 @@ colcon build
 source install/setup.bash
 ```
 There will be warnings after you build for the first time, but hopefully no errors. Remember to run colcon build in your workspace root everytime you make a change.
+
+---
+
+## Check the sensor topics on flexo
+
+To publish the topics, follow the guide in each folder:
+
+- Audio (`/audio_context`): [`audio_signals_FRI_II/RUN_ON_FLEXO.md`](audio_signals_FRI_II/RUN_ON_FLEXO.md)
+- Vision (`/hri/vision/context`): [`hri_vision/RUN_ON_FLEXO.md`](hri_vision/RUN_ON_FLEXO.md)
+
+Then, from any terminal on flexo, this prints one message from each topic:
+
+```bash
+ros2 daemon stop ; ros2 topic echo --once /audio_context --field data ; ros2 topic echo --once /hri/vision/context --field data
+```
+
+The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in both folders add these to `~/.bashrc`.
