@@ -14,7 +14,8 @@ CONFIG = {
     # "USB Audio" finds both "Microphone (USBAudio1.0)" on Windows and
     # "USB Audio Device" on Linux. Falls back to the default if it is not
     # found, so a missing device never stops the node.
-    "input_device":        "Camera-B4",
+    "input_device":        "Azure Kinect",  # its 7-mic array. The PS Eye
+                                            # is "Camera-B4".
     "input_channels":      None,   # None = ask the device
     "capture_sample_rate": None,   # None = ask the device
     "warmup_blocks":       2,      # some backends open with digital silence

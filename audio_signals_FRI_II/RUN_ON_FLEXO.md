@@ -39,7 +39,9 @@ This is a real message from the audio node (October 2, 2026):
 - Sit at flexo's screen and log in with your lab account.
 - Make sure that no other account is logged in on flexo.
   ROS programs that still run in another account's session can stop your terminals from seeing each other.
-- Plug the PlayStation Eye camera into flexo. Its microphone name contains `Camera-B4`, which is the name that `config.py` looks for.
+- The node uses the microphone array in the Azure Kinect. `config.py` looks for a device name that contains `Azure Kinect`.
+  The Kinect must have its power supply and its USB cable connected.
+  To use the PlayStation Eye instead, set `input_device` in `config.py` to `"Camera-B4"`.
 - Open one Terminator window and maximize it.
 
 ## Fast path: two scripts
@@ -55,14 +57,16 @@ The rest of this guide explains each step, and Part F lists fixes.
 
    If the folder already exists, run `cd ~/fri2_f26 && git switch main && git pull` instead.
 
-2. Do the setup, one time. The script does steps A1 and A3 to A7, downloads the speech model, and runs the microphone check (B1).
+2. Do the setup, one time. The script runs 8 checks in this order: internet, ROS (also added to `~/.bashrc`), Python packages, setuptools, packages and speech model, build, microphone connected, and microphone records.
 
    ```bash
    bash ~/fri2_f26/audio_signals_FRI_II/tools/setup_flexo.sh
    ```
 
-   - Expected: the last lines say `Setup complete.`
-   - If the script stops with `FAILED:`, read the message after it. Then find the problem in Part F.
+   - Expected: a ✅ line after each step, then `✅ Ready. All 8 checks passed.`
+   - The step 8 line names the microphone, for example `Azure Kinect Microphone Array ..., 7 ch @ 48000 Hz, room level -59.0 dBFS`.
+   - If the script stops with `❌ FAILED:`, read the message after it. Then find the problem in Part F.
+   - Stop any running audio node before you run the script. Step 8 cannot record while the node holds the microphone.
    - You can run the script again at any time. It does not download again what is already installed.
 
 3. Open a new terminal, and start the node:
@@ -71,7 +75,8 @@ The rest of this guide explains each step, and Part F lists fixes.
    bash ~/fri2_f26/audio_signals_FRI_II/tools/run_node.sh
    ```
 
-   - Expected: `publishing /audio_context every 1s`
+   - Expected: `✅ audio_context built`, then `publishing /audio_context every 1s`
+   - The script builds the package each time before it starts the node, so the node always uses the current code.
 
 4. Open a second new terminal, and read the JSON:
 
@@ -212,8 +217,8 @@ Do this in **Terminal 1 (GENERAL)**.
 cd ~/fri2_f26/audio_signals_FRI_II && python3 tools/check_devices.py
 ```
 
-- Expected: `FOUND`, with a line whose name contains `Camera-B4`.
-- If you see `NOT FOUND`, the node uses the default microphone, which may be the wrong one. Plug in the PlayStation Eye, or see Part F.
+- Expected: `FOUND`, with `Azure Kinect Microphone Array`, 7 channels, at 48000 Hz.
+- If you see `NOT FOUND`, the node uses the default microphone, which may be the wrong one. Check the Kinect power supply and USB cable, or see Part F.
 - To list every microphone, run `python3 tools/check_devices.py --list`.
 
 ### B2. Run a 30-second test
@@ -330,6 +335,7 @@ source /opt/ros/humble/setup.bash && cd ~/fri2_f26 && git pull && cd audio_signa
 
 Then stop the node in Terminal 2 and start it again with the C1 command.
 Do this after every change to the code, because this build copies the code into `install/`.
+`tools/run_node.sh` does this build for you each time it starts the node.
 
 ---
 
@@ -343,9 +349,10 @@ Do this after every change to the code, because this build copies the code into 
 | `No executable found` | The command has a typo, or the build did not run. Do A7 again, then run the C1 command. |
 | `option --editable not recognized` or `canonicalize_version() got an unexpected keyword argument` | Run `pip install --user --upgrade packaging`, then do A5 and A7 again. |
 | `PortAudio library not found` | Ask the lab admin to install `libportaudio2`. |
-| `check_devices.py` shows `NOT FOUND` | Plug in the PlayStation Eye. Wait 5 seconds and run B1 again. |
+| `check_devices.py` shows `NOT FOUND` | Check the Kinect power supply and USB cable. Wait 5 seconds and run B1 again. |
+| `check_levels.py` says `Very low. Raise the capture volume` | The Kinect records quietly, with speech peaks near -30 dBFS. Transcription still works. To raise the level, run `alsamixer -c 2`, press F4, and raise the capture control. |
 | `"speech_now"` never becomes `true` when you talk | The node listens to the wrong microphone, or the input volume is low. Run B1. Check the input volume in Settings, Sound, Input. |
-| The PlayStation Eye shows in `arecord -l` with `Subdevices: 0/1`, or capture fails with `Device unavailable` | PulseAudio holds the microphone. Run `pactl set-card-profile "$(pactl list cards short \| awk '/Camera-B4/ {print $2}')" off`. Then run `arecord -l` again. You want `Subdevices: 1/1`. Do this again after each reboot. |
+| The microphone shows in `arecord -l` with `Subdevices: 0/1`, or capture fails with `Device unavailable` | Another program holds the microphone. Stop any audio node that runs. If that does not help, PulseAudio holds it. Run `pactl set-card-profile "$(pactl list cards short \| awk '/Kinect/ {print $2}')" off`. For the PlayStation Eye, use `/Camera-B4/` in place of `/Kinect/`. Then run `arecord -l` again. You want `Subdevices: 1/1`. Do this again after each reboot. |
 | `transcription unavailable, carrying on without it` | The speech model did not download. Check the internet (A1), then start the node again. |
 | `"transcript"` stays `""` | Make sure that `"engaged"` is `true` and that `"speech_now"` becomes `true` when you talk. |
 | `"noise_floor_db": null` | Normal for the first 3 seconds, and after the robot talks for more than 10 seconds. |
@@ -357,7 +364,7 @@ Do this after every change to the code, because this build copies the code into 
 
 Use this after you complete Part A once.
 
-1. Go to flexo's screen, log in, and open Terminator. Plug in the PlayStation Eye.
+1. Go to flexo's screen, log in, and open Terminator. Make sure that the Kinect has power.
 2. Terminal 2 (AUDIO NODE): press **Ctrl+Shift+O** and run the C1 command. Wait for `publishing /audio_context every 1s`.
 3. Terminal 3 (SUBSCRIBE): click the top-left pane, press **Ctrl+Shift+E**, and run the C2 command.
 4. Terminal 1 (GENERAL): set the flags with the C3 commands, and test with the C4 table.
