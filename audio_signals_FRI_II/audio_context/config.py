@@ -111,6 +111,17 @@ CONFIG = {
 
     # --- robot hearing itself --------------------------------------
     "robot_speaking_tail_sec": 0.5,
+
+    # --- voice direction, Azure Kinect array only --------------------
+    "bearing_enabled":     True,   # adds speech_bearing_deg when the
+                                   # microphone is the Kinect 7-mic array.
+                                   # Other microphones never get the field.
+    "bearing_offset_deg":  0.0,    # TUNE. Turns the result so that 0 is
+                                   # straight ahead of the camera. See
+                                   # CALIBRATION.md.
+    "bearing_mirror":      False,  # TUNE. True swaps left and right.
+    "bearing_window_sec":  1.0,    # voiced audio from this far back makes
+                                   # one estimate
 }
 
 

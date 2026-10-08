@@ -38,6 +38,7 @@ from audio_context.frames import Buffer
 from audio_context.ring import RingBuffer
 from audio_context.stt import Transcriber
 from audio_context.tone import Tone
+from audio_context.bearing import Bearing
 from audio_context.utterance import Utterance
 
 # One per block. db and voice are the same length, one entry per 32 ms frame.
@@ -75,6 +76,8 @@ class Processor:
         self.ring = RingBuffer(cfg)
         self.stt = Transcriber(cfg, verbose=verbose)
         self.tone = Tone(cfg)
+        # Voice direction. It turns itself on only for the Kinect array.
+        self.bearing = Bearing(cfg)
         self.ignored = 0           # blocks dropped while the robot spoke
 
     def _report(self, background, speech):
@@ -130,6 +133,9 @@ class Processor:
         self.stt.start()
 
         with AudioCapture(self.cfg, wav=wav) as cap:
+            if self.bearing.activate(cap.device_name, cap.channels, cap.source_rate):
+                print(f"speech_bearing_deg on: {cap.device_name}, "
+                      f"{cap.channels} ch @ {cap.source_rate} Hz", flush=True)
             for block in cap.blocks():
                 # The robot hears itself. While its own voice is playing, and
                 # briefly after while the room still rings with it, none of
@@ -143,6 +149,8 @@ class Processor:
 
                 self.ring.add(block)
                 result = self._analyse(block)
+                if result.voice.any():
+                    self.bearing.add(block)
                 if len(result.db) == 0:
                     continue
                 yield result

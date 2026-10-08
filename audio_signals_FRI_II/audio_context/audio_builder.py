@@ -32,13 +32,14 @@ def sentence_complete(text):
 class Builder:
 
     def __init__(self, cfg, buffer, utterance, counters, stt=None, tone=None,
-                 verbose=False):
+                 verbose=False, bearing=None):
         self.cfg = cfg
         self.buffer = buffer       # the stores processor.py is filling
         self.utterance = utterance # the tracker processor.py is feeding
         self.counters = counters   # the rolling counts it also feeds
         self.stt = stt             # the transcriber, when there is one
         self.tone = tone           # the tone measurer, when there is one
+        self.bearing = bearing     # voice direction, Kinect array only
         self.verbose = verbose
         self.background = Background(cfg)
         self.speech = Speech(cfg)
@@ -95,6 +96,9 @@ class Builder:
             "engaged": state.engaged(),
             "robot_speaking": state.robot_speaking(),
         }
+        # Only with the Kinect array. Other microphones get no field at all.
+        if self.bearing is not None and self.bearing.active:
+            audio["speech_bearing_deg"] = self.bearing.latest(stamp)
 
         if self.verbose:
             n_bg, n_sp = self.buffer.counts()
@@ -135,6 +139,8 @@ class Builder:
             "engaged": state.engaged(),
             "robot_speaking": state.robot_speaking(),
         }
+        if self.bearing is not None and self.bearing.active:
+            audio["speech_bearing_deg"] = None
         if self.verbose:
             print(f"  BUILD {self.builds:3d}  not measuring, robot is speaking")
         return audio
