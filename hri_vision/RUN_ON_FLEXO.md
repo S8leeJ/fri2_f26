@@ -19,6 +19,8 @@ This is a real message from flexo:
 {"person_count":1,"people":[{"id":1,"confidence":0.92,"distance_m":1.826,"direction":"stationary","dwell_time_s":2.14,"orientation":"facing_robot","gaze":"toward_robot","face_visible":true}],"sensor_status":{"depth_fresh":true,"orientation_fresh":true}}
 ```
 
+`Ranges.md` explains what each field means. `CALIBRATION.md` has the settings and measurements behind them.
+
 ## Before you start
 
 - Sit at flexo's own screen and log in with your lab account.
