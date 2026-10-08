@@ -95,7 +95,7 @@ Nothing publishes these yet, so set them by hand. Each holds until Ctrl+C.
 
 Turn transcription on:
 
-    ros2 topic pub /engaged std_msgs/Bool "data: true"
+    ros2 topic pub -t 1 /engaged std_msgs/Bool "data: true"
 
 Tell the node the robot is talking, so it stops measuring:
 
