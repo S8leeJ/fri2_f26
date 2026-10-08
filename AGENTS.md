@@ -185,6 +185,7 @@ It was tested on the robot `flexo` with the Azure Kinect on October 6, 2026.
 - `hri_vision/requirements.txt` pins mediapipe, OpenCV, and NumPy. Newer versions fail on ROS 2 Humble.
 - Only one account at a time can run ROS on flexo. ROS programs in another logged-in session stopped the pipeline from getting camera images on October 6, 2026.
 - `hri_vision/RUN_ON_FLEXO.md` has the robot steps. `hri_vision/laptop_vision.md` holds raw notes and logs from the first run.
+- `hri_vision/scripts/`: `setup_flexo.sh` does the one-time setup and checks. `run_driver.sh` starts the Kinect driver. `run_pipeline.sh` builds the package and starts the pipeline. `view.sh` shows boxes on the camera image, the JSON, or the plain image.
 
 ---
 
