@@ -24,6 +24,10 @@ Then it publishes the newest audio and vision messages together, 10 times each s
 The messages are copied without change. A source that has not sent anything
 yet is null. A growing age shows a program that stopped.
 
+After it says "Press Ctrl+C to stop", it prints nothing more. Each program's
+output is in fusion/logs/, and a growing age in /social_context shows a program
+that stopped.
+
 Ctrl+C stops the programs that this script started: the pipeline and the audio
 node first, the driver last.
 
@@ -107,7 +111,6 @@ def wait_for_text(name, proc, text, timeout):
 def stop(name, proc):
     if proc.poll() is not None:
         return
-    say(f"{name}: stopping")
     for sig, wait_s in ((signal.SIGINT, 10), (signal.SIGTERM, 5), (signal.SIGKILL, 2)):
         try:
             os.killpg(proc.pid, sig)
@@ -142,7 +145,7 @@ def start_programs(started):
     return True
 
 
-def publish(started):
+def publish():
     rclpy.init()
     node = rclpy.create_node("fusion_publisher")
     latest = {"audio": (None, None), "vision": (None, None)}
@@ -164,27 +167,9 @@ def publish(started):
             out[f"{name}_age_s"] = None if received is None else round(now - received, 2)
         pub.publish(String(data=json.dumps(out)))
 
-    reported = set()
-
-    def status():
-        now = time.time()
-        parts = []
-        for name, (data, received) in latest.items():
-            parts.append(f"{name} " + ("nothing yet" if received is None else f"{now - received:.1f} s old"))
-        vision = latest["vision"][0]
-        if vision is not None:
-            parts.append(f"people {vision.get('person_count')}")
-        say("publishing /social_context at 10 Hz | " + " | ".join(parts))
-        for name, proc in started.items():
-            if proc.poll() is not None and name not in reported:
-                reported.add(name)
-                say(f"{name} stopped. Its last lines:")
-                print(log_tail(name), flush=True)
-
     node.create_subscription(String, "/audio_context", keep("audio"), 10)
     node.create_subscription(String, "/hri/vision/context", keep("vision"), 10)
     node.create_timer(1.0 / RATE_HZ, send)
-    node.create_timer(5.0, status)
     say(f"publishing /social_context at {RATE_HZ:.0f} Hz. Press Ctrl+C to stop.")
     # Ctrl+C ends spin with KeyboardInterrupt, or with ExternalShutdownException
     # in newer rclpy versions.
@@ -203,7 +188,7 @@ def main():
     started = {}
     try:
         if start_programs(started):
-            publish(started)
+            publish()
     except KeyboardInterrupt:
         pass
     finally:
