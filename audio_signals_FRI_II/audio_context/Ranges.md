@@ -7,6 +7,11 @@ microphone, that is said plainly.
 Measured on a PlayStation Eye four-microphone array at 16 kHz, in a room
 whose noise floor sat at −41 to −43 dBFS.
 
+Since October 8, 2026, `config.py` uses the microphone array in the Azure
+Kinect. The bands below come from the PlayStation Eye. First Kinect readings,
+in a quiet room on flexo: noise floor about −59 dBFS, and `speech_snr_db`
+about 7 dB while someone talks. Check the bands again on the Kinect.
+
 ---
 
 ## Transferable: these hold on any microphone
