@@ -18,6 +18,17 @@ from audio_context.background import Background
 from audio_context.speech import Speech
 
 
+def sentence_complete(text):
+    # Whisper punctuates, so a finished sentence ends in . ? or !. It marks
+    # speech that trails off or is cut short with "...".
+    text = text.strip()
+    if not text:
+        return None
+    if text.endswith(("...", "…")):
+        return False
+    return text.endswith((".", "?", "!"))
+
+
 class Builder:
 
     def __init__(self, cfg, buffer, utterance, counters, stt=None, tone=None,
@@ -46,12 +57,15 @@ class Builder:
 
         floor, level = self.background.read(self.buffer.background_levels())
         snr = self.speech.snr(self.buffer.speech_levels(), floor)
+        stamp = self.buffer.newest()
+        transcript = self.stt.latest() if self.stt else ""
+        spoken = self.stt.latest_time() if self.stt else None
 
         audio = {
             # When the sound happened, not when this ran. If transcription
             # later takes a moment, the stamp must still point at the audio,
             # because the LLM node uses it to judge how stale the context is.
-            "stamp": self.buffer.newest(),
+            "stamp": stamp,
             "noise_floor_db": floor,
             "noise_level": level,
             "speech_snr_db": snr,
@@ -61,7 +75,15 @@ class Builder:
 
             # Whatever text is ready. Empty when nobody has spoken, or when
             # not engaged, or while a transcription is still running.
-            "transcript": self.stt.latest() if self.stt else "",
+            "transcript": transcript,
+
+            # Seconds since the transcribed sentence ended. The transcript
+            # stays until the next sentence, so this tells a new sentence
+            # from one that the robot may already have answered.
+            "transcript_age_s": (round(max(0.0, stamp - spoken), 1)
+                                 if transcript and spoken is not None and stamp is not None
+                                 else None),
+            "syntactically_complete": sentence_complete(transcript),
 
             # How the last utterance sounded: pitch, spread, level. Null
             # when nobody has spoken, when not engaged, or when there was
@@ -107,6 +129,8 @@ class Builder:
             "speech_ratio_10s": None,
             "seconds_since_speech": None,
             "transcript": "",
+            "transcript_age_s": None,
+            "syntactically_complete": None,
             "tone": None,
             "engaged": state.engaged(),
             "robot_speaking": state.robot_speaking(),

@@ -37,6 +37,16 @@ Levels are in dBFS. 0 dBFS is the loudest sound that the microphone can record, 
 - It stays until the next sentence. So the same text in several messages can be one sentence that the robot already answered.
 - Words can be misheard.
 
+**`transcript_age_s`**: the seconds since the person finished the sentence in `transcript`.
+- A small value is a new sentence. The value grows while the same transcript stays.
+- `null` when there is no transcript.
+
+**`syntactically_complete`**: whether `transcript` ends like a finished sentence.
+- `true`: it ends with a period, a question mark, or an exclamation mark.
+- `false`: it ends without one, or with "...", which the speech model writes when speech trails off or is cut short.
+- `null` when there is no transcript.
+- It comes from the speech model's punctuation, so it can be wrong.
+
 **`tone`**: how the last sentence sounded. It updates only while `engaged` is `true`.
 - `intensity_db`: the level of the sentence. Its distance above `noise_floor_db` shows the voice level: about 12 dB above is a loud voice, about 5 dB above is a quiet voice.
 - `seconds`: the length, plus about 1.3 seconds of extra audio. So it is longer than the speech itself.

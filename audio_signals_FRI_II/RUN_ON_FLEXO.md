@@ -29,6 +29,8 @@ This is a real message from the audio node (October 2, 2026):
 | `speech_ratio_10s` | Part of the last 10 seconds that had speech. Above 0.4 means a conversation. |
 | `seconds_since_speech` | Length of the current pause. `0.0` while someone talks. |
 | `transcript` | The last utterance as text. Empty unless `engaged` is `true`. |
+| `transcript_age_s` | Seconds since the person finished the sentence in `transcript`. `null` when there is no transcript. |
+| `syntactically_complete` | `true` when `transcript` ends with `.`, `?`, or `!`. `false` when it has no end mark, or ends with `...`. `null` when there is no transcript. |
 | `tone` | Level and length of the last utterance. |
 | `engaged`, `robot_speaking` | The two flags, copied back from the input topics. |
 
