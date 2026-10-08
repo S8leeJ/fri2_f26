@@ -23,7 +23,7 @@ The repo has five parts:
 | LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. ROS node not started. |
 | Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Not connected to the LLM. See §4.2. |
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Not connected to the LLM. See §4.5. |
-| Fusion | `fusion/` | Python | `fusion_publisher.py` publishes the newest audio and vision messages together on `/social_context` at 10 Hz. `fusion_subscriber.py` prints them. |
+| Fusion | `fusion/` | Python | `fusion_publisher.py` starts the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
 The homework packages are old. Do not change them unless a person asks.
@@ -199,7 +199,7 @@ Do not fix these without asking. Report them to a person.
 
 1. **The audio output does not match `ambient`.** The audio node emits `noise_floor_db` in dBFS, which can be `null`. The schema needs `ambient.noise_db`, A-weighted and required. The audio README calls its output the `"audio"` block, but the schema has no `audio` key. `seconds_since_speech`, `speech_ratio_10s`, and `speech_snr_db` have no schema field.
 2. **The vision output does not match `target`.** It publishes `people[]` with `id`, `distance_m`, `direction`, `dwell_time_s`, `orientation`, `gaze`, and `face_visible` on `/hri/vision/context`. The schema expects one `target` with `facing_robot`, `motion`, and more. `direction` uses `receding`. The schema `motion` uses `leaving`.
-3. **Fusion.** `fusion/fusion_publisher.py` (October 8, 2026) publishes `/social_context` at 10 Hz. Each message holds the newest `/audio_context` and `/hri/vision/context` messages without change, with their ages. It is not the schema v2.0 shape. Something must still map it to `ambient`, `target`, and `bystanders`.
+3. **Fusion.** `fusion/fusion_publisher.py` (October 8, 2026) starts the audio and vision run scripts and publishes `/social_context` at 10 Hz. Each message holds the newest `/audio_context` and `/hri/vision/context` messages without change, with their ages. It is not the schema v2.0 shape. Something must still map it to `ambient`, `target`, and `bystanders`.
 4. **Location.** `SCHEMA.md` §8 says the schema has no location field and the robot stays at one fixed spot. The `location-context` and `decision-logic` branches build room labels. `audio_context/config.py` tells the user to measure "all three locations."
 5. **`/speech_request` key.** `IMPLEMENTATION_PLAN.md` §2 uses `target_id`. `SCHEMA.md` and `decision.schema.json` use `target_person_id`.
 

@@ -84,33 +84,54 @@ There will be warnings after you build for the first time, but hopefully no erro
 
 ---
 
-## Check the sensor topics on flexo
+## Run audio and vision on flexo
 
-To publish the topics, follow the guide in each folder:
+Use the robot flexo (IP `10.0.0.144`). Sit at its own screen, and log out every other account first.
 
-- Audio (`/audio_context`): [`audio_signals_FRI_II/RUN_ON_FLEXO.md`](audio_signals_FRI_II/RUN_ON_FLEXO.md)
-- Vision (`/hri/vision/context`): [`hri_vision/RUN_ON_FLEXO.md`](hri_vision/RUN_ON_FLEXO.md)
-
-Then, from any terminal on flexo, this prints one message from each topic:
+### 1. Setup, once for each account
 
 ```bash
-ros2 daemon stop ; ros2 topic echo --once /audio_context --field data ; ros2 topic echo --once /hri/vision/context --field data
+bash ~/fri2_f26/audio_signals_FRI_II/tools/setup_flexo.sh
 ```
 
-The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in both folders add these to `~/.bashrc`.
+```bash
+bash ~/fri2_f26/hri_vision/scripts/setup_flexo.sh
+```
 
-## Fuse the topics into `/social_context`
+Each script runs its checks in order and ends with `✅ Ready`, or stops with `❌ FAILED:` and the reason.
+The installs stay in the account. Run a setup again after a `git pull` that changes a `requirements.txt`, or when a build or an import fails.
 
-With the audio node and the vision pipeline running, start the publisher on flexo:
+### 2. Run everything with one command
 
 ```bash
 python3 ~/fri2_f26/fusion/fusion_publisher.py
 ```
 
-It publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. To check it, run the subscriber in another terminal:
+It does these steps in order:
+
+1. Loads ROS 2 and sets `ROS_LOCALHOST_ONLY=1`.
+2. Starts the audio node (`audio_signals_FRI_II/tools/run_node.sh`). It rebuilds `audio_context`, opens the Kinect microphone, and publishes `/audio_context` once each second.
+3. Starts the Kinect driver (`hri_vision/scripts/run_driver.sh`), and waits for `K4A Started`. The driver publishes the camera images.
+4. Starts the vision pipeline (`hri_vision/scripts/run_pipeline.sh`). It rebuilds `hri_vision` and publishes `/hri/vision/context` several times each second.
+5. Publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each.
+
+A program that already runs is used as it is. Each program writes its output to `fusion/logs/`.
+Ctrl+C stops everything that the script started, with the driver last. Then log out.
+
+To run the parts one at a time instead, run the three scripts from steps 2, 3, and 4 in separate terminals, in that order.
+`audio_signals_FRI_II/RUN_ON_FLEXO.md` and `hri_vision/RUN_ON_FLEXO.md` explain each part and list fixes.
+
+### 3. Check the topics
+
+From any terminal on flexo:
 
 ```bash
-ros2 daemon stop ; python3 ~/fri2_f26/fusion/fusion_subscriber.py
+ros2 daemon stop ; ros2 topic echo --once /audio_context --field data ; ros2 topic echo --once /hri/vision/context --field data
 ```
 
-It prints `10 messages in the last second` and both messages with their ages. Add `--all` to print every message.
+```bash
+ros2 daemon stop ; ros2 topic echo /social_context --field data
+```
+
+The first command prints one audio message and one vision message. The second shows `/social_context` as it arrives.
+A terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts add both to `~/.bashrc`.
