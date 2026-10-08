@@ -35,6 +35,60 @@ This is a real message from flexo:
   If another account is logged in, log it out first.
 - Open one Terminator window and maximize it.
 
+## Fast path: four scripts
+
+If you only want the pipeline running, use the scripts in `hri_vision/scripts/`.
+The rest of this guide explains each step, and Part D lists fixes.
+
+1. Get the code, one time:
+
+   ```bash
+   cd ~ && git clone https://github.com/S8leeJ/fri2_f26.git
+   ```
+
+   If the folder already exists, run `cd ~/fri2_f26 && git switch main && git pull` instead.
+
+2. Do the setup, one time. The script runs 9 checks in this order: internet, ROS (also added to `~/.bashrc`), Python packages, build tools, packages and models, build, Kinect connected, Kinect driver build, and other logged-in accounts.
+
+   ```bash
+   bash ~/fri2_f26/hri_vision/scripts/setup_flexo.sh
+   ```
+
+   - Expected: a ✅ line after each step, then `✅ Ready.`
+   - A ⚠️ line is a warning. Read it, but the setup continues.
+   - If the script stops with `❌ FAILED:`, read the message after it. Then find the problem in Part D.
+
+3. Open a new terminal, and start the Kinect driver. Keep it running.
+
+   ```bash
+   bash ~/fri2_f26/hri_vision/scripts/run_driver.sh
+   ```
+
+   - Expected: `Found 1 sensors`, then `K4A Started`.
+
+4. Open a second new terminal, and start the pipeline:
+
+   ```bash
+   bash ~/fri2_f26/hri_vision/scripts/run_pipeline.sh
+   ```
+
+   - Expected: `✅ hri_vision built`, `✅ Kinect driver found`, the four "ready" lines, and then one JSON line each second.
+   - The script builds the package each time before it starts the pipeline.
+
+5. Open a third new terminal, and view the output:
+
+   ```bash
+   bash ~/fri2_f26/hri_vision/scripts/view.sh
+   ```
+
+   - Without a word after it, `view.sh` shows the camera image with a green box on each person. Each label shows the ID, distance, direction, and orientation.
+   - `view.sh json` shows every JSON message on `/hri/vision/context`.
+   - `view.sh camera` shows the plain camera image.
+
+6. To stop, press **Ctrl+C** in the viewer, then in the pipeline, then in the driver. Then log out.
+
+The driver build is in `/home/justin/bwi_ros2`. To use another build, put `KINECT_WS=` and its path before the command, for example `KINECT_WS=~/bwi_ros2 bash ~/fri2_f26/hri_vision/scripts/run_driver.sh`.
+
 ## The four terminals
 
 Split one Terminator window into four panes:
