@@ -32,7 +32,7 @@ This is a real message from the audio node (October 2, 2026):
 | `tone` | Level and length of the last utterance. |
 | `engaged`, `robot_speaking` | The two flags, copied back from the input topics. |
 
-`audio_context/Ranges.md` explains which values are normal.
+`audio_context/Ranges.md` explains which values are normal. `audio_context/CALIBRATION.md` has the measurements behind them.
 
 ## Before you start
 

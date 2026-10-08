@@ -1,116 +1,51 @@
-# What the audio numbers mean
+# Audio fields
 
-Reference ranges for whoever writes the LLM prompt. Every figure here was
-measured on this system, not assumed. Where a number depends on the
-microphone, that is said plainly.
+The robot's microphone gives these fields once each second.
+Each field describes the audio. No single field decides what the robot does. Each one is evidence to weigh with the other fields.
+`null` means "not measured". It never means zero or silence.
+Levels are in dBFS. 0 dBFS is the loudest sound that the microphone can record, so the values are negative. A more negative value is quieter.
 
-Measured on a PlayStation Eye four-microphone array at 16 kHz, in a room
-whose noise floor sat at −41 to −43 dBFS.
+**`stamp`**: the Unix time, in seconds, of the newest audio. Audio data that is more than 2 seconds old can be out of date.
 
-Since October 8, 2026, `config.py` uses the microphone array in the Azure
-Kinect. The bands below come from the PlayStation Eye. First Kinect readings,
-in a quiet room on flexo: noise floor about −59 dBFS, and `speech_snr_db`
-about 7 dB while someone talks. Check the bands again on the Kinect.
+**`noise_level`**: `quiet`, `moderate`, or `loud`. A summary of `noise_floor_db`. It is more stable than the raw number.
 
----
+**`noise_floor_db`**: the room level when nobody talks. A quiet room is about −59.5. The number depends on the microphone, so it means most next to the voice levels in the same message.
 
-## Transferable: these hold on any microphone
+**`speech_snr_db`**: how far voices rose above the room in the last 10 seconds, in dB.
+- About 5: a quiet voice.
+- About 12: a loud voice, close to the robot.
+- Below 5: a faint voice, or a voice far from the robot.
+- It stays for up to 10 seconds after speech stops. `null`: no speech in the last 10 seconds.
 
-**`speech_snr_db`** — how far a voice rises above the room. A difference
-between two levels, so the microphone and its gain cancel out.
+**`speech_now`**: someone talks now. It is about 0.5 seconds late. A cough does not count.
 
-| value | what it was |
-|---|---|
-| 3 to 5 | across the room, or spoken quietly |
-| 6 to 9 | a few metres away, normal volume |
-| 10 to 15 | conversational distance, speaking to the robot |
-| above 15 | close, or raised |
-| `null` | nobody has spoken recently |
+**`speech_ratio_10s`**: the part of the last 10 seconds that had speech, from 0 to 1.
+- 0.05 to 0.2: one remark, or someone who walks past.
+- 0.2 to 0.35: an exchange, or one long sentence.
+- Above 0.4: a conversation in progress, or one person who talks for a long time.
+- One question to the robot changes it only a little.
 
-The useful split for deciding whether someone is addressing the robot sits
-around 8 to 10 dB. Below that they are probably talking to somebody else.
+**`seconds_since_speech`**: the length of the current pause. 0 while someone talks.
+- Under 1: usually the middle of a sentence.
+- 1 to 3: usually the end of a turn.
+- Over 5: silence.
+- `null` means that nobody spoke yet. It does not mean a long pause.
+- After the robot talks, it includes the time that the robot talked.
 
-**`speech_ratio_10s`** — share of the last ten seconds with talking in it.
+**`transcript`**: the last finished sentence, as text.
+- It exists only while `engaged` is `true`.
+- It stays until the next sentence. So the same text in several messages can be one sentence that the robot already answered.
+- Words can be misheard.
 
-| value | what it was |
-|---|---|
-| 0.00 | silence |
-| 0.05 to 0.20 | one remark, or someone passing |
-| 0.20 to 0.35 | an exchange, turns with gaps |
-| above 0.40 | a conversation already under way |
+**`tone`**: how the last sentence sounded. It updates only while `engaged` is `true`.
+- `intensity_db`: the level of the sentence. Its distance above `noise_floor_db` shows the voice level: about 12 dB above is a loud voice, about 5 dB above is a quiet voice.
+- `seconds`: the length, plus about 1.3 seconds of extra audio. So it is longer than the speech itself.
+- `active_ratio`: near 1.0 for normal speech. A lower value means gaps, or a far voice.
 
-This is the field that separates two people talking to each other from one
-person addressing the robot. A single question barely moves it.
+**`engaged`**: the robot is in a conversation.
+- `true`: transcription is on. `transcript`, `tone`, and `seconds_since_speech` describe the person's last sentence. An empty transcript means that nobody finished a sentence yet.
+- `false`: nothing is transcribed. An empty transcript does not mean silence. `speech_now`, `speech_ratio_10s`, and `speech_snr_db` still show if people talk. `tone` can still hold a value from an earlier conversation.
 
-**`seconds_since_speech`** — how long the room has been quiet. 0.0 while
-someone is still talking, `null` if nobody has spoken at all. Under about a
-second is mid-exchange; several seconds is a genuine pause.
-
-**`tone.intensity_db` minus `noise_floor_db`** — the tone block's level is
-only meaningful against the floor in the same object. The gap is what
-carries the meaning. Across five readings of one phrase, said five ways:
-
-| gap | delivery |
-|---|---|
-| +4 | quiet, as if not wanting to be overheard |
-| +6 to +7 | normal |
-| +11 | animated |
-| +15 | irritated, clipped |
-
-**`tone.seconds`** — how long the utterance took. Carries more than it
-looks. The same phrase ran 4.1 s said animatedly and 2.1 s said irritably;
-1.7 s quiet. Clipped and drawn out are both signals.
-
-**`tone.active_ratio`** — share of the utterance with energy near its peak.
-Near 1.0 at conversational distance, so it mostly reads 1.0 and carries
-little. Worth watching only when it drops, which means a gappy or distant
-utterance and therefore less to trust in the rest of the block.
-
----
-
-## Not transferable: recalibrate on the robot
-
-**`noise_floor_db`** is dBFS, relative to what the microphone can record.
-It depends on the device and its gain, so a number from one setup means
-nothing on another. Two readings taken so far:
-
-| place | microphone | floor |
-|---|---|---|
-| library | laptop analog input | −59 dBFS |
-| lab room | PlayStation Eye array | −41 to −43 dBFS |
-
-Those differ by 17 dB for rooms that are not 17 dB apart. Most of that is
-the microphone.
-
-**Use `noise_level` instead.** It is the same measurement turned into
-quiet, moderate or loud, using cutoffs that get set per installation. That
-word survives a change of microphone; the number does not.
-
-The cutoffs in `config.py` are still placeholders. Until the floor has been
-read on the robot in the library, the hallway and the lab, `noise_level` is
-a guess.
-
----
-
-## Fields that need no explanation
-
-`speech_now` is whether someone is talking at this moment, already smoothed
-so it does not flicker between words. `transcript` is what was said, empty
-unless engaged. `engaged` and `robot_speaking` are echoed from other nodes.
-
-**While `robot_speaking` is true**, every measurement is `null`: the
-microphone can only hear the robot, so nothing is being measured. `null`
-across the board with `robot_speaking: true` means suppressed, not broken.
-
----
-
-## What these cannot tell you
-
-Acoustics predict how activated someone is. They do not predict whether
-that is good or bad: raised pitch and volume look the same for delighted
-and furious. Valence lives in the words, which is why `transcript` and
-`tone` belong together in the prompt rather than either alone.
-
-There is no pitch here. An earlier version tracked it and failed on real
-speech in a room, reporting a voice near 110 Hz as 137 to 225. The fields
-were removed rather than published wrong. See `tone.py` for the detail.
+**`robot_speaking`**: the robot's own voice plays.
+- `true`: the microphone hears only the robot. All measurements are `null`, which means not measured. In this message, the audio fields hold no information about people.
+- The 0.5 seconds after it becomes `false` are also not measured.
