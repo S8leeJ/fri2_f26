@@ -98,3 +98,19 @@ ros2 daemon stop ; ros2 topic echo --once /audio_context --field data ; ros2 top
 ```
 
 The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in both folders add these to `~/.bashrc`.
+
+## Fuse the topics into `/social_context`
+
+With the audio node and the vision pipeline running, start the publisher on flexo:
+
+```bash
+python3 ~/fri2_f26/fusion/fusion_publisher.py
+```
+
+It publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. To check it, run the subscriber in another terminal:
+
+```bash
+ros2 daemon stop ; python3 ~/fri2_f26/fusion/fusion_subscriber.py
+```
+
+It prints `10 messages in the last second` and both messages with their ages. Add `--all` to print every message.
