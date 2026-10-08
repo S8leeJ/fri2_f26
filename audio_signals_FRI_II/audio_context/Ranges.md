@@ -7,9 +7,9 @@ Levels are in dBFS. 0 dBFS is the loudest sound that the microphone can record, 
 
 **`stamp`**: the Unix time, in seconds, of the newest audio. Audio data that is more than 2 seconds old can be out of date.
 
-**`noise_level`**: `quiet`, `moderate`, or `loud`. A summary of `noise_floor_db`. It is more stable than the raw number. `quiet` is below about −58. `moderate` includes a room where people talk normally.
+**`noise_level`**: `quiet`, `moderate`, or `loud`. A summary of `noise_floor_db`. It is more stable than the raw number.
 
-**`noise_floor_db`**: the room level between voices. A quiet room is about −59.5. A room where people talk normally is about −56. The number depends on the microphone, so it means most next to the voice levels in the same message.
+**`noise_floor_db`**: the room level when nobody talks. A quiet room is about −59.5. The number depends on the microphone, so it means most next to the voice levels in the same message.
 
 **`speech_snr_db`**: how far voices rose above the room in the last 10 seconds, in dB.
 - About 5: a quiet voice.

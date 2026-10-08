@@ -23,7 +23,7 @@ This is a real message from the audio node (October 2, 2026):
 | Field | Meaning |
 |---|---|
 | `noise_floor_db` | Room level when nobody talks, in dBFS. More negative is quieter. `null` for the first 3 seconds. |
-| `noise_level` | `quiet`, `moderate`, or `loud`. `quiet` is below about −58 dBFS. A room where people talk normally (about −56) is `moderate`. The `loud` cutoff is not calibrated yet. |
+| `noise_level` | `quiet`, `moderate`, or `loud`. The cutoffs in `config.py` are not calibrated yet. |
 | `speech_snr_db` | How far a voice rises above the room. Larger means closer or louder. |
 | `speech_now` | Someone talks in this second. |
 | `speech_ratio_10s` | Part of the last 10 seconds that had speech. Above 0.4 means a conversation. |
@@ -354,7 +354,6 @@ Do this after every change to the code, because this build copies the code into 
 | `PortAudio library not found` | Ask the lab admin to install `libportaudio2`. |
 | `check_devices.py` shows `NOT FOUND` | Check the Kinect power supply and USB cable. Wait 5 seconds and run B1 again. |
 | `check_levels.py` says `Very low. Raise the capture volume` | The Kinect records quietly, with speech peaks near -30 dBFS. Transcription still works. To raise the level, run `alsamixer -c 2`, press F4, and raise the capture control. |
-| `"speech_now"` becomes `true` when nobody talks, or `"speech_ratio_10s"` is high in a quiet room | Noise reads as speech. In `audio_context/config.py`, set `vad_threshold` to 0.5, or `vad_max_gain_db` to 20. See `audio_context/CALIBRATION.md`. |
 | `"speech_now"` never becomes `true` when you talk | The node listens to the wrong microphone, or the input volume is low. Run B1. Check the input volume in Settings, Sound, Input. |
 | The microphone shows in `arecord -l` with `Subdevices: 0/1`, or capture fails with `Device unavailable` | Another program holds the microphone. Stop any audio node that runs. If that does not help, PulseAudio holds it. Run `pactl set-card-profile "$(pactl list cards short \| awk '/Kinect/ {print $2}')" off`. For the PlayStation Eye, use `/Camera-B4/` in place of `/Kinect/`. Then run `arecord -l` again. You want `Subdevices: 1/1`. Do this again after each reboot. |
 | `transcription unavailable, carrying on without it` | The speech model did not download. Check the internet (A1), then start the node again. |
@@ -380,4 +379,4 @@ Use this after you complete Part A once.
 
 - **Privacy.** Raw audio stays in memory. The node writes only levels and timestamps to `data/background.db` and `data/voice.db`, in the folder where you start it. Transcription runs only while `engaged` is `true`.
 - **Vision at the same time.** The audio node and the vision pipeline (`hri_vision/RUN_ON_FLEXO.md`) can run at the same time in separate panes. They use different devices.
-- **Calibration.** `noise_floor_db` is relative to the microphone, so its value changes with the microphone and its volume. The `quiet` cutoff in `config.py` is measured. The `loud` cutoff is a placeholder until someone measures a loud room.
+- **Calibration.** `noise_floor_db` is relative to the microphone, so its value changes with the microphone and its volume. The `noise_level` cutoffs in `config.py` are placeholders until someone measures the room at the study spot.
