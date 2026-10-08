@@ -117,7 +117,8 @@ It does these steps in order:
 
 It prints a ✅ for audio, driver, vision, and publish as each one works, then `Press Ctrl+C to stop.`, and then nothing more.
 If a part does not work, it prints a ❌ and that program's last log lines, then stops what it started.
-A program that already runs is used as it is. Each program writes its output to `fusion/logs/`.
+A program that already runs is used as it is. Each program writes its output to `fusion/logs/`, and each run clears that folder first.
+`audio.log` also has every `/audio_context` message, one JSON object per line. `pipeline.log` has the vision JSON.
 Ctrl+C stops everything that the script started, with the driver last. Then log out.
 
 To run the parts one at a time instead, run the three scripts from steps 2, 3, and 4 in separate terminals, in that order.
