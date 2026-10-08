@@ -75,7 +75,7 @@ The rest of this guide explains each step, and Part D lists fixes.
    - Expected: `✅ hri_vision built`, `✅ Kinect driver found`, the four "ready" lines, and then one JSON line each second.
    - The script builds the package each time before it starts the pipeline.
 
-5. Open a third new terminal, and view the output:
+5. `OPTIONAL` Open a third new terminal, and view the output:
 
    ```bash
    bash ~/fri2_f26/hri_vision/scripts/view.sh
