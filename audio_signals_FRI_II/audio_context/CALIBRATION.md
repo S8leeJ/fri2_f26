@@ -56,11 +56,14 @@ Details that `Ranges.md` leaves out:
 - `speech_snr_db` is the median level of the speech in the last 10 seconds, minus the floor. It needs at least 10 speech frames (about 0.3 seconds).
 - `speech_now` becomes `true` after about 0.25 seconds of speech, and `false` after 0.5 seconds of silence.
 - `tone.seconds` includes the 0.85 second margin before the speech and about 0.5 seconds after it.
+- `transcript_age_s` counts from the end of the speech in the sentence. `seconds_since_speech` counts from the end of the 0.5 second silence check. So for the same sentence, `transcript_age_s` is about 0.5 seconds larger.
+- `transcript_age_s` uses `stamp`, the time of the newest real audio. The node drops digital silence (exact zeros), so with a WAV file that ends in zeros, the age stops growing. A live microphone always sends real audio.
+- `syntactically_complete` is `true` when the transcript ends in `.`, `?`, or `!`, and `false` when it ends in `...` or `…`, or has no end mark. It was tested on transcripts from October 2 and 8.
 - The node ignores audio while `robot_speaking` is `true`, and for 0.5 seconds after.
 
 ## Known limits
 
-- The transcript does not clear when the robot replies. `Ranges.md` says that the same text can be a sentence that was already answered.
+- The transcript does not clear when the robot replies. `Ranges.md` says that the same text can be a sentence that was already answered. `transcript_age_s` shows how old it is.
 - `tone` does not clear when `engaged` becomes `false`. `Ranges.md` says that `tone` can hold a value from an earlier conversation.
 - The node cannot tell who is talking. The Kinect's 7 microphones could give the direction of a voice later.
 - Sound shows how activated a person is, not if that is good or bad. The words show that.
