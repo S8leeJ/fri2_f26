@@ -1,19 +1,33 @@
+#!/usr/bin/env python3
 """Subscribe to /social_context and print what arrives.
 
 Once each second it prints how many messages arrived in that second, then the
 newest audio and vision messages with their ages. 10 messages each second
 means the publisher runs at full rate.
 
-    python3 fusion/fusion_subscriber.py          one summary each second
-    python3 fusion/fusion_subscriber.py --all    every message, as it arrives
+    python3 ~/fri2_f26/fusion/fusion_subscriber.py          one summary each second
+    python3 ~/fri2_f26/fusion/fusion_subscriber.py --all    every message, as it arrives
+
+The script connects to ROS the same way as the audio and vision run scripts.
+It loads ROS 2 Humble if the terminal has not, and sets ROS_LOCALHOST_ONLY=1.
 """
 
 import json
+import os
 import sys
-import time
 
-import rclpy
-from std_msgs.msg import String
+# Every node on flexo must use the same value, or the nodes cannot see each other.
+os.environ["ROS_LOCALHOST_ONLY"] = "1"
+try:
+    import rclpy
+    from std_msgs.msg import String
+except ImportError as error:
+    # ROS is not loaded in this terminal. Start again inside a shell that loads it.
+    if os.environ.get("FUSION_ROS_LOADED"):
+        sys.exit(f"ROS 2 does not load, even after /opt/ros/humble/setup.bash: {error}")
+    os.environ["FUSION_ROS_LOADED"] = "1"
+    os.execvp("bash", ["bash", "-c", 'source /opt/ros/humble/setup.bash && exec python3 "$0" "$@"',
+                       os.path.abspath(__file__), *sys.argv[1:]])
 
 
 def show(msg):

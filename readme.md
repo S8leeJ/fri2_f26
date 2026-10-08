@@ -101,7 +101,7 @@ The terminal needs ROS loaded and `ROS_LOCALHOST_ONLY=1`. The setup scripts in b
 
 ## Fuse the topics into `/social_context`
 
-With the audio node and the vision pipeline running, start the publisher on flexo:
+With the audio node and the vision pipeline running, start the publisher in any terminal on flexo:
 
 ```bash
 python3 ~/fri2_f26/fusion/fusion_publisher.py
@@ -110,7 +110,9 @@ python3 ~/fri2_f26/fusion/fusion_publisher.py
 It publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each. To check it, run the subscriber in another terminal:
 
 ```bash
-ros2 daemon stop ; python3 ~/fri2_f26/fusion/fusion_subscriber.py
+python3 ~/fri2_f26/fusion/fusion_subscriber.py
 ```
 
 It prints `10 messages in the last second` and both messages with their ages. Add `--all` to print every message.
+
+Both scripts connect to ROS by themselves, like the audio and vision run scripts. They load ROS 2 Humble if the terminal has not, and set `ROS_LOCALHOST_ONLY=1`. You can also run them without `python3`, for example `~/fri2_f26/fusion/fusion_subscriber.py`.
