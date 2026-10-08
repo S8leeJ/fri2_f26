@@ -131,6 +131,9 @@ conversation_initiator/
 └── mvp/
     ├── mvp.py              runs every vignette through the LLM, prints a table
     ├── context.py          schema validation and the audio node adapter
+    ├── fusion_adapter.py   fusion wrapper message to a v2.0 context, no ROS
+    ├── test_fusion_adapter.py  adapter tests, no ROS or key needed
+    ├── live_node.py        ROS node on flexo: /social_context in, decisions out
     ├── gate.py             local pre-filter, no network
     ├── test_gate.py        gate and contract tests + a 100-tick simulation
     ├── postfilter.py       hard rules the model answer cannot override
@@ -188,7 +191,8 @@ It skips the LLM when:
 | `cooldown` | asked less than 3 s ago |
 | `no_material_change` | nothing meaningful moved since the last ask |
 
-Material changes are: distance, facing, motion, or conversation on the target;
+Material changes are: distance, facing, motion, conversation, or a new
+transcript on the target;
 `noise_level`, a 6 dB move in `noise_floor_db`, or `speech_now` flipping in
 the room; and the robot starting or stopping speaking, crossing the 30 s
 greeting cooldown, or being ignored again. After 10 s it asks again
@@ -264,6 +268,7 @@ pip install -r requirements.txt
 cp .env.example .env                 # add ANTHROPIC_API_KEY or GEMINI_API_KEY
 
 python3 test_gate.py                 # gate and schema tests, no key needed
+python3 test_fusion_adapter.py       # fusion mapping tests, no ROS or key needed
 python3 test_postfilter.py           # post-filter tests, no key needed
 python3 test_tts.py                  # prosody and TTS tests, no key needed
 python3 test_stt.py                  # STT tests, no key needed
@@ -313,6 +318,82 @@ test checklist. The playground does not measure accuracy. Use `mvp.py` on
 labelled vignettes for that. Groq's free tier allows about 4 turns a minute. The server retries
 once after a rate limit, so a fast click can wait about 15 s.
 
+## Live on flexo
+
+`mvp/live_node.py` connects the MVP to the robot. It reads the fusion node's
+`/social_context`, builds a v2.0 context, runs the gate, the LLM and the
+post-filter, and publishes each decision on `/initiation_decision`.
+
+```mermaid
+flowchart LR
+    audio["audio node"] -->|"/audio_context"| fusion
+    vision["vision pipeline"] -->|"/hri/vision/context"| fusion
+    fusion -->|"/social_context"| live["live_node.py"]
+    live -->|"/initiation_decision"| echo["ros2 topic echo"]
+    live -->|"--speak: /engaged, /robot_speaking"| audio
+```
+
+### Setup, once, on flexo
+
+```bash
+cd ~/fri2_f26/conversation_initiator/mvp
+python3 -m venv --system-site-packages .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env    # add GROQ_API_KEY; add DEEPGRAM_API_KEY for --speak
+```
+
+`--system-site-packages` lets the venv see `rclpy` from ROS 2 Humble. Do
+not commit `.env`.
+
+### Run
+
+```bash
+python3 ~/fri2_f26/fusion/fusion_publisher.py            # terminal 1
+cd ~/fri2_f26/conversation_initiator/mvp                 # terminal 2
+.venv/bin/python live_node.py                            # dry run
+ros2 topic echo /initiation_decision --field data        # terminal 3, optional
+```
+
+The node sources `/opt/ros/humble/setup.bash` itself if ROS is not loaded.
+It prints one line for each LLM call and a gate summary every 30 s. Each
+call is also appended to `mvp/live_logs/<date>.jsonl` as `{context, result}`.
+A context from that log can be copied into a vignette.
+
+| Flag | Effect |
+|---|---|
+| (none) | Dry run. Decide and publish. Nothing is said, and `/engaged` is not published. |
+| `--engaged` | Dry run that also publishes `/engaged` true, so the audio node transcribes. Use it to test `respond`. |
+| `--speak` | Full loop. Says each line with `tts.py`. Publishes `/robot_speaking` during playback and `/engaged` after the robot speaks. |
+| `--provider`, `--model` | Default `groq` and its default model. |
+| `--rate` | Ticks per second. Default 3. |
+| `--stale-sec` | Ask again after this long, even with no change. Default 30, because 10 uses up Groq's free tier. |
+| `--timeout` | Seconds per LLM call. Default 8. On a timeout the robot stays silent. |
+
+In a dry run, the node acts as if the robot said each line. So
+`last_spoke_s_ago`, the 30 s cooldown and the conversation history behave as
+they would with `--speak`. Because nobody hears the line, the no-reply count
+goes up after 8 s.
+
+### How the fusion message maps to the schema
+
+`fusion_adapter.py` does the mapping. The fusion message holds the raw
+`/audio_context` and `/hri/vision/context` messages.
+
+| Schema | From |
+|---|---|
+| `ambient.*` | The audio fields with the same names (`context.AMBIENT_FIELDS`). Empty if audio is more than 3 s old. |
+| `target` | The nearest person with a distance. The current target stays unless someone is 0.5 m nearer. `null` if vision is more than 2 s old. |
+| `target.facing_robot` | `orientation == "facing_robot"` |
+| `target.gaze_at_robot_s` | Seconds of continuous `gaze == "toward_robot"`. Left out if orientation is stale. |
+| `target.motion` | `direction`: `approaching`, `receding` to `leaving`, `stationary`. Left out if `unknown`. |
+| `target.dwell_s` | `dwell_time_s` |
+| `target.speech` | A new audio `transcript`, held until one LLM call uses it. A transcript more than 3 s old when first seen is skipped. |
+| `bystanders` | Everyone else with a distance. |
+| `robot`, `recent_decisions`, `conversation` | Kept by the node. A new target, or no target for 10 s, ends the interaction. |
+
+Vision does not measure `in_conversation`, `activity` or `bearing_deg`, so
+the adapter leaves them out. Rules R1 and R4 then depend on the model alone.
+
 ## Adding a vignette
 
 1. Pick the next number and a filename that describes the scene.
@@ -328,6 +409,6 @@ once after a rate limit, so a fast click can wait about 15 s.
 
 ## What's next
 
-Once the MVP passes go/no-go, `IMPLEMENTATION_PLAN.md` wraps this in a ROS 2
-node that subscribes to the fused `/social_context` topic. That adds SSML for
-speech and Langfuse tracing. The node runs `postfilter.py` on every decision.
+`live_node.py` is a first version of the ROS node in `IMPLEMENTATION_PLAN.md`.
+It is a plain script, not a colcon package. It has not run on flexo yet.
+Langfuse tracing and a daily call cap are not done.
