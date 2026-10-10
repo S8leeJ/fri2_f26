@@ -634,14 +634,10 @@ def main() -> None:
         except RuntimeError as e:
             sys.exit(str(e))
 
-    vignettes = []
-    for v in load_vignettes():
-        if v.get("expect"):
-            vignettes.append(v)
-        else:
-            print("skipping %s: no expect label yet" % v["file"], file=sys.stderr)
-    if not vignettes:
-        sys.exit("no labelled vignettes")
+    # expect is optional. It is a developer's expectation, not ground truth.
+    vignettes = load_vignettes()
+    for v in vignettes:
+        v["expect"] = v.get("expect") or "-"
 
     # The first call is not representative: Anthropic compiles each schema's grammar
     # server-side and caches it, and any provider may be cold. Spend throwaway calls,
@@ -704,11 +700,11 @@ def main() -> None:
             if r.thoughts is not None:
                 thoughts.append(r.thoughts)
 
-            ok = r.action == v["expect"]
+            ok = v["expect"] in ("-", r.action)
             print("%-4s %-30s %-14s %-14s %s %7.0f %7s%s"
                   % (v["id"], name, v["expect"], r.action, score_fmt % tuple(r.scores),
                      r.ms1, "-" if r.ms2 is None else "%.0f" % r.ms2,
-                     "" if ok else "   <-- disagrees"))
+                     "" if ok else "   <-- differs from expect"))
             if r.speech is not None:
                 s = r.speech
                 print("     says: \"%s\"  (%s, %s, %s)" % (s.text, s.volume, s.rate, s.pitch))
@@ -732,24 +728,26 @@ def main() -> None:
                 print("     post-filter: %s -> %s (%s)" % (r.action, final, blocked_by))
 
     print("-" * len(header))
-    total = len(rows)
-    answered = sum(1 for _, a in rows if a is not None)
-    agree = sum(1 for v, a in rows if a == v["expect"])
-    false_greets = sum(1 for v, a in rows if a in SPEAKS and v["expect"] not in SPEAKS)
-    greet_rows = [a for v, a in rows if v["expect"] == "greet"]
+    expected = [(v, a) for v, a in rows if v["expect"] != "-"]
+    total = len(expected)
+    answered = sum(1 for _, a in expected if a is not None)
+    agree = sum(1 for v, a in expected if a == v["expect"])
+    false_greets = sum(1 for v, a in expected if a in SPEAKS and v["expect"] not in SPEAKS)
+    greet_rows = [a for v, a in expected if v["expect"] == "greet"]
     pct = 100.0 * agree / total if total else 0
     pct_answered = 100.0 * agree / answered if answered else 0
 
     # A timeout is a miss on the robot, so the headline counts it; the answered
     # figure separates "the model was wrong" from "the model was late".
-    print("agreement: %d/%d (%.0f%%), %d/%d of answered (%.0f%%)"
-          % (agree, total, pct, agree, answered, pct_answered))
+    print("matches expect: %d/%d (%.0f%%), %d/%d of answered (%.0f%%)   no expect: %d runs"
+          % (agree, total, pct, agree, answered, pct_answered, len(rows) - total))
     print("false greets: %d   greet recall: %d/%d   timeouts: %d   errors: %d"
           % (false_greets, sum(1 for a in greet_rows if a == "greet"), len(greet_rows),
              timeouts, errors))
     if blocked:
         print("post-filter blocked: %d   false greets after it: %d"
-              % (blocked, sum(1 for v, a in filtered if a in SPEAKS and v["expect"] not in SPEAKS)))
+              % (blocked, sum(1 for v, a in filtered
+                              if a in SPEAKS and v["expect"] not in SPEAKS + ("-",))))
     print("call 1 (decision): %s" % fmt_ms(ms1s))
     if tts is not None:
         print("tts (%s): %s   cached: %d" % (tts.name, fmt_ms(tts_ms), tts_cached))
@@ -771,12 +769,12 @@ def main() -> None:
               "read those rows first.")
     if timeouts + errors:
         print("\n%d of %d calls failed. Those are not model mistakes; fix latency or\n"
-              "quota before reading the agreement number as accuracy."
-              % (timeouts + errors, total))
+              "quota before reading the match number."
+              % (timeouts + errors, len(rows)))
     if answered and pct_answered < 60:
-        print("\nBelow 60% of answered. Read every disagreement before touching the prompt:\n"
-              "systematic errors mean the rules need work, random ones are a\n"
-              "bigger problem. See MVP_PLAN.md go/no-go.")
+        print("\nBelow 60% of answered. A developer's expectation is not ground truth, but\n"
+              "read every mismatch before touching the prompt. Participants judge the\n"
+              "study (docs/llm_decision_layer.md section 9).")
 
 
 if __name__ == "__main__":

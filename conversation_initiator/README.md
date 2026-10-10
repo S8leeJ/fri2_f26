@@ -122,7 +122,7 @@ conversation_initiator/
 ├── README.md               this file
 ├── SCHEMA.md               the /social_context contract, v2.0
 ├── SCHEMA_COMPARISON.md    why the schema looks the way it does
-├── MVP_PLAN.md             the four-day plan, results so far, go/no-go
+├── MVP_PLAN.md             the four-day plan and its first results
 ├── IMPLEMENTATION_PLAN.md  the full ROS 2 build, after the MVP passes
 ├── schema/                 the JSON Schemas and a round-trip example
 ├── playground/             local chat UI: change the scene, talk to the robot
@@ -142,7 +142,7 @@ conversation_initiator/
     ├── test_stt.py         STT tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
-    └── vignettes/          test scenes, 001–025. 009–021 need labels
+    └── vignettes/          test scenes, 001–025. expect is optional
 ```
 
 ### `mvp.py`: the decision
@@ -166,14 +166,16 @@ scores, and each call's latency. The summary reports:
 
 | Line | Meaning |
 |---|---|
-| agreement | matches over all calls, and over the calls that answered |
-| false greets | spoke when it should not have; the costly error, target 0 |
-| greet recall | of the cases that should greet, how many did |
+| matches expect | matches over the vignettes that have an `expect`, and over the calls that answered |
+| false greets | spoke where `expect` says it should not; the costly error, target 0 |
+| greet recall | of the cases whose `expect` is greet, how many did |
 | timeouts, errors | calls that never returned a decision |
 | flipped across repeats | vignettes whose action changed with `--repeat` |
 
-Vignettes with no `expect` label are skipped, so you can add a case without
-seeing the model's answer first.
+`expect` is optional. Vignettes without it still run, so you see the
+decision, but they do not count in the summary. These numbers are a
+development check. In the study, the participant decides what is right
+(`docs/llm_decision_layer.md` §9).
 
 ### `gate.py`: whether to ask at all
 
@@ -237,8 +239,9 @@ is `aura-2-thalia-en`.
 
 ### `vignettes/`: the test set
 
-Each file is one scene plus the answer a person would give, written before
-running the model:
+Each file is one scene. `expect` is optional. It is what the author expects,
+written before running the model. It is not ground truth, because in the
+study the participant decides what is right:
 
 ```json
 {
@@ -276,9 +279,9 @@ python3 mvp.py --repeat 3            # three passes: steadier latency, and flips
 python3 mvp.py --rubric 3            # the original three-score decision
 ```
 
-A disagreement row is marked `<-- disagrees`. Read all of them before
-changing the prompt. With nine cases, patching after each one fits the prompt
-to noise. `MVP_PLAN.md` covers how to classify them and what counts as a pass.
+A row that differs from its `expect` is marked `<-- differs from expect`.
+Read all of them before changing the prompt. Patching after each one fits the
+prompt to a few cases.
 
 ## Playground
 
@@ -305,19 +308,19 @@ never reach the browser.
 - **+5 s** and **+30 s** move time forward. Use them to test the 30 s
   greeting cooldown. **Ignored** adds one to `consecutive_no_response`.
 - **Save as vignette** writes the current scene to `mvp/vignettes/` with
-  `expect: null`. Label it before you use it.
+  `expect: null`. `mvp.py` runs it as it is.
 - With nobody present, the server returns `no_person` and makes no model call.
 
 [`playground/README.md`](playground/README.md) explains each part and has a
-test checklist. The playground does not measure accuracy. Use `mvp.py` on
-labelled vignettes for that. Groq's free tier allows about 4 turns a minute. The server retries
+test checklist. The playground is a probe and demo tool. It does not produce
+study results. In the study, participants judge the robot. Groq's free tier allows about 4 turns a minute. The server retries
 once after a rate limit, so a fast click can wait about 15 s.
 
 ## Adding a vignette
 
 1. Pick the next number and a filename that describes the scene.
-2. Write `expect` before you run anything. Leave it `null` until you have;
-   the runner skips unlabelled files.
+2. If you know what the robot should do, write `expect` before you run
+   anything. Otherwise leave it `null`. The runner still runs the scene.
 3. Build `ambient` from what the microphone would actually report. Use a
    quiet floor below −50 dBFS, moderate below −40, and loud above that. Leave
    fields `null` where the audio node would.
@@ -328,6 +331,6 @@ once after a rate limit, so a fast click can wait about 15 s.
 
 ## What's next
 
-Once the MVP passes go/no-go, `IMPLEMENTATION_PLAN.md` wraps this in a ROS 2
+`IMPLEMENTATION_PLAN.md` wraps this in a ROS 2
 node that subscribes to the fused `/social_context` topic. That adds SSML for
 speech and Langfuse tracing. The node runs `postfilter.py` on every decision.

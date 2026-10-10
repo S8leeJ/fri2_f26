@@ -6,8 +6,8 @@ said, and why.
 
 Use it to probe the model one field at a time, to find new test cases, and
 to demo the project. Hover over any control to see what it does. The
-**? Help** button gives a short guide and the rules. It does not measure accuracy. For accuracy, run
-`mvp.py` on labelled vignettes.
+**? Help** button gives a short guide and the rules. It does not produce study results. In the
+study, the participant decides what is right (`docs/llm_decision_layer.md` §9).
 
 ## How it works
 
@@ -169,9 +169,9 @@ Use Groq. It is the fastest working provider. Do one check at a time.
 | 3 | Preset 024. Set `noise_level` to quiet, Check scene. Set it to loud, Check scene. | Volume goes from `soft` to `loud`. The second bubble lists `ambient.noise_level: "quiet" -> "loud"`. |
 | 4 | After the robot greets, press +5 s, then Check scene. Press +30 s, then Check scene. | Silent at 5 s (R2 cooldown). It may greet again after 35 s. |
 | 5 | Clear person present. Press Check scene. | `remain_silent`, `no_person`, no model call |
-| 6 | Press Save as vignette. Then run `python3 test_gate.py` in `mvp/`. | A new unlabelled file. The tests pass. |
+| 6 | Press Save as vignette. Then run `python3 test_gate.py` in `mvp/`. | A new file with `expect: null`. The tests pass. |
 
-Delete a test vignette when you are done with it, or label it and keep it.
+Delete a test vignette when you are done with it, or keep it as a regression case.
 
 ### What to look for
 

@@ -285,10 +285,11 @@ have to change.
 
 ---
 
-## 5. OPEN — evaluation design
+## 5. RESOLVED — evaluation design
 
-**Not resolved here. Flagged because it determines what the vignettes are for, and
-therefore how much the schema decision actually matters.**
+**Resolved October 8, 2026: live only.** The participant decides what is right. The
+vignettes stay as development fixtures, and the κ and adjudication apparatus is out.
+`docs/llm_decision_layer.md` §9 has the method. The text below is the original note.
 
 `docs/llm_decision_layer.md` §9 specifies an **offline** evaluation:
 

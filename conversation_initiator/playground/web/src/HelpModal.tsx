@@ -56,7 +56,7 @@ export default function HelpModal({ onClose }: { onClose: () => void }) {
           <li>Groq's free tier allows about 4 turns a minute. A turn may wait about 15 s.</li>
           <li>The same scene can get different answers. Press Check scene twice to see it.</li>
           <li>The robot has no map. A reply with directions is made up.</li>
-          <li>This tool does not measure accuracy. Run <code>mvp.py</code> on labelled vignettes for that.</li>
+          <li>This tool does not produce study results. In the study, the participant decides what is right.</li>
         </ul>
       </div>
     </div>

@@ -4,6 +4,11 @@
 **Runs on:** your laptop. No robot, no ROS, no teammates.
 **Last updated:** September 22, 2026 (moved onto context schema v2.0)
 
+> **Update, October 8, 2026.** The study now lets the participant decide what is right
+> (`docs/llm_decision_layer.md` §9). The `expect` labels and agreement numbers below compare
+> the model with a developer's expectations. They were a development check. They are not a
+> study result. The text below is kept as it was.
+
 ---
 
 ## The one question this MVP answers
