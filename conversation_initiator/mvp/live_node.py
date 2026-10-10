@@ -129,17 +129,20 @@ class LiveInitiator(Node):
             return
         note_asked(self.gate, ctx, now)
         with self.lock:
+            pending, end = self.mem.pending, self.mem.last_utterance_end
             consume_pending(self.mem)
+        # When the person stopped talking, and when this node first saw the words.
+        heard_at = {"end": end, "seen": pending["t"]} if pending and end else None
         self.busy = True
-        threading.Thread(target=self._decide, args=(ctx,), daemon=True).start()
+        threading.Thread(target=self._decide, args=(ctx, heard_at), daemon=True).start()
 
-    def _decide(self, ctx):
+    def _decide(self, ctx, heard_at=None):
         try:
-            self._decide_once(ctx)
+            self._decide_once(ctx, heard_at)
         finally:
             self.busy = False
 
-    def _decide_once(self, ctx):
+    def _decide_once(self, ctx, heard_at=None):
         out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model}
         try:
             r = decide(self.args.provider, self.client, self.model, ctx, 6)
@@ -167,22 +170,42 @@ class LiveInitiator(Node):
             + (f"  (model said {r.action}, blocked)" if blocked_by else ""))
 
         if speech and self.tts:
-            self._say(speech)
+            self._say(speech, r, heard_at)
+        elif speech:
+            self._log_timing(r, heard_at, None)
         with self.lock:
             apply_result(self.mem, final, reason, line, time.time())
 
-    def _say(self, speech):
+    def _say(self, speech, r=None, heard_at=None):
         self.mem.speaking = True
         self.pub_speaking.publish(Bool(data=True))
         try:
             from tts import play
+            start = time.time()
             path, _ = self.tts.synthesize(speech)
+            if r is not None:
+                self._log_timing(r, heard_at, time.time() - start)
             play(path)
         except Exception as e:  # noqa: BLE001 - a TTS failure must not stop the node
             self.get_logger().error(f"TTS failed: {e}")
         finally:
             self.pub_speaking.publish(Bool(data=False))
             self.mem.speaking = False
+
+    def _log_timing(self, r, heard_at, tts_s):
+        parts = []
+        if heard_at:
+            parts.append(f"heard {heard_at['seen'] - heard_at['end']:.1f} s")
+        parts.append(f"decide {r.ms1 / 1000:.1f} s")
+        if r.ms2:
+            parts.append(f"line {r.ms2 / 1000:.1f} s")
+        if tts_s is not None:
+            parts.append(f"speech {tts_s:.1f} s")
+        total = ""
+        if heard_at:
+            what = "starts talking" if tts_s is not None else "has its line"
+            total = f"  ->  robot {what} {time.time() - heard_at['end']:.1f} s after the person stopped"
+        self.get_logger().info("timing: " + ", ".join(parts) + total)
 
     def _publish(self, ctx, out):
         self.pub_decision.publish(String(data=json.dumps(out)))
