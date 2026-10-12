@@ -34,6 +34,7 @@ This is a real message from the audio node (October 2, 2026):
 | `syntactically_complete` | `true` when `transcript` ends with `.`, `?`, or `!`. `false` when it has no end mark, or ends with `...`. `null` when there is no transcript. |
 | `tone` | Level and length of the last utterance. |
 | `engaged`, `robot_speaking` | The two flags, copied back from the input topics. |
+| `trace` | Wall times for the latest transcript: `speech_end`, `closed`, `stt_start`, `stt_done`, `built`. Only when `transcript` has text. `live_node.py` uses it to time each step. |
 
 `audio_context/Ranges.md` explains which values are normal. `audio_context/CALIBRATION.md` has the measurements behind them.
 

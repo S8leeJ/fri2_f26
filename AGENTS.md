@@ -144,6 +144,7 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 A standalone Python 3.10 program. `python main.py` runs it.
 It captures a microphone or a WAV file and runs Silero voice detection and loudness measurement.
 Once per second it builds an `audio` JSON object with these fields: `stamp`, `noise_floor_db`, `noise_level`, `speech_snr_db`, `speech_now`, `speech_ratio_10s`, `seconds_since_speech`, `transcript`, `transcript_age_s`, `syntactically_complete`, `tone`, `engaged`, `robot_speaking`. With the Kinect's 7-mic array only, it adds `speech_bearing_deg` (`audio_context/bearing.py`).
+When `transcript` has text, it adds `trace`: wall times that `live_node.py` uses to time each step of a reply.
 Transcription uses local `faster-whisper`. It runs only while `engaged` is true.
 All tunable numbers are in `audio_context/config.py`.
 Its own `README.md` covers setup.
