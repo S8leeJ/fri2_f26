@@ -110,6 +110,9 @@ def materially_changed(
             return True
         if p.get("motion") != p0.get("motion"):
             return True
+        heard = (p.get("speech") or {}).get("partial_transcript")
+        if heard and heard != (p0.get("speech") or {}).get("partial_transcript"):
+            return True
 
     a, a0 = _ambient(ctx), _ambient(prev)
     if a.get("noise_level") != a0.get("noise_level"):
@@ -156,7 +159,11 @@ def should_ask_llm(
         return False, "gave_up"
 
     if state.last_asked_t is not None:
-        if now - state.last_asked_t < cfg["min_cooldown_sec"]:
+        heard = (_target(ctx).get("speech") or {}).get("partial_transcript")
+        before = ((_target(state.last_ctx or {}) or {}).get("speech") or {}).get("partial_transcript")
+        # Someone who just spoke to the robot does not wait out the cooldown.
+        new_words = bool(heard) and heard != before
+        if now - state.last_asked_t < cfg["min_cooldown_sec"] and not new_words:
             return False, "cooldown"
 
     # Greeting recently alone is not a hard block — it is a soft signal the LLM

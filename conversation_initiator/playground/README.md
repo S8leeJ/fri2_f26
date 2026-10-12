@@ -52,8 +52,8 @@ browser.
    - Otherwise it runs `mvp.decide()` with the 6-score rubric. When the
      action is `greet` or `respond`, that makes a second call for the line.
      With `jev`, a greet uses a fixed line and makes no second call. Jev
-     cannot write text, so a `respond` line comes from Groq, Gemini, or
-     Anthropic, whichever has a key first.
+     cannot write text, so a `respond` line comes from Groq, Anthropic, or
+     Gemini, whichever has a key first.
    - It runs `postfilter.enforce()`. If the post-filter blocks the action,
      the server drops the line, because the robot would never say it.
 4. **The app shows a robot bubble** with:

@@ -37,7 +37,7 @@ class ReplyWriterTests(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def env(self, **values):
-        base = {"JEV_REPLY_PROVIDER": "", "GROQ_API_KEY": "", "GEMINI_API_KEY": "",
+        base = {"GROQ_API_KEY": "", "GEMINI_API_KEY": "",
                 "ANTHROPIC_API_KEY": ""}
         return mock.patch.dict(os.environ, {**base, **values})
 
@@ -45,12 +45,15 @@ class ReplyWriterTests(unittest.TestCase):
         return [w[0] for w in mvp.reply_writers()]
 
     def test_writers_with_a_key_in_order(self):
+        with self.env(GEMINI_API_KEY="k", ANTHROPIC_API_KEY="k", GROQ_API_KEY="k"):
+            self.assertEqual(self.names(), ["groq", "anthropic", "gemini"])
+        mvp._reply_writers = None
         with self.env(GEMINI_API_KEY="k", ANTHROPIC_API_KEY="k"):
-            self.assertEqual(self.names(), ["gemini", "anthropic"])
+            self.assertEqual(self.names(), ["anthropic", "gemini"])
 
-    def test_override_goes_first(self):
+    def test_groq_first_even_with_the_old_setting(self):
         with self.env(JEV_REPLY_PROVIDER="anthropic", GROQ_API_KEY="k", ANTHROPIC_API_KEY="k"):
-            self.assertEqual(self.names(), ["anthropic", "groq"])
+            self.assertEqual(self.names(), ["groq", "anthropic"])
 
     def test_none_without_keys(self):
         with self.env():

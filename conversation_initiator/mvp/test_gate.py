@@ -119,6 +119,14 @@ class GateUnitTests(unittest.TestCase):
         b = base_ctx(target={"motion": "passing"})
         self.assertTrue(materially_changed(b, a))
 
+    def test_new_transcript_is_material(self):
+        quiet = base_ctx()
+        asked = base_ctx(target={"speech": {"detected": True, "partial_transcript": "hi"}})
+        self.assertTrue(materially_changed(asked, quiet))
+        self.assertFalse(materially_changed(asked, asked))
+        # The transcript going away after it was answered is not a reason to ask again.
+        self.assertFalse(materially_changed(quiet, asked))
+
     def test_audio_changes_are_material(self):
         base = base_ctx()
         self.assertTrue(materially_changed(base_ctx(ambient={"noise_level": "loud"}), base))
