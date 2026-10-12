@@ -1,0 +1,56 @@
+% Response latency of the live initiator on flexo, October 12, 2026.
+% IEEE (IEEEtran) table. Compile with pdflatex, for example in Overleaf.
+\documentclass[conference]{IEEEtran}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{graphicx}
+\begin{document}
+
+\begin{table*}[!t]
+\caption{Response Latency of the Live Initiator on the Robot, by Pipeline Step (Seconds)}
+\label{tab:latency}
+\centering
+\renewcommand{\arraystretch}{1.15}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l*{7}{c}@{}}
+\toprule
+ & \makecell{(a)\Baseline:\Jev + Claude,\3 Hz}
+ & \makecell{(b)\Transcript\skips gate\cooldown}
+ & \makecell{(c)\10 Hz tick,\Groq\replies}
+ & \makecell{(d)\Instant\publish}
+ & \makecell{(e)\Streaming\speech,\warm-up}
+ & \makecell{(f)\Groq\Whisper,\0.8 s pause}
+ & \makecell{(g)\0.65 s\pause,\120B model} \
+\midrule
+Audio node, total       & 1.30 & 1.63 & 1.50 & 1.27 & 1.28 & 1.37 & 1.28 \
+\quad Silence check     & -- & -- & -- & 0.53 & 0.53 & 0.90 & 0.68 \
+\quad Transcription     & -- & -- & -- & 0.74 & 0.75 & 0.47 & 0.60 \
+\quad Publish wait      & -- & -- & -- & 0.00 & 0.00 & 0.00 & 0.00 \
+Transfer to decision node & 0.45 & 0.28 & 0.23 & 0.00 & 0.00 & 0.07 & 0.00 \
+Gate wait               & 1.65 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \
+Decision (Jev)          & 1.05 & 0.27 & 0.25 & 0.25 & 0.28 & 0.24 & 0.24 \
+Reply text (LLM)        & 1.70 & 1.62 & 0.45 & 0.52 & 0.58 & 0.76 & 0.68 \
+Speech                  & 1.40 & 1.50 & 1.35 & 1.21 & 0.25 & 0.23 & 0.23 \
+\midrule
+\textbf{Total, mean}    & \textbf{7.85} & \textbf{4.98} & \textbf{3.95} & \textbf{3.16} & \textbf{2.35} & \textbf{2.61} & \textbf{2.42} \
+Total, median           & 7.85 & 4.95 & 3.90 & 2.93 & 2.27 & 2.60 & 2.37 \
+\bottomrule
+\end{tabular}%
+}
+
+\vspace{4pt}
+\begin{minipage}{\textwidth}
+\footnotesize
+Total is the time from the end of the person's speech to the start of the robot's voice.
+Each column adds one change to the column on its left.
+Values are means over 2 to 12 replies per configuration, measured on the robot on October 12, 2026.
+Columns (a)--(c) come from a timing log with 0.1~s resolution; columns (d)--(g) come from a per-step trace with 0.01~s resolution.
+--: not measured separately.
+Speech excludes replies that played a cached line; from (e) on, it is the time until the first sound.
+Column (d) includes one 6.78~s reply with 1.35~s not attributed to any step.
+Column (g) pools two runs and includes one 1.40~s transcription.
+In column (f), the reply model was not recorded.
+\end{minipage}
+\end{table*}
+
+\end{document}
