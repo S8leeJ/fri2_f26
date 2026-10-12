@@ -40,7 +40,7 @@ def steps(marks: Dict[str, float], ms1: float, ms2: Optional[float],
     if ms2:
         out.append(("line", ms2 / 1000))
     if tts_s is not None:
-        out.append(("tts", tts_s))
+        out.append(("tts", tts_s))     # until the first sound
     return out
 
 

@@ -53,6 +53,7 @@ except ImportError as error:
                        sys.executable, os.path.abspath(__file__), *sys.argv[1:]])
 
 import dotenv
+import httpx
 
 HERE = pathlib.Path(__file__).resolve().parent
 dotenv.load_dotenv(HERE / ".env")
@@ -60,7 +61,7 @@ dotenv.load_dotenv(HERE / ".env")
 from context import validate  # noqa: E402
 from fusion_adapter import Memory, apply_result, consume_pending, fusion_to_context  # noqa: E402
 from gate import GateState, decide_tick, note_asked  # noqa: E402
-from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client  # noqa: E402
+from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers  # noqa: E402
 from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
@@ -106,6 +107,25 @@ class LiveInitiator(Node):
         self.tracer = Tracer(LOGS / f"trace_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.jsonl")
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, log {self.log_path}")
+        self._warm_up()
+
+    def _warm_up(self):
+        """Make the clients and open their connections now, not during the first reply."""
+        start = time.time()
+        clients = [self.client]
+        if self.args.provider == "jev":
+            clients += [client for _, client, _ in reply_writers()]
+        if self.tts is not None:
+            clients.append(self.tts.client)
+        opened = 0
+        for client in clients:
+            if isinstance(client, httpx.Client):
+                try:
+                    client.get("/")    # any answer leaves the connection open
+                    opened += 1
+                except Exception:  # noqa: BLE001 - the first real call opens it instead
+                    pass
+        self.get_logger().info(f"warm-up: {opened} connections open in {time.time() - start:.1f} s")
 
     def _on_context(self, msg):
         try:
@@ -204,13 +224,15 @@ class LiveInitiator(Node):
     def _say(self, speech, r=None, heard_at=None):
         self.mem.speaking = True
         self.pub_speaking.publish(Bool(data=True))
-        try:
-            from tts import play
-            start = time.time()
-            path, _ = self.tts.synthesize(speech)
+        start = time.time()
+
+        def first_sound():
             if r is not None:
                 self._trace(r, heard_at, time.time() - start)
-            play(path)
+
+        try:
+            # A new line starts to play while it is still being made.
+            self.tts.speak(speech, on_start=first_sound)
         except Exception as e:  # noqa: BLE001 - a TTS failure must not stop the node
             self.get_logger().error(f"TTS failed: {e}")
         finally:

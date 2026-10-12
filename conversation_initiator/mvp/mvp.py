@@ -224,6 +224,10 @@ def load_vignettes() -> list:
     return out
 
 
+# Keep a connection open this long between calls, so the next call skips the TLS setup.
+KEEPALIVE_S = 60.0
+
+
 def make_client(provider: str, timeout_s: float):
     # No SDK retries: a retried call would be timed as one slow call, and the
     # robot cannot wait for a retry anyway.
@@ -253,6 +257,7 @@ def make_client(provider: str, timeout_s: float):
             base_url="https://api.groq.com/openai/v1",
             headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"]},
             timeout=timeout_s,
+            limits=httpx.Limits(keepalive_expiry=KEEPALIVE_S),
         )
     if provider == "jev":
         import httpx
@@ -261,6 +266,7 @@ def make_client(provider: str, timeout_s: float):
             base_url="https://api.typesafe.ai/v1",
             headers={"Authorization": "Bearer " + os.environ["TYPESAFE_API_KEY"]},
             timeout=timeout_s,
+            limits=httpx.Limits(keepalive_expiry=KEEPALIVE_S),
         )
     raise ValueError("unknown provider: %s" % provider)
 
