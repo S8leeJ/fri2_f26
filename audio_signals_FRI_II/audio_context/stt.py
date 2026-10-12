@@ -44,6 +44,7 @@ class Transcriber:
         self.rate = cfg["sample_rate"]
         self.verbose = verbose
         self.log_timing = False    # one line per transcript, without the words
+        self.on_text = None        # called with no arguments when new text is ready
 
         # Depth one: if a request is already waiting, a newer utterance
         # replaces it. Falling behind is better than queueing up stale audio
@@ -52,6 +53,7 @@ class Transcriber:
         self._lock = threading.Lock()
         self._text = ""
         self._text_t = None        # when the transcribed audio happened
+        self._trace = None         # wall times for the latest transcript
         self._stop = threading.Event()
         self._thread = None
         self.done = 0              # utterances transcribed
@@ -92,7 +94,8 @@ class Transcriber:
             return False          # under 0.2 s, nothing worth transcribing
         try:
             self._queue.put_nowait((np.asarray(samples, dtype=np.float32),
-                                    when if when is not None else time.time()))
+                                    when if when is not None else time.time(),
+                                    time.time()))
             return True
         except queue.Full:
             self.skipped += 1
@@ -106,20 +109,26 @@ class Transcriber:
         with self._lock:
             return self._text_t
 
+    def latest_trace(self):
+        with self._lock:
+            return self._trace
+
     def clear(self):
         # Called when the robot disengages, so an old transcript does not
         # linger into the next interaction.
         with self._lock:
             self._text = ""
             self._text_t = None
+            self._trace = None
 
     def _work(self):
         while not self._stop.is_set():
             try:
-                samples, when = self._queue.get(timeout=0.5)
+                samples, when, closed = self._queue.get(timeout=0.5)
             except queue.Empty:
                 continue
 
+            started = time.time()
             t0 = time.perf_counter()
             try:
                 model = _get_model(self.cfg)
@@ -151,6 +160,11 @@ class Transcriber:
             with self._lock:
                 self._text = text
                 self._text_t = when
+                self._trace = {"speech_end": round(when, 3), "closed": round(closed, 3),
+                               "stt_start": round(started, 3), "stt_done": round(time.time(), 3)}
+
+            if self.on_text is not None:
+                self.on_text()
 
             if self.verbose:
                 print(f"  TRANSCRIPT ({audio_sec:.1f}s audio in {took:.1f}s): "

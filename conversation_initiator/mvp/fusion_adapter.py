@@ -140,7 +140,8 @@ def _note_transcript(audio: Dict[str, Any], mem: Memory, now: float) -> None:
     elif text == mem.last_transcript:
         return
     mem.last_transcript = text
-    mem.pending = {"t": now, "text": text, "complete": audio.get("syntactically_complete"), "age": age}
+    mem.pending = {"t": now, "text": text, "complete": audio.get("syntactically_complete"),
+                   "trace": audio.get("trace")}
     mem.no_response = 0
     mem.awaiting_reply_since = None
     _add_turn(mem, now, "person", text)
