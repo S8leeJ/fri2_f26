@@ -61,6 +61,7 @@ the audio and vision nodes are wired together.
    `noise_level`, so there is no second call. Jev cannot write text, so a
    `respond` line comes from the first of Groq, Anthropic, and Gemini that
    has a key. If that call fails, the next one is tried.
+   To check the order on the robot, run `python3 ~/fri2_f26/fusion/tools/check_reply_writers.py`.
 
 Scores come before the action in the schema on purpose. The model commits to
 its reading of the scene first, and then picks the action.
