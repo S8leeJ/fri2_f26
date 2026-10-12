@@ -516,7 +516,7 @@ class Result:
     decision: Optional[dict] = None
 
 
-REPLY_WRITERS = ("groq", "gemini", "anthropic")
+REPLY_WRITERS = ("groq", "anthropic", "gemini")
 _reply_writers = None
 
 
@@ -544,7 +544,7 @@ def line_to_say(provider, client, model, ctx, d):
             return fixed_greeting(ctx), None, None
         writers = reply_writers()
         if not writers:
-            return None, None, "jev cannot write a reply. Add a GROQ, GEMINI, or ANTHROPIC key."
+            return None, None, "jev cannot write a reply. Add a GROQ, ANTHROPIC, or GEMINI key."
     # A failed line should not cost the decision, which is what is being scored.
     error = None
     for provider, client, model in writers:

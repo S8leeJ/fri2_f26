@@ -59,7 +59,7 @@ the audio and vision nodes are wired together.
    The call is skipped when the post-filter blocks the action. With
    `--provider jev`, a greet uses a fixed line with the volume set by
    `noise_level`, so there is no second call. Jev cannot write text, so a
-   `respond` line comes from the first of Groq, Gemini, and Anthropic that
+   `respond` line comes from the first of Groq, Anthropic, and Gemini that
    has a key. If that call fails, the next one is tried.
    `JEV_REPLY_PROVIDER` picks which one goes first.
 

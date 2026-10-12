@@ -45,8 +45,11 @@ class ReplyWriterTests(unittest.TestCase):
         return [w[0] for w in mvp.reply_writers()]
 
     def test_writers_with_a_key_in_order(self):
+        with self.env(GEMINI_API_KEY="k", ANTHROPIC_API_KEY="k", GROQ_API_KEY="k"):
+            self.assertEqual(self.names(), ["groq", "anthropic", "gemini"])
+        mvp._reply_writers = None
         with self.env(GEMINI_API_KEY="k", ANTHROPIC_API_KEY="k"):
-            self.assertEqual(self.names(), ["gemini", "anthropic"])
+            self.assertEqual(self.names(), ["anthropic", "gemini"])
 
     def test_override_goes_first(self):
         with self.env(JEV_REPLY_PROVIDER="anthropic", GROQ_API_KEY="k", ANTHROPIC_API_KEY="k"):
