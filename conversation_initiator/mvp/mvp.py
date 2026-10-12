@@ -530,12 +530,15 @@ def reply_writers() -> list:
     """(provider, client, model) for each LLM that can write Jev's replies, in the order to try.
 
     Always Groq, then Anthropic, then Gemini. A provider with no key is left out,
-    and line_to_say tries the next one when a call fails.
+    and line_to_say tries the next one when a call fails. GROQ_MODEL in .env
+    replaces the Groq model.
     """
     global _reply_writers
     if _reply_writers is None:
         names = [n for n in REPLY_WRITERS if os.environ.get(ENV_KEY[n])]
-        _reply_writers = [(n, make_client(n, 5.0), DEFAULT_MODEL[n]) for n in names]
+        _reply_writers = [(n, make_client(n, 5.0),
+                           (n == "groq" and os.environ.get("GROQ_MODEL")) or DEFAULT_MODEL[n])
+                          for n in names]
     return _reply_writers
 
 
