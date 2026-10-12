@@ -28,7 +28,7 @@ VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 DEFAULT_MODEL = {
     "anthropic": "claude-haiku-4-5-20251001",
     "gemini": "gemini-3.1-flash-lite",
-    "groq": "openai/gpt-oss-20b",
+    "groq": "openai/gpt-oss-120b",
     "jev": "jev-latest",
 }
 ENV_KEY = {
@@ -224,6 +224,10 @@ def load_vignettes() -> list:
     return out
 
 
+# Keep a connection open this long between calls, so the next call skips the TLS setup.
+KEEPALIVE_S = 60.0
+
+
 def make_client(provider: str, timeout_s: float):
     # No SDK retries: a retried call would be timed as one slow call, and the
     # robot cannot wait for a retry anyway.
@@ -253,6 +257,7 @@ def make_client(provider: str, timeout_s: float):
             base_url="https://api.groq.com/openai/v1",
             headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"]},
             timeout=timeout_s,
+            limits=httpx.Limits(keepalive_expiry=KEEPALIVE_S),
         )
     if provider == "jev":
         import httpx
@@ -261,6 +266,7 @@ def make_client(provider: str, timeout_s: float):
             base_url="https://api.typesafe.ai/v1",
             headers={"Authorization": "Bearer " + os.environ["TYPESAFE_API_KEY"]},
             timeout=timeout_s,
+            limits=httpx.Limits(keepalive_expiry=KEEPALIVE_S),
         )
     raise ValueError("unknown provider: %s" % provider)
 
@@ -524,12 +530,15 @@ def reply_writers() -> list:
     """(provider, client, model) for each LLM that can write Jev's replies, in the order to try.
 
     Always Groq, then Anthropic, then Gemini. A provider with no key is left out,
-    and line_to_say tries the next one when a call fails.
+    and line_to_say tries the next one when a call fails. GROQ_MODEL in .env
+    replaces the Groq model.
     """
     global _reply_writers
     if _reply_writers is None:
         names = [n for n in REPLY_WRITERS if os.environ.get(ENV_KEY[n])]
-        _reply_writers = [(n, make_client(n, 5.0), DEFAULT_MODEL[n]) for n in names]
+        _reply_writers = [(n, make_client(n, 5.0),
+                           (n == "groq" and os.environ.get("GROQ_MODEL")) or DEFAULT_MODEL[n])
+                          for n in names]
     return _reply_writers
 
 

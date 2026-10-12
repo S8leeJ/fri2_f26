@@ -21,6 +21,10 @@ Topics:
 Each tick: fusion_adapter builds a v2.0 context, the gate decides whether to
 ask, and one worker thread at a time calls the LLM and the post-filter. Every
 LLM call is appended to live_logs/<date>.jsonl.
+
+Each reply to speech logs one "turn N:" line with the seconds for each step
+(turn_trace.py), and appends it to live_logs/trace_<start time>.jsonl.
+Ctrl+C prints the median and max of each step for the session.
 """
 
 from __future__ import annotations
@@ -49,6 +53,7 @@ except ImportError as error:
                        sys.executable, os.path.abspath(__file__), *sys.argv[1:]])
 
 import dotenv
+import httpx
 
 HERE = pathlib.Path(__file__).resolve().parent
 dotenv.load_dotenv(HERE / ".env")
@@ -56,8 +61,9 @@ dotenv.load_dotenv(HERE / ".env")
 from context import validate  # noqa: E402
 from fusion_adapter import Memory, apply_result, consume_pending, fusion_to_context  # noqa: E402
 from gate import GateState, decide_tick, note_asked  # noqa: E402
-from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client  # noqa: E402
+from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers  # noqa: E402
 from postfilter import SPEAKS, enforce  # noqa: E402
+from turn_trace import Tracer  # noqa: E402
 
 LOGS = HERE / "live_logs"
 SUMMARY_EVERY_S = 30.0
@@ -81,6 +87,8 @@ class LiveInitiator(Node):
         self.busy = False
         self.latest = None
         self.bad_ctx_logged = 0.0
+        # stt_done of the newest audio trace, and when this node first received it.
+        self.trace_arrived = (None, None)
 
         self.create_subscription(String, "/social_context", self._on_context, 10)
         self.pub_decision = self.create_publisher(String, "/initiation_decision", 10)
@@ -96,14 +104,39 @@ class LiveInitiator(Node):
 
         LOGS.mkdir(exist_ok=True)
         self.log_path = LOGS / f"{datetime.date.today().isoformat()}.jsonl"
+        self.tracer = Tracer(LOGS / f"trace_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.jsonl")
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, log {self.log_path}")
+        self._warm_up()
+
+    def _warm_up(self):
+        """Make the clients and open their connections now, not during the first reply."""
+        start = time.time()
+        clients = [self.client]
+        if self.args.provider == "jev":
+            clients += [client for _, client, _ in reply_writers()]
+        if self.tts is not None:
+            clients.append(self.tts.client)
+        opened = 0
+        for client in clients:
+            if isinstance(client, httpx.Client):
+                try:
+                    client.get("/")    # any answer leaves the connection open
+                    opened += 1
+                except Exception:  # noqa: BLE001 - the first real call opens it instead
+                    pass
+        self.get_logger().info(f"warm-up: {opened} connections open in {time.time() - start:.1f} s")
 
     def _on_context(self, msg):
         try:
             self.latest = json.loads(msg.data)
         except json.JSONDecodeError:
-            pass
+            return
+        done = ((self.latest.get("audio") or {}).get("trace") or {}).get("stt_done")
+        if done is not None and done != self.trace_arrived[0]:
+            self.trace_arrived = (done, time.time())
+            # A new transcript: check the gate now, not on the next tick.
+            self._tick()
 
     def _publish_engaged(self):
         self.pub_engaged.publish(Bool(data=self.args.engaged or self.mem.engaged))
@@ -131,11 +164,21 @@ class LiveInitiator(Node):
         with self.lock:
             pending, end = self.mem.pending, self.mem.last_utterance_end
             consume_pending(self.mem)
-        # When the person stopped talking, and when this node first saw the words.
-        heard_at = ({"end": end, "seen": pending["t"], "age": pending.get("age"), "ask": now}
-                    if pending and end else None)
+        heard_at = self._marks(pending, end, now) if pending and end else None
         self.busy = True
         threading.Thread(target=self._decide, args=(ctx, heard_at), daemon=True).start()
+
+    def _marks(self, pending, end, asked):
+        """Wall times for the steps from the end of speech to the LLM call."""
+        marks = {"speech_end": end}
+        trace = pending.get("trace") or {}
+        if trace:
+            marks.update({k: trace[k] for k in ("speech_end", "closed", "stt_done", "built") if k in trace})
+            if self.trace_arrived[0] == trace.get("stt_done"):
+                marks["arrived"] = self.trace_arrived[1]
+        marks["seen"] = pending["t"]
+        marks["asked"] = asked
+        return marks
 
     def _decide(self, ctx, heard_at=None):
         try:
@@ -174,44 +217,32 @@ class LiveInitiator(Node):
         if speech and self.tts:
             self._say(speech, r, heard_at)
         elif speech:
-            self._log_timing(r, heard_at, None)
+            self._trace(r, heard_at, None)
         with self.lock:
             apply_result(self.mem, final, reason, line, time.time())
 
     def _say(self, speech, r=None, heard_at=None):
         self.mem.speaking = True
         self.pub_speaking.publish(Bool(data=True))
-        try:
-            from tts import play
-            start = time.time()
-            path, _ = self.tts.synthesize(speech)
+        start = time.time()
+
+        def first_sound():
             if r is not None:
-                self._log_timing(r, heard_at, time.time() - start)
-            play(path)
+                self._trace(r, heard_at, time.time() - start)
+
+        try:
+            # A new line starts to play while it is still being made.
+            self.tts.speak(speech, on_start=first_sound)
         except Exception as e:  # noqa: BLE001 - a TTS failure must not stop the node
             self.get_logger().error(f"TTS failed: {e}")
         finally:
             self.pub_speaking.publish(Bool(data=False))
             self.mem.speaking = False
 
-    def _log_timing(self, r, heard_at, tts_s):
-        parts = []
+    def _trace(self, r, heard_at, tts_s):
+        # Only replies to speech have a start point.
         if heard_at:
-            heard = heard_at["seen"] - heard_at["end"]
-            age = heard_at.get("age")
-            split = f" (audio node {age:.1f} s, then {max(0.0, heard - age):.1f} s to here)" if age is not None else ""
-            parts.append(f"heard {heard:.1f} s{split}")
-            parts.append(f"wait {heard_at['ask'] - heard_at['seen']:.1f} s")
-        parts.append(f"decide {r.ms1 / 1000:.1f} s")
-        if r.ms2:
-            parts.append(f"line {r.ms2 / 1000:.1f} s")
-        if tts_s is not None:
-            parts.append(f"speech {tts_s:.1f} s")
-        total = ""
-        if heard_at:
-            what = "starts talking" if tts_s is not None else "has its line"
-            total = f"  ->  robot {what} {time.time() - heard_at['end']:.1f} s after the person stopped"
-        self.get_logger().info("timing: " + ", ".join(parts) + total)
+            self.get_logger().info(self.tracer.add(heard_at, r.ms1, r.ms2, tts_s, time.time()))
 
     def _publish(self, ctx, out):
         self.pub_decision.publish(String(data=json.dumps(out)))
@@ -226,6 +257,7 @@ class LiveInitiator(Node):
                 f"{g.suppression_rate:.0%} suppressed {g.suppressions}")
 
     def stop(self):
+        print(self.tracer.summary(), flush=True)
         for pub in (self.pub_speaking, self.pub_engaged):
             if pub:
                 try:

@@ -100,6 +100,11 @@ class Builder:
         if self.bearing is not None and self.bearing.active:
             audio["speech_bearing_deg"] = self.bearing.latest(stamp)
 
+        # Wall times for the latest transcript, so the live node can trace each step.
+        trace = self.stt.latest_trace() if self.stt and transcript else None
+        if trace:
+            audio["trace"] = {**trace, "built": round(time.time(), 3)}
+
         if self.verbose:
             n_bg, n_sp = self.buffer.counts()
             f = "None" if floor is None else f"{floor:.1f}"

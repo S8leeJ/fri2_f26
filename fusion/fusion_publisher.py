@@ -17,7 +17,8 @@ Each run clears fusion/logs/ first. Each program writes its output to
 fusion/logs/<name>.log. audio.log also gets every /audio_context message, one
 JSON object per line. pipeline.log has the vision JSON.
 
-Then it publishes the newest audio and vision messages together, 10 times each second:
+Then it publishes the newest audio and vision messages together, 10 times each second.
+It also publishes at once when a new audio message arrives:
 
     {"t": 1791447072.3,
      "audio": {...the newest /audio_context message...},  "audio_age_s": 0.4,
@@ -163,7 +164,7 @@ def check(node, started, reused, label, program, what, ready, timeout):
     raise StartFailed()
 
 
-def run(node, latest, started):
+def run(node, latest, started, sender):
     reused = set()
 
     def launch(name):
@@ -195,6 +196,7 @@ def run(node, latest, started):
         pub.publish(String(data=json.dumps(out)))
 
     node.create_timer(1.0 / RATE_HZ, send)
+    sender["send"] = send
     print(f"✅ {'publish':<8} /social_context at {RATE_HZ:.0f} Hz", flush=True)
     print("Press Ctrl+C to stop.", flush=True)
     rclpy.spin(node)
@@ -204,6 +206,7 @@ def main():
     rclpy.init()
     node = rclpy.create_node("fusion_publisher")
     latest = {"audio": (None, None), "vision": (None, None)}
+    sender = {}
     clear_logs()
     audio_log = open(LOGS / "audio.log", "a", buffering=1)
 
@@ -215,6 +218,9 @@ def main():
                 return
             if log is not None:
                 log.write(msg.data + "\n")
+            # Send new audio at once, so a transcript does not wait for the timer.
+            if name == "audio" and "send" in sender:
+                sender["send"]()
         return callback
 
     node.create_subscription(String, "/audio_context", keep("audio", audio_log), 10)
@@ -226,7 +232,7 @@ def main():
                getattr(executors, "ExternalShutdownException", KeyboardInterrupt))
     started = {}
     try:
-        run(node, latest, started)
+        run(node, latest, started, sender)
     except stopped:
         pass
     finally:

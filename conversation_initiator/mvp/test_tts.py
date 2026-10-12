@@ -175,5 +175,75 @@ class FromEnvTests(unittest.TestCase):
             from_env()
 
 
+
+class FakePlayer:
+    """Stands in for aplay. Records what is written to it."""
+
+    def __init__(self, events):
+        self.events, self.written, self.returncode = events, bytearray(), 0
+        self.stdin = self
+
+    def write(self, data):
+        self.events.append("write")
+        self.written += data
+
+    def flush(self):
+        pass
+
+    def close(self):
+        pass
+
+    def wait(self):
+        return self.returncode
+
+    def kill(self):
+        self.events.append("kill")
+
+
+class DeepgramStreamTests(_FakeServer):
+    def setUp(self):
+        # Three chunks that split the 2-byte samples, as a network can.
+        self.tts = self.fake(DeepgramTTS("key"), iter([PCM[:3], PCM[3:5], PCM[5:]]))
+        self.events = []
+        self.players = []
+
+        def popen(cmd, stdin=None):
+            self.assertEqual(cmd[0], "aplay")
+            self.players.append(FakePlayer(self.events))
+            return self.players[-1]
+
+        for patcher in (mock.patch("tts.subprocess.Popen", side_effect=popen),
+                        mock.patch("tts.sys", SimpleNamespace(platform="linux", byteorder="little")),
+                        mock.patch("tts.play", side_effect=lambda path: self.events.append("play"))):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_plays_while_streaming_and_scales(self):
+        ms = self.tts.speak(line(volume="soft"), on_start=lambda: self.events.append("start"))
+        self.assertIsNotNone(ms)
+        self.assertEqual(self.events[0], "start")
+        self.assertEqual(array.array("h", self.players[0].written).tolist(), [500, -500, 16383, -16384])
+
+    def test_new_line_is_cached(self):
+        self.tts.speak(line(volume="loud"))
+        path, ms = self.tts.synthesize(line(volume="loud"))
+        self.assertIsNone(ms)
+        self.assertEqual(samples(path), [1000, -1000, 32767, -32768])
+        self.assertEqual(len(self.requests), 1)
+
+    def test_cached_line_plays_from_disk(self):
+        self.tts.speak(line())
+        self.events.clear()
+        self.assertIsNone(self.tts.speak(line(), on_start=lambda: self.events.append("start")))
+        self.assertEqual(self.events, ["start", "play"])
+        self.assertEqual(len(self.players), 1)
+
+    def test_error_stops_the_player_and_caches_nothing(self):
+        self.status = 500
+        with self.assertRaises(RuntimeError):
+            self.tts.speak(line())
+        self.assertIn("kill", self.events)
+        self.assertEqual(list(self.tts.cache_dir.iterdir()), [])
+
 if __name__ == "__main__":
     unittest.main()

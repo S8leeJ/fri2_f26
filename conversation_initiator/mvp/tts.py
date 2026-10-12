@@ -44,6 +44,10 @@ SAMPLE_RATE = 24000
 RATE_TO_SPEED = {"slow": 0.85, "medium": 1.0, "fast": 1.15}
 # Gain never exceeds 1.0, so scaling cannot clip.
 VOLUME_GAIN = {"x-soft": 0.25, "soft": 0.5, "medium": 0.7, "loud": 1.0}
+# Keep a connection open this long between calls, so the next call skips the TLS setup.
+KEEPALIVE_S = 60.0
+# Plays raw 16-bit mono PCM from stdin, as Deepgram sends it.
+PLAYER = ["aplay", "-q", "-t", "raw", "-f", "S16_LE", "-r", str(SAMPLE_RATE), "-c", "1"]
 
 
 def scale_pcm(pcm: bytes, gain: float) -> bytes:
@@ -72,7 +76,8 @@ class _CachedTTS:
 
     def __init__(self, base_url: str, headers: dict, cache_dir: pathlib.Path, timeout_s: float):
         self.cache_dir = cache_dir
-        self.client = httpx.Client(base_url=base_url, headers=headers, timeout=timeout_s)
+        self.client = httpx.Client(base_url=base_url, headers=headers, timeout=timeout_s,
+                                   limits=httpx.Limits(keepalive_expiry=KEEPALIVE_S))
 
     def _path(self, *parts, suffix: str = ".wav") -> pathlib.Path:
         digest = hashlib.sha256(json.dumps(parts).encode()).hexdigest()[:16]
@@ -91,6 +96,17 @@ class _CachedTTS:
             raise RuntimeError("%s TTS %d: %s"
                                % (self.name, response.status_code, response.text[:200]))
         return response.content, (time.perf_counter() - start) * 1000
+
+    def speak(self, speech, on_start=None) -> Optional[float]:
+        """Make the whole clip, then play it. Calls on_start just before the sound starts.
+
+        Returns the network ms, or None when the clip came from the cache.
+        """
+        path, ms = self.synthesize(speech)
+        if on_start is not None:
+            on_start()
+        play(path)
+        return ms
 
 
 class DeepgramTTS(_CachedTTS):
@@ -113,12 +129,59 @@ class DeepgramTTS(_CachedTTS):
         if raw.exists():
             pcm = raw.read_bytes()
         else:
-            pcm, ms = self._post("/v1/speak", json={"text": speech.text}, params={
-                "model": self.voice, "encoding": "linear16", "container": "none",
-                "sample_rate": SAMPLE_RATE, "speed": speed})
+            pcm, ms = self._post("/v1/speak", json={"text": speech.text}, params=self._params(speed))
             self._save(raw, pcm)
         self._save(path, wav_bytes(scale_pcm(pcm, gain)))
         return path, ms
+
+    def _params(self, speed: float) -> dict:
+        return {"model": self.voice, "encoding": "linear16", "container": "none",
+                "sample_rate": SAMPLE_RATE, "speed": speed}
+
+    def speak(self, speech, on_start=None) -> Optional[float]:
+        """Play the line. A new line starts to play while Deepgram still sends it.
+
+        Calls on_start just before the first sound. Returns the network ms, or
+        None when the line came from the cache. A new line is cached as well.
+        """
+        gain, speed = VOLUME_GAIN[speech.volume], RATE_TO_SPEED[speech.rate]
+        path = self._path(self.voice, speech.text, speed, gain)
+        raw = self._path(self.voice, speech.text, speed, suffix=".pcm")
+        if sys.platform != "linux" or path.exists() or raw.exists():
+            return super().speak(speech, on_start)
+
+        start = time.perf_counter()
+        player = subprocess.Popen(PLAYER, stdin=subprocess.PIPE)
+        pcm, carry = bytearray(), b""
+        try:
+            with self.client.stream("POST", "/v1/speak", json={"text": speech.text},
+                                    params=self._params(speed)) as response:
+                if response.status_code != 200:
+                    response.read()
+                    raise RuntimeError("%s TTS %d: %s"
+                                       % (self.name, response.status_code, response.text[:200]))
+                for chunk in response.iter_bytes():
+                    # A chunk can end in the middle of a 2-byte sample.
+                    data = carry + chunk
+                    whole = len(data) - len(data) % 2
+                    carry = data[whole:]
+                    if not whole:
+                        continue
+                    if not pcm and on_start is not None:
+                        on_start()
+                    pcm += data[:whole]
+                    player.stdin.write(scale_pcm(data[:whole], gain))
+                    player.stdin.flush()
+            player.stdin.close()
+            if player.wait() != 0:
+                raise RuntimeError("aplay exited with code %d" % player.returncode)
+        except BaseException:
+            player.kill()
+            raise
+        ms = (time.perf_counter() - start) * 1000
+        self._save(raw, bytes(pcm))
+        self._save(path, wav_bytes(scale_pcm(bytes(pcm), gain)))
+        return ms
 
 
 class AzureTTS(_CachedTTS):
@@ -201,11 +264,17 @@ def main() -> None:
         ap.error("give a line to say, or --warm")
 
     for speech in lines:
-        path, ms = tts.synthesize(speech)
-        print("%s %-7s %s  %s" % (tts.name, speech.volume,
-                                  "cached" if ms is None else "%.0f ms" % ms, path))
-        if not args.no_play:
-            play(path)
+        if args.no_play:
+            path, ms = tts.synthesize(speech)
+            print("%s %-7s %s  %s" % (tts.name, speech.volume,
+                                      "cached" if ms is None else "%.0f ms" % ms, path))
+            continue
+        start = time.perf_counter()
+        first = []
+        ms = tts.speak(speech, on_start=lambda: first.append(time.perf_counter() - start))
+        print("%s %-7s %s  first sound after %.0f ms" % (
+            tts.name, speech.volume, "cached" if ms is None else "network %.0f ms" % ms,
+            first[0] * 1000 if first else -1))
 
 
 if __name__ == "__main__":

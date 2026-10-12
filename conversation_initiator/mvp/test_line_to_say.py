@@ -51,6 +51,13 @@ class ReplyWriterTests(unittest.TestCase):
         with self.env(GEMINI_API_KEY="k", ANTHROPIC_API_KEY="k"):
             self.assertEqual(self.names(), ["anthropic", "gemini"])
 
+    def test_groq_model_setting(self):
+        with self.env(GROQ_API_KEY="k", GROQ_MODEL="openai/gpt-oss-120b"):
+            self.assertEqual(mvp.reply_writers()[0][2], "openai/gpt-oss-120b")
+        mvp._reply_writers = None
+        with self.env(GROQ_API_KEY="k", GROQ_MODEL=""):
+            self.assertEqual(mvp.reply_writers()[0][2], mvp.DEFAULT_MODEL["groq"])
+
     def test_groq_first_even_with_the_old_setting(self):
         with self.env(JEV_REPLY_PROVIDER="anthropic", GROQ_API_KEY="k", ANTHROPIC_API_KEY="k"):
             self.assertEqual(self.names(), ["groq", "anthropic"])

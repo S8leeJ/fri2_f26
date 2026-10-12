@@ -84,9 +84,9 @@ Details that `Ranges.md` leaves out:
 
 - `noise_floor_db` is the median of the frames without speech in the last 10 seconds. It is `null` for the first 3 seconds, and for about 3 seconds after the robot talks for more than 10 seconds.
 - `speech_snr_db` is the median level of the speech in the last 10 seconds, minus the floor. It needs at least 10 speech frames (about 0.3 seconds).
-- `speech_now` becomes `true` after about 0.25 seconds of speech, and `false` after 0.5 seconds of silence.
+- `speech_now` becomes `true` after about 0.25 seconds of speech, and `false` after 0.65 seconds of silence.
 - `tone.seconds` includes the 0.85 second margin before the speech and about 0.5 seconds after it.
-- `transcript_age_s` counts from the end of the speech in the sentence. `seconds_since_speech` counts from the end of the 0.5 second silence check. So for the same sentence, `transcript_age_s` is about 0.5 seconds larger.
+- `transcript_age_s` counts from the end of the speech in the sentence. `seconds_since_speech` counts from the end of the 0.65 second silence check. So for the same sentence, `transcript_age_s` is about 0.65 seconds larger.
 - `transcript_age_s` uses `stamp`, the time of the newest real audio. The node drops digital silence (exact zeros), so with a WAV file that ends in zeros, the age stops growing. A live microphone always sends real audio.
 - `syntactically_complete` is `true` when the transcript ends in `.`, `?`, or `!`, and `false` when it ends in `...` or `…`, or has no end mark. It was tested on transcripts from October 2 and 8.
 - The node ignores audio while `robot_speaking` is `true`, and for 0.5 seconds after.
@@ -117,6 +117,17 @@ The rotation of the microphone hexagon relative to the camera is not known, so c
 8. Write down the two values here, and commit them on a branch.
 
 Not calibrated yet.
+
+## End of a sentence and transcription
+
+Changed October 12, 2026.
+
+- A sentence ends after 0.65 seconds of silence (`utterance_close_sec`). It was 0.5 seconds, which cut people off when they paused to think. 0.8 seconds was tried, then lowered to 0.65 to save time. Each 0.1 second here adds 0.1 second before every reply.
+- `stt_provider` is `"groq"`. Groq's `whisper-large-v3-turbo` transcribes each sentence over the internet, so the audio of the sentence leaves the robot. It mishears fewer words than the local `tiny.en`.
+- Local `faster-whisper` (`tiny.en`) transcribes the sentence instead when `GROQ_API_KEY` is not set, or when a Groq call fails or takes longer than `stt_groq_timeout_sec` (2.5 seconds).
+- `tools/run_node.sh` reads `GROQ_API_KEY` from `conversation_initiator/mvp/.env`.
+- The audio log shows the engine for each sentence, for example `transcribed 3.5 s of audio in 0.4 s (groq)`. At start, the node prints which engine it uses.
+- To keep all audio on the robot, as before, set `stt_provider` to `"local"`.
 
 ## Known limits
 

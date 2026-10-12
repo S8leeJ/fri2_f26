@@ -34,6 +34,7 @@ This is a real message from the audio node (October 2, 2026):
 | `syntactically_complete` | `true` when `transcript` ends with `.`, `?`, or `!`. `false` when it has no end mark, or ends with `...`. `null` when there is no transcript. |
 | `tone` | Level and length of the last utterance. |
 | `engaged`, `robot_speaking` | The two flags, copied back from the input topics. |
+| `trace` | Wall times for the latest transcript: `speech_end`, `closed`, `stt_start`, `stt_done`, `built`. Only when `transcript` has text. `live_node.py` uses it to time each step. |
 
 `audio_context/Ranges.md` explains which values are normal. `audio_context/CALIBRATION.md` has the measurements behind them.
 
@@ -380,6 +381,6 @@ Use this after you complete Part A once.
 
 ## Notes
 
-- **Privacy.** Raw audio stays in memory. The node writes only levels and timestamps to `data/background.db` and `data/voice.db`, in the folder where you start it. Transcription runs only while `engaged` is `true`.
+- **Privacy.** Raw audio stays in memory. The node writes only levels and timestamps to `data/background.db` and `data/voice.db`, in the folder where you start it. Transcription runs only while `engaged` is `true`. With `stt_provider: "groq"` in `config.py` (the default since October 12, 2026), the audio of each sentence goes to Groq for transcription. Set it to `"local"` to keep all audio on the robot.
 - **Vision at the same time.** The audio node and the vision pipeline (`hri_vision/RUN_ON_FLEXO.md`) can run at the same time in separate panes. They use different devices.
 - **Calibration.** `noise_floor_db` is relative to the microphone, so its value changes with the microphone and its volume. The `quiet` cutoff in `config.py` is measured. The `loud` cutoff is a placeholder until someone measures a loud room.

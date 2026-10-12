@@ -225,6 +225,9 @@ false greets left after the filter.
 
 `tts.py` turns each line into audio and saves it in `tts_cache/`. A line
 already in the cache plays from disk with no network call.
+On Linux, a new Deepgram line starts to play while Deepgram still sends it,
+and it is saved to the cache at the end. `live_node.py` uses this, so the
+`tts` step in its trace is the time until the first sound.
 
 Deepgram Aura-2 is the default engine. It supports `rate` through its speed
 setting. It has no volume control, so `tts.py` scales the samples itself.

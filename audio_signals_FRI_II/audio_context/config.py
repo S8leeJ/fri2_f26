@@ -81,7 +81,9 @@ CONFIG = {
                                    # made distant speech almost impossible to
                                    # register, because the detector flickers
                                    # at low SNR and one gap reset the count.
-    "utterance_close_sec": 0.50,
+    "utterance_close_sec": 0.65,   # silence that ends a sentence. 0.5 cut people
+                                   # off when they paused to think. Each 0.1 s
+                                   # here adds 0.1 s before every reply.
     "utterance_max_sec":   15.0,
 
     # --- output timing ---------------------------------------------
@@ -104,6 +106,13 @@ CONFIG = {
                                    # The ring already holds this audio.
 
     # --- gated path, only runs when engaged ------------------------
+    "stt_provider":        "groq", # "groq": Groq's Whisper transcribes over the
+                                   # internet, so the audio of each sentence
+                                   # leaves the robot. "local": faster-whisper on
+                                   # this machine only. groq uses local when
+                                   # GROQ_API_KEY is not set or a call fails.
+    "stt_groq_model":      "whisper-large-v3-turbo",
+    "stt_groq_timeout_sec": 2.5,   # then local transcribes the sentence instead
     "stt_model":           "tiny.en",
     "stt_device":          "cpu",  # keep on cpu even with a GPU, or timings
                                    # here will not match the robot
