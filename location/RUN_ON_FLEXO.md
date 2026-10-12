@@ -18,9 +18,20 @@ Tested on flexo on October 12, 2026.
 `...` is `/home/justin/bwi_ros2/src/bwi_ros2_common`. The map numbers come from the GitHub copy of `bwi_ros2_common`.
 Use `segbot_v2.launch.py`. `segbot_v4.launch.py` needs the package `segway`, which is not installed on flexo.
 
-## 1. Start navigation and RViz
+## Before you start
 
-Log out every other account on flexo. Turn on the Segway base. AMCL needs laser data, and the laser may need power from the base.
+1. Sit at flexo's own screen and log in. RViz needs that screen, so SSH does not work for this.
+2. Log out every other account on flexo. ROS programs in another account can stop yours from seeing each other.
+3. Turn on the Segway base. AMCL needs laser data, and the laser may need power from the base.
+4. Get the code, if your account does not have it yet:
+
+   ```bash
+   cd ~ && git clone https://github.com/S8leeJ/fri2_f26.git
+   ```
+
+5. Open Terminator. Every command below loads ROS itself, so it works in any new terminal.
+
+## 1. Start navigation and RViz
 
 ```bash
 source /home/justin/bwi_ros2/install/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 launch bwi_launch segbot_v2.launch.py
@@ -46,11 +57,17 @@ Keep this terminal running.
 In a new terminal:
 
 ```bash
-ros2 daemon stop ; ros2 topic echo --once /amcl_pose --field pose.pose.position
+source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 daemon stop ; ros2 topic echo --once /amcl_pose --field pose.pose.position
 ```
 
 - Expected: `x: ...  y: ...  z: 0.0`, in meters on the floor 2 map. On October 12, 2026, the robot read `x: -0.13  y: -0.40`.
-- If the command waits and prints nothing, AMCL has no position or no laser data. Do step 2 again, then check the laser with `ros2 topic hz /scan`. You want about 10 Hz.
+- If the command waits and prints nothing, AMCL has no position or no laser data. Do step 2 again, then check the laser:
+
+  ```bash
+  source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 topic hz /scan
+  ```
+
+  You want about 10 Hz. If it prints nothing, turn on the base and wait about 10 seconds.
 
 ## 4. Find the room for a position
 
@@ -80,7 +97,7 @@ EOF
 
 ## 5. Run the `location-context` branch
 
-Do this in your own clone. The branch has no `package.xml`, so run the node with `python3`, not `ros2 run`.
+Do this in your own clone (see Before you start). The branch has no `package.xml`, so run the node with `python3`, not `ros2 run`.
 
 ```bash
 cd ~/fri2_f26 && git fetch && git switch location-context
@@ -103,6 +120,17 @@ cd ~/fri2_f26 && source /opt/ros/humble/setup.bash && export ROS_LOCALHOST_ONLY=
 - On October 12, 2026, the launch printed `Message Filter dropping message: frame 'nav_hokuyo_laser_link' ... earlier than all the data in the transform cache`. RViz and the costmaps dropped laser scans. AMCL then probably cannot correct the pose, so the pose stays where you clicked. For a robot at one fixed spot, this is enough.
 - The launch file publishes `map → odom` and `odom → base_footprint` as fixed transforms (seen in the GitHub copy). So the pose may not follow the robot when it drives. Ask Justin if the robot must be tracked while it moves.
 - The study schema has no location field yet (`conversation_initiator/SCHEMA.md` §8). The team must agree before a location goes into the LLM input.
+
+## Problems
+
+| You see | Do this |
+|---|---|
+| `ros2: command not found` | Use the full command, which starts with `source /opt/ros/humble/setup.bash`. |
+| `Package 'bwi_launch' not found` | The first `source` in step 1 did not run. Run the whole step 1 command again. |
+| `Package 'segway' not found` | You started `segbot_v4.launch.py`. Use `segbot_v2.launch.py`. |
+| Segway or serial port errors | The base is off, or your account cannot open its port. AMCL and RViz still start. |
+| RViz does not open | You are on SSH. Use flexo's own screen. |
+| Step 3 shows nothing, and no warnings in step 1 | Every terminal needs `export ROS_LOCALHOST_ONLY=1`. Log out other accounts. |
 
 ## Stop
 
