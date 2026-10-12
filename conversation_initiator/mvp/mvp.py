@@ -28,7 +28,7 @@ VIGNETTES = pathlib.Path(__file__).parent / "vignettes"
 DEFAULT_MODEL = {
     "anthropic": "claude-haiku-4-5-20251001",
     "gemini": "gemini-3.1-flash-lite",
-    "groq": "openai/gpt-oss-20b",
+    "groq": "openai/gpt-oss-120b",
     "jev": "jev-latest",
 }
 ENV_KEY = {
