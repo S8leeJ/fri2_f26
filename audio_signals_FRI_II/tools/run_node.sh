@@ -32,4 +32,11 @@ echo "✅ audio_context built"
 source "$ROOT/install/setup.bash"
 export ROS_LOCALHOST_ONLY=1
 
+# Groq transcription (stt_provider in config.py) uses the key in the LLM .env file.
+ENV_FILE="$ROOT/../conversation_initiator/mvp/.env"
+if [ -z "$GROQ_API_KEY" ] && [ -f "$ENV_FILE" ]; then
+    KEY="$(grep -E '^GROQ_API_KEY=' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '\r"')"
+    [ -n "$KEY" ] && export GROQ_API_KEY="$KEY"
+fi
+
 exec ros2 run audio_context node

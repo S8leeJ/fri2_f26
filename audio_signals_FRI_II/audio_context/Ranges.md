@@ -17,7 +17,7 @@ Levels are in dBFS. 0 dBFS is the loudest sound that the microphone can record, 
 - Below 5: a faint voice, or a voice far from the robot.
 - It stays for up to 10 seconds after speech stops. `null`: no speech in the last 10 seconds.
 
-**`speech_now`**: someone talks now. It is about 0.5 seconds late. A cough does not count.
+**`speech_now`**: someone talks now. It becomes `true` about 0.25 seconds after a voice starts, and `false` about 0.8 seconds after it stops. A cough does not count.
 
 **`speech_ratio_10s`**: the part of the last 10 seconds that had speech, from 0 to 1.
 - 0.05 to 0.2: one remark, or someone who walks past.
