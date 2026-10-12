@@ -132,7 +132,8 @@ class LiveInitiator(Node):
             pending, end = self.mem.pending, self.mem.last_utterance_end
             consume_pending(self.mem)
         # When the person stopped talking, and when this node first saw the words.
-        heard_at = {"end": end, "seen": pending["t"]} if pending and end else None
+        heard_at = ({"end": end, "seen": pending["t"], "age": pending.get("age"), "ask": now}
+                    if pending and end else None)
         self.busy = True
         threading.Thread(target=self._decide, args=(ctx, heard_at), daemon=True).start()
 
@@ -195,7 +196,11 @@ class LiveInitiator(Node):
     def _log_timing(self, r, heard_at, tts_s):
         parts = []
         if heard_at:
-            parts.append(f"heard {heard_at['seen'] - heard_at['end']:.1f} s")
+            heard = heard_at["seen"] - heard_at["end"]
+            age = heard_at.get("age")
+            split = f" (audio node {age:.1f} s, then {max(0.0, heard - age):.1f} s to here)" if age is not None else ""
+            parts.append(f"heard {heard:.1f} s{split}")
+            parts.append(f"wait {heard_at['ask'] - heard_at['seen']:.1f} s")
         parts.append(f"decide {r.ms1 / 1000:.1f} s")
         if r.ms2:
             parts.append(f"line {r.ms2 / 1000:.1f} s")
