@@ -43,6 +43,7 @@ class Transcriber:
         self.cfg = cfg
         self.rate = cfg["sample_rate"]
         self.verbose = verbose
+        self.log_timing = False    # one line per transcript, without the words
 
         # Depth one: if a request is already waiting, a newer utterance
         # replaces it. Falling behind is better than queueing up stale audio
@@ -164,3 +165,5 @@ class Transcriber:
             if self.verbose:
                 print(f"  TRANSCRIPT ({audio_sec:.1f}s audio in {took:.1f}s): "
                       f"{text!r}")
+            elif self.log_timing:
+                print(f"transcribed {audio_sec:.1f} s of audio in {took:.1f} s", flush=True)

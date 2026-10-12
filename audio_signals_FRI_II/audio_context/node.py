@@ -51,6 +51,7 @@ class AudioContextNode(Node):
             self.get_logger().error(f"config: {problem}")
 
         self.proc = Processor(CONFIG)
+        self.proc.stt.log_timing = True
         self.builder = Builder(CONFIG, self.proc.buffer, self.proc.utterance,
                                self.proc.counters, self.proc.stt,
                                self.proc.tone, bearing=self.proc.bearing)
