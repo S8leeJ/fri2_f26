@@ -170,7 +170,7 @@ No build was run for this doc.
 
 | Branch | Content |
 |---|---|
-| `origin/location-context`, `origin/decision-logic` | `location_context.py` matches the robot's pose to room rectangles. It outputs a `location` block with `room_label` and `room_type`. `decision-logic` adds a ROS node for it. |
+| `origin/location-context`, `origin/decision-logic` | `location_context.py` matches the robot's pose to room rectangles. It outputs a `location` block with `room_label` and `room_type`. `decision-logic` adds a ROS node for it. `location/RUN_ON_FLEXO.md` (on `main`) shows how to start AMCL and RViz on flexo, read `/amcl_pose`, and find the room in the BWI `locations.yaml`. |
 
 Do not commit to these branches unless the owner asks you to.
 
