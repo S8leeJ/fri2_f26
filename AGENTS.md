@@ -20,9 +20,9 @@ The repo has five parts:
 | Part | Directories | Language | Status |
 |---|---|---|---|
 | FRI homework stack | `follower_robot/`, `nav_goals/`, `spatial_transforms/`, `spatial_utils/` | C++, `ament_cmake` | Finished homework. Not used by the study. |
-| LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. ROS node not started. |
-| Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Not connected to the LLM. See §4.2. |
-| Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Not connected to the LLM. See §4.5. |
+| LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. `mvp/live_node.py` runs on `flexo` and speaks. See §4.1. |
+| Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.2. |
+| Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.5. |
 | Fusion | `fusion/` | Python | `fusion_publisher.py` starts the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
@@ -132,8 +132,8 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 | 1: providers | Sep 23 to Oct 1 | `schema.py` with three dialects, a provider interface, an OpenAI backend | Not started. `mvp.py` has two providers inline. |
 | 2: latency | Oct 2 to 8 | Benchmark P50 and P95, pick one model | Not started. `MVP_PLAN.md` has free-tier numbers only. |
 | 3: gate, safety | Oct 9 to 15 | Gate, timeout, post-filter, Langfuse, daily cap | Not started. |
-| 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Started Oct 8. `mvp/live_node.py` subscribes to the fusion `/social_context`, maps it with `mvp/fusion_adapter.py`, runs the gate, LLM and post-filter, and publishes `/initiation_decision`. Dry run by default; `--speak` adds TTS, `/engaged` and `/robot_speaking`. Tested on a laptop with stub ROS modules only. Not yet run on flexo. A plain script, not a colcon package. |
-| 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | `mvp/tts.py`: Deepgram by default, Azure as an option, with a disk cache. The playground plays the lines. Not tested on the robot's speakers. |
+| 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Started Oct 8. `mvp/live_node.py` subscribes to the fusion `/social_context`, maps it with `mvp/fusion_adapter.py`, runs the gate, LLM and post-filter, and publishes `/initiation_decision`. Dry run by default; `--speak` adds TTS, `/engaged` and `/robot_speaking`. Ran on flexo on October 12, 2026. Jev decides. Groq writes the reply, then Anthropic, then Gemini if a call fails (`fusion/tools/check_reply_writers.py` checks the order). Deepgram speaks. It took 3.5 to 4.5 s from the end of a sentence to the start of the reply. Each reply prints a `timing:` line. A plain script, not a colcon package. |
+| 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | `mvp/tts.py`: Deepgram by default, Azure as an option, with a disk cache. The playground plays the lines. `live_node.py --speak` played them on flexo's speakers on October 12, 2026. |
 | 6: evaluation | Oct 30 to Nov 12 | 60 to 100 labeled vignettes, kappa, ablations | Not started. Scope is open (`SCHEMA_COMPARISON.md` §5). |
 | Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. You can type or talk (Deepgram STT), and it speaks the replies. It is a probe tool. It does not measure accuracy. |
 
@@ -150,7 +150,7 @@ Its own `README.md` covers setup.
 `audio_context/node.py` is the ROS node (`ros2 run audio_context node`). It publishes the JSON on `/audio_context` and subscribes to `/engaged` and `/robot_speaking` (`std_msgs/Bool`).
 It ran on `flexo` on October 6, 2026. `audio_signals_FRI_II/RUN_ON_FLEXO.md` has the robot steps.
 Since October 8, 2026, the default microphone is the Azure Kinect's 7-mic array (`input_device: "Azure Kinect"`). `audio_context/Ranges.md` is a short field guide for the LLM system prompt. `audio_context/CALIBRATION.md` has the measurements and the steps to take more.
-`tools/setup_flexo.sh` does the one-time setup and checks that the microphone records. `tools/run_node.sh` builds the package, then starts the node.
+`tools/setup_flexo.sh` does the one-time setup and checks that the microphone records. `tools/run_node.sh` builds the package, then starts the node. It does not start when an audio node already runs, because two nodes would both publish `/audio_context`. The node logs how long Whisper takes for each transcript.
 `tone` holds the level, length, and active ratio of the last utterance. Pitch was removed, because it was wrong on real speech (see `audio_context/tone.py`).
 
 ### 4.3 Homework packages
