@@ -168,7 +168,8 @@ class LiveInitiator(Node):
             f"{final:<13} {reason or ''!s:<32} {r.ms1:5.0f} ms"
             + (f"  heard {heard!r}" if heard else "")
             + (f"  says {line!r}" if line else "")
-            + (f"  (model said {r.action}, blocked)" if blocked_by else ""))
+            + (f"  (model said {r.action}, blocked)" if blocked_by else "")
+            + (f"  no line: {r.speech_error}" if r.speech_error and not line else ""))
 
         if speech and self.tts:
             self._say(speech, r, heard_at)
@@ -225,10 +226,12 @@ class LiveInitiator(Node):
                 f"{g.suppression_rate:.0%} suppressed {g.suppressions}")
 
     def stop(self):
-        if self.pub_speaking:
-            self.pub_speaking.publish(Bool(data=False))
-        if self.pub_engaged:
-            self.pub_engaged.publish(Bool(data=False))
+        for pub in (self.pub_speaking, self.pub_engaged):
+            if pub:
+                try:
+                    pub.publish(Bool(data=False))
+                except Exception:  # noqa: BLE001 - ROS may already be shut down
+                    pass
 
 
 def main():
@@ -247,7 +250,12 @@ def main():
     if not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")
 
-    rclpy.init()
+    try:
+        from rclpy.signals import SignalHandlerOptions
+        # Ctrl+C then leaves ROS running until stop() has sent the last false values.
+        rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
+    except (ImportError, TypeError):
+        rclpy.init()
     node = LiveInitiator(args)
     stopped = (KeyboardInterrupt, getattr(executors, "ExternalShutdownException", KeyboardInterrupt))
     try:
