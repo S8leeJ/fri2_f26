@@ -61,7 +61,6 @@ the audio and vision nodes are wired together.
    `noise_level`, so there is no second call. Jev cannot write text, so a
    `respond` line comes from the first of Groq, Anthropic, and Gemini that
    has a key. If that call fails, the next one is tried.
-   `JEV_REPLY_PROVIDER` picks which one goes first.
 
 Scores come before the action in the schema on purpose. The model commits to
 its reading of the scene first, and then picks the action.

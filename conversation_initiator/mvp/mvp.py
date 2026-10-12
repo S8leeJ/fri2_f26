@@ -523,12 +523,12 @@ _reply_writers = None
 def reply_writers() -> list:
     """(provider, client, model) for each LLM that can write Jev's replies, in the order to try.
 
-    JEV_REPLY_PROVIDER goes first. Then each of REPLY_WRITERS with a key.
+    Always Groq, then Anthropic, then Gemini. A provider with no key is left out,
+    and line_to_say tries the next one when a call fails.
     """
     global _reply_writers
     if _reply_writers is None:
-        names = [os.environ.get("JEV_REPLY_PROVIDER") or ""] + list(REPLY_WRITERS)
-        names = [n for n in dict.fromkeys(names) if n in REPLY_WRITERS and os.environ.get(ENV_KEY[n])]
+        names = [n for n in REPLY_WRITERS if os.environ.get(ENV_KEY[n])]
         _reply_writers = [(n, make_client(n, 5.0), DEFAULT_MODEL[n]) for n in names]
     return _reply_writers
 
