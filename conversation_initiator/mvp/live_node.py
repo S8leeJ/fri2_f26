@@ -115,6 +115,8 @@ class LiveInitiator(Node):
         done = ((self.latest.get("audio") or {}).get("trace") or {}).get("stt_done")
         if done is not None and done != self.trace_arrived[0]:
             self.trace_arrived = (done, time.time())
+            # A new transcript: check the gate now, not on the next tick.
+            self._tick()
 
     def _publish_engaged(self):
         self.pub_engaged.publish(Bool(data=self.args.engaged or self.mem.engaged))

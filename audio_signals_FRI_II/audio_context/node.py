@@ -52,6 +52,9 @@ class AudioContextNode(Node):
 
         self.proc = Processor(CONFIG)
         self.proc.stt.log_timing = True
+        # Publish a new transcript at once, not on the next 1 s tick.
+        self.proc.stt.on_text = self._publish
+        self._build_lock = threading.Lock()
         self.builder = Builder(CONFIG, self.proc.buffer, self.proc.utterance,
                                self.proc.counters, self.proc.stt,
                                self.proc.tone, bearing=self.proc.bearing)
@@ -107,7 +110,9 @@ class AudioContextNode(Node):
 
     def _publish(self):
         try:
-            self.pub.publish(String(data=json.dumps(self.builder.build())))
+            with self._build_lock:
+                data = json.dumps(self.builder.build())
+            self.pub.publish(String(data=data))
         except Exception as e:
             # One bad build should not take the node down, or the robot
             # loses its ears for the rest of the run.

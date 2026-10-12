@@ -35,7 +35,7 @@ def steps(marks: Dict[str, float], ms1: float, ms2: Optional[float],
         if "asked" in marks:
             out.append(("gate", marks["asked"] - marks["seen"]))
     else:
-        out += [(name, marks[b] - marks[a]) for name, a, b in MARKED if a in marks and b in marks]
+        out += [(name, max(0.0, marks[b] - marks[a])) for name, a, b in MARKED if a in marks and b in marks]
     out.append(("decide", ms1 / 1000))
     if ms2:
         out.append(("line", ms2 / 1000))

@@ -91,6 +91,25 @@ class GateUnitTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(reason, "cooldown")
 
+    def test_new_transcript_skips_cooldown(self):
+        state = GateState()
+        note_asked(state, base_ctx(t=0.0))
+        heard = base_ctx(t=1.0, target={"speech": {"detected": True, "partial_transcript": "Hi there."}})
+        self.assertEqual(should_ask_llm(heard, state), (True, "ok"))
+
+    def test_same_transcript_keeps_cooldown(self):
+        state = GateState()
+        heard = {"speech": {"detected": True, "partial_transcript": "Hi there."}}
+        note_asked(state, base_ctx(t=0.0, target=heard))
+        self.assertEqual(should_ask_llm(base_ctx(t=1.0, target=heard), state), (False, "cooldown"))
+
+    def test_transcript_does_not_skip_robot_speaking(self):
+        state = GateState()
+        note_asked(state, base_ctx(t=0.0))
+        ctx = base_ctx(t=1.0, target={"speech": {"detected": True, "partial_transcript": "Hi."}},
+                       robot={"is_speaking": True})
+        self.assertEqual(should_ask_llm(ctx, state), (False, "self_speaking"))
+
     def test_no_material_change_after_cooldown(self):
         state = GateState()
         ctx0 = base_ctx(t=0.0)
