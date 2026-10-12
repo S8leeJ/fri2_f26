@@ -159,7 +159,11 @@ def should_ask_llm(
         return False, "gave_up"
 
     if state.last_asked_t is not None:
-        if now - state.last_asked_t < cfg["min_cooldown_sec"]:
+        heard = (_target(ctx).get("speech") or {}).get("partial_transcript")
+        before = ((_target(state.last_ctx or {}) or {}).get("speech") or {}).get("partial_transcript")
+        # Someone who just spoke to the robot does not wait out the cooldown.
+        new_words = bool(heard) and heard != before
+        if now - state.last_asked_t < cfg["min_cooldown_sec"] and not new_words:
             return False, "cooldown"
 
     # Greeting recently alone is not a hard block — it is a soft signal the LLM
