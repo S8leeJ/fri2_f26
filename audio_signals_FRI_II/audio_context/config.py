@@ -81,7 +81,7 @@ CONFIG = {
                                    # made distant speech almost impossible to
                                    # register, because the detector flickers
                                    # at low SNR and one gap reset the count.
-    "utterance_close_sec": 0.80,   # silence that ends a sentence. 0.5 cut people
+    "utterance_close_sec": 0.65,   # silence that ends a sentence. 0.5 cut people
                                    # off when they paused to think. Each 0.1 s
                                    # here adds 0.1 s before every reply.
     "utterance_max_sec":   15.0,
