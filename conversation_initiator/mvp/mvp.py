@@ -188,14 +188,49 @@ Set rule_fired to the rule ID and a few words, e.g. "R1 target in conversation".
 SYSTEM_3 = "\n\n".join([INTRO, DIMENSIONS_3, FIELD_GUIDE, RULES, ACTIONS_3])
 SYSTEM_6 = "\n\n".join([INTRO, DIMENSIONS_6, FIELD_GUIDE, RULES, ACTIONS_6])
 
+FACTS_PATH = pathlib.Path(__file__).parent / "facts" / "ahg.md"
+
+
+def load_facts(path: pathlib.Path = FACTS_PATH) -> str:
+    """The facts file without its Sources list, which is for people, not the model."""
+    if not path.exists():
+        return "You know no facts about the building."
+    return path.read_text().split("\n## Sources", 1)[0].strip()
+
+
+FACTS = load_facts()
+
 SPEECH_SYSTEM = """A mobile robot in a university building has decided to speak to a \
 nearby person. You are given the scene and the decision.
 
-Write one short line for it to say: under 12 words, friendly and plain. If the action \
-is respond, answer what the person said. context.conversation holds the earlier turns, \
-oldest first; continue from them, so a follow-up like "why?" gets the rest of what the \
-robot started. Do not repeat a line the robot already said. Match the room: soft when \
-ambient.noise_level is quiet, medium when moderate, loud only when the room is loud."""
+Write one line for it to say, friendly and plain. A greeting is under 12 words. A reply \
+that answers a question with a fact may use up to 25 words; other replies stay under 12. \
+If the action is respond, answer what the person said. context.conversation holds the \
+earlier turns, oldest first; continue from them, so a follow-up like "why?" gets the rest \
+of what the robot started. Do not repeat a line the robot already said. Match the room: \
+soft when ambient.noise_level is quiet, medium when moderate, loud only when the room is \
+loud.
+
+Facts rules:
+- First look for the answer in the facts below. If they answer the question, give that \
+answer.
+- State only facts from the list. Speak as the robot ("I"). Describe a lab as "Dr. X's \
+lab"; do not say you belong to it unless the facts say so.
+- If the person asks for directions, a room, a person, or anything else not in the list, \
+say plainly that you don't know that yet. Suggest asking someone in the building, or \
+emailing robotics@utexas.edu.
+- Never guess a name, room, floor, time, or direction.
+
+Examples:
+- "What does Dr. Hart's lab do?" -> "Dr. Hart's Living with Robots Lab builds service \
+robots that work with people in homes, workplaces and public spaces."
+- "How do I get a tour?" -> "You can book a tour on robotics.utexas.edu/visit."
+- "Where is the elevator?" -> "Sorry, I don't know my way around yet. Please ask someone \
+nearby."
+
+Facts you may use:
+
+""" + FACTS
 
 
 VOLUME_FOR_NOISE = {"quiet": "soft", "moderate": "medium", "loud": "loud"}

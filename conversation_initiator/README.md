@@ -145,6 +145,7 @@ conversation_initiator/
     ├── test_stt.py         STT tests, no key needed
     ├── requirements.txt
     ├── .env.example        copy to .env and add your key
+    ├── facts/ahg.md        building facts the robot may say; nothing else
     └── vignettes/          test scenes, 001–025. expect is optional
 ```
 
@@ -399,6 +400,35 @@ goes up after 8 s.
 
 Vision does not measure `in_conversation`, `activity` or `bearing_deg`, so
 the adapter leaves them out. Rules R1 and R4 then depend on the model alone.
+
+## Building facts
+
+`mvp/facts/ahg.md` holds what the robot may say about AHG: the building, the
+Texas Robotics labs and who leads them, the robot itself, and how to book a
+tour. `mvp.py` reads it once at import and adds it to `SPEECH_SYSTEM`, the
+prompt that writes every spoken line. The live node, the playground and
+`mvp.py` all use it.
+
+The prompt tells the model to state only these facts. For directions, rooms,
+schedules or people not in the file, the robot says it does not know yet and
+suggests asking someone nearby or emailing robotics@utexas.edu. A reply that
+answers a fact question may use up to 25 words. Other lines stay under 12.
+The prompt also has three example answers, because the Groq model follows
+examples more closely than rules.
+
+To edit the facts:
+
+- Take each fact from a UT page and add the page to the Sources list at the
+  end. The Sources list is not sent to the model.
+- Keep the file short. The facts go out again with every spoken line, and
+  Groq's free tier allows 8,000 tokens a minute. `test_line_to_say.py` fails
+  above 4,000 characters.
+- Do not add directions until someone checks them in the building. The robot
+  stands in one fixed spot, so "left" or "right" must be measured from there.
+- Restart the playground server or the live node after an edit.
+
+This replaces the "replies defer only" idea from the earlier speech plan for
+questions that the facts answer.
 
 ## Adding a vignette
 

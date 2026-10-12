@@ -7,6 +7,8 @@
 from __future__ import annotations
 
 import os
+import pathlib
+import tempfile
 import unittest
 from unittest import mock
 
@@ -26,6 +28,33 @@ class JevQuestionTests(unittest.TestCase):
     def test_rule_choices_are_only_the_rules(self):
         self.assertEqual(list(mvp.RULE_TEXT), ["R1", "R2", "R3", "R4", "R5", "R6"])
         self.assertTrue(mvp.RULE_TEXT["R1"].startswith("Never greet someone who is in a conversation"))
+
+
+# Each spoken line sends the facts again, and Groq's free tier is 8,000 tokens a minute.
+FACTS_BUDGET_CHARS = 4000
+
+
+class FactsTests(unittest.TestCase):
+    def test_facts_file_is_in_the_prompt(self):
+        self.assertTrue(mvp.FACTS_PATH.exists())
+        self.assertIn("Anna Hiss Gymnasium", mvp.FACTS)
+        self.assertIn("Living with Robots Lab, Dr. Justin Hart", mvp.FACTS)
+        self.assertTrue(mvp.SPEECH_SYSTEM.endswith(mvp.FACTS))
+
+    def test_sources_stay_out_of_the_prompt(self):
+        self.assertIn("## Sources", mvp.FACTS_PATH.read_text())
+        self.assertNotIn("## Sources", mvp.FACTS)
+
+    def test_facts_fit_the_budget(self):
+        self.assertLess(len(mvp.FACTS), FACTS_BUDGET_CHARS)
+
+    def test_prompt_says_to_admit_not_knowing(self):
+        self.assertIn("don't know that yet", mvp.SPEECH_SYSTEM)
+        self.assertIn("Never guess", mvp.SPEECH_SYSTEM)
+
+    def test_missing_file_means_no_facts(self):
+        missing = pathlib.Path(tempfile.gettempdir()) / "no_such_facts.md"
+        self.assertEqual(mvp.load_facts(missing), "You know no facts about the building.")
 
 
 class ReplyWriterTests(unittest.TestCase):
