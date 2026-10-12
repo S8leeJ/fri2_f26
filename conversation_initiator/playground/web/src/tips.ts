@@ -2,7 +2,7 @@ export const TIPS = {
   // Header
   provider: "Which LLM makes the decision. Only providers with a key in mvp/.env appear here.",
   model: "Leave empty to use the provider's default model. Type a model ID to try another one.",
-  save: "Save the current scene as a new vignette file with no label. Label it later, then mvp.py tests it.",
+  save: "Save the current scene as a new vignette file. mvp.py runs it as a regression case.",
   help: "How to use the playground.",
   voice_toggle: "Speak each robot line out loud. Lines already in mvp/tts_cache play with no network call.",
   mic: "Click, speak, then click Stop. Deepgram writes down what you said and sends it as your message.",

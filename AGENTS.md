@@ -134,8 +134,8 @@ Phase dates come from `IMPLEMENTATION_PLAN.md`.
 | 3: gate, safety | Oct 9 to 15 | Gate, timeout, post-filter, Langfuse, daily cap | Not started. |
 | 4: live | Oct 16 to 22 | Real sensor nodes, `dry_run` on the robot | Started Oct 8. `mvp/live_node.py` subscribes to the fusion `/social_context`, maps it with `mvp/fusion_adapter.py`, runs the gate, LLM and post-filter, and publishes `/initiation_decision`. Dry run by default; `--speak` adds TTS, `/engaged` and `/robot_speaking`. Ran on flexo on October 12, 2026. Jev decides. Groq writes the reply, then Anthropic, then Gemini if a call fails (`fusion/tools/check_reply_writers.py` checks the order). Deepgram speaks. It took 3.5 to 4.5 s from the end of a sentence to the start of the reply. Each reply prints a `timing:` line. A plain script, not a colcon package. |
 | 5: speech | Oct 23 to 29 | Prosody enums to SSML, Azure TTS | `mvp/tts.py`: Deepgram by default, Azure as an option, with a disk cache. The playground plays the lines. `live_node.py --speak` played them on flexo's speakers on October 12, 2026. |
-| 6: evaluation | Oct 30 to Nov 12 | 60 to 100 labeled vignettes, kappa, ablations | Not started. Scope is open (`SCHEMA_COMPARISON.md` §5). |
-| Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. You can type or talk (Deepgram STT), and it speaks the replies. It is a probe tool. It does not measure accuracy. |
+| 6: evaluation | Oct 30 to Nov 12 | Participant sessions: the participant decides what is right. No labeling, no kappa. Changed Oct 8 (design doc §9). | Not started. The rating procedure is open (design doc §12). |
+| Extra: playground | Oct 6 | Not in any plan | `conversation_initiator/playground/`: a local React chat UI and a FastAPI server around `mvp.py`. You can type or talk (Deepgram STT), and it speaks the replies. It is a probe and demo tool. It does not produce study results. |
 
 `.gitignore` already ignores `.env`. Item 4 in `IMPLEMENTATION_PLAN.md` §14 is done.
 

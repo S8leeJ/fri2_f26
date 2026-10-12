@@ -184,7 +184,7 @@ def save_vignette(req: NewVignette):
     slug = re.sub(r"[^a-z0-9]+", "_", req.note.lower()).strip("_")[:40] or "scene"
     path = VIGNETTES / ("%s_playground_%s.json" % (num, slug))
     body = {"id": num, "expect": None,
-            "note": req.note or "Saved from the playground. Needs a label.",
+            "note": req.note or "Saved from the playground.",
             "context": req.context}
     with open(path, "x") as f:
         f.write(json.dumps(body, indent=2) + "\n")

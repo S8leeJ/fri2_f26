@@ -191,7 +191,7 @@ The BWI robots are shared machines. Do not put keys in `~/.bashrc` on a shared r
 
 ### Vignette authoring rule
 
-Each vignette is a **single decision moment**, not a sequence. Filename encodes the expectation:
+Each vignette is a **single decision moment**, not a sequence. Vignettes are development fixtures, not study data (Phase 6). The `expect` field is optional. It records what the author expects, so a change that breaks a known case shows up. The filename can encode it:
 
 ```
 003_two_people_talking_nearby__expect_wait.json
@@ -343,7 +343,7 @@ Instrument it. `/initiator_status` should report the **suppression rate** — ta
 
 One trace per gate-passed tick. Span the LLM call, attach `latency_ms`, tokens, cost, chosen action, and the full context as input. Then:
 
-- `scripts/upload_dataset.py` pushes vignettes as dataset items, `expected_output` = human label
+- `scripts/upload_dataset.py` pushes vignettes as dataset items, `expected_output` = the vignette's `expect`, if it has one
 - Failures observed on the robot get pulled into the dataset from the trace UI, becoming regression cases
 
 This replaces the hand-rolled CSV logging in the design doc. Do not build both.
@@ -416,32 +416,34 @@ Escape the text. A transcript containing `&` or `<` will produce invalid SSML an
 
 **Goal:** the results section.
 
+**Decision, October 8, 2026: the participant decides what is right.** There is no labeling round and no human–human κ. `docs/llm_decision_layer.md` §9 has the full method and §12 has the open items.
+
 ### Order of operations
 
-1. **60–100 vignettes** total, mixing hand-authored and harvested
-2. **Three or more humans label each.** Recruit teammates plus two outsiders. Outsiders matter — teammates know what the system is supposed to do and will label to match it.
-3. **Human–human agreement first.** Fleiss' κ, or Krippendorff's α if counts vary. This is your ceiling and it goes in the paper regardless of what it says. If humans agree at κ=0.5, then 70% model accuracy is a good result — and you cannot claim that without this number.
-4. **Adjudicate disagreements** into a reference label.
-5. **Model vs reference:** accuracy, per-class precision/recall/F1, confusion matrix. Spearman's ρ for the ordinal rubric scores. The comparable HRI study reports ρ ≈ 0.82–0.83 for GPT-4 against human social intuitions; that is your yardstick.
-6. **Ablations as Langfuse experiments** on the identical dataset:
+1. **Settle the open items** in the design doc §12: when participants rate, the scale, how they report a missed opportunity, and the conditions per participant.
+2. **Confirm IRB status** with the course staff.
+3. **Log every decision** with a participant ID and the condition: the context JSON, the action, the line, and the latency. The participant's rating must join to the decision it rates.
+4. **Pilot with two or three people.** Fix the procedure before the real sessions.
+5. **Run the sessions.** Each condition is a live run of the same robot at the same spot:
 
-| Run | Input given to the model |
+| Condition | Input given to the model |
 |---|---|
 | `full` | complete context JSON |
 | `audio_only` | ambient + speech fields |
 | `vision_only` | geometry + gaze fields |
 | `context_unaware` | rules only, no JSON |
-| `claude` / `gemini` / `openai` | full context, model swapped |
 
-Each is a dataset run, comparable side by side in the UI. Use versioned datasets so numbers are reproducible after you inevitably add vignettes.
+6. **Analyze:** appropriate and false initiations from the ratings, missed opportunities, and latency P50/P95 per condition.
+
+The vignettes stay as regression fixtures. Run them before each session day, so a prompt change cannot reach a participant untested.
 
 ### Acceptance criteria
 
-- κ reported for human–human agreement
-- Confusion matrix per condition
-- Cross-model comparison table
+- Every robot decision in a session is logged with participant ID, condition, and latency
+- Every participant rating joins to the decision it rates
+- Appropriate, false, and missed initiations reported per condition
 - Latency P50/P95 for the shipped configuration
-- Every number regenerable by re-running one script
+- Every number regenerable from the session logs by one script
 
 ---
 
@@ -465,7 +467,8 @@ Keep unit tests **network-free** by recording provider responses as fixtures. Te
 |---|---|---|
 | Sensor nodes slip past Oct 22 | Blocks integration | Phase 0 fake publisher; this package reaches Phase 3 alone |
 | P95 latency exceeds 800 ms on campus wifi | Feels broken | Bake-off from the robot; gate reduces call frequency; pre-warm on approach |
-| Human agreement is low (κ < 0.4) | Weakens the whole evaluation | Find out in Phase 6 *early*; tighten label definitions and re-label a subset |
+| Too few participants, or ratings that vary a lot | Weakens the whole evaluation | Pilot early; settle the rating scale before the first real session |
+| IRB review takes longer than planned | Delays the sessions | Ask the course staff now |
 | Credit exhausted by a runaway loop | Project stops | Daily cap circuit breaker in Phase 3, not later |
 | Vendor ships a new model mid-project | Numbers go stale | Pin model IDs in `providers.yaml`; re-run bake-off, don't drift |
 | Keys leak from a shared robot | Account compromise | `.env` gitignored before first use; never in `.bashrc` on shared machines |
@@ -480,8 +483,8 @@ Keep unit tests **network-free** by recording provider responses as fixtures. Te
 - [ ] Never speaks when `other_speech_active` and the target is in conversation
 - [ ] Never repeats a greeting to someone who ignored it twice
 - [ ] Every decision traced in Langfuse with latency and cost
-- [ ] 60+ labeled vignettes with human–human κ reported
-- [ ] Four ablation conditions run on the same dataset
+- [ ] Participant sessions run, with every decision logged and rated
+- [ ] Four conditions compared on participant ratings
 - [ ] Cross-model comparison across all three providers
 - [ ] `README.md` lets a teammate run it from scratch in under 10 minutes
 - [ ] No API key anywhere in git history

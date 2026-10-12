@@ -72,7 +72,7 @@ class PostfilterUnitTests(unittest.TestCase):
 
 
 class PostfilterVignetteTests(unittest.TestCase):
-    """A greet forced onto every labelled vignette."""
+    """A greet forced onto every vignette that has an expect."""
 
     def setUp(self):
         self.vignettes = [json.loads(f.read_text()) for f in sorted(VIGNETTES.glob("*.json"))]

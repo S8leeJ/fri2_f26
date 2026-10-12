@@ -94,7 +94,7 @@ export default function App() {
     if (note === null) return;
     try {
       const { file } = await api.saveVignette(ctx, note);
-      push({ kind: "note", text: `Saved as vignettes/${file} (unlabelled).` });
+      push({ kind: "note", text: `Saved as vignettes/${file}.` });
       setPresets(await api.presets());
     } catch (e) {
       push({ kind: "error", text: (e as Error).message });
