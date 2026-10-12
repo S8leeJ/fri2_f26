@@ -238,7 +238,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--provider", default="groq", choices=sorted(DEFAULT_MODEL))
     ap.add_argument("--model", default=None, help="overrides the provider default")
-    ap.add_argument("--rate", type=float, default=3.0, help="ticks per second")
+    ap.add_argument("--rate", type=float, default=10.0, help="ticks per second, the same rate as fusion")
     ap.add_argument("--timeout", type=float, default=8.0, help="seconds per LLM call")
     ap.add_argument("--stale-sec", type=float, default=30.0,
                     help="re-ask after this long even if nothing changed")

@@ -365,7 +365,7 @@ A context from that log can be copied into a vignette.
 | `--engaged` | Dry run that also publishes `/engaged` true, so the audio node transcribes. Use it to test `respond`. |
 | `--speak` | Full loop. Says each line with `tts.py`. Publishes `/robot_speaking` during playback and `/engaged` after the robot speaks. |
 | `--provider`, `--model` | Default `groq` and its default model. |
-| `--rate` | Ticks per second. Default 3. |
+| `--rate` | Ticks per second. Default 10, the same rate as fusion. |
 | `--stale-sec` | Ask again after this long, even with no change. Default 30, because 10 uses up Groq's free tier. |
 | `--timeout` | Seconds per LLM call. Default 8. On a timeout the robot stays silent. |
 
