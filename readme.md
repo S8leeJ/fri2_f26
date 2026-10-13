@@ -110,12 +110,13 @@ python3 ~/fri2_f26/fusion/fusion_publisher.py
 It does these steps in order:
 
 1. Loads ROS 2 and sets `ROS_LOCALHOST_ONLY=1`.
+1. Starts the BWI base (`attention/run_base.sh`): the Segway driver, the lasers, the map, and AMCL, without RViz. It gives `/cmd_vel` and `/odom`, which the turner in `live_node.py` needs. Turn on the Segway first. If `/odom` does not arrive, it prints a ⚠️ warning and goes on, and only turning does not work. `--no-base` skips this step.
 2. Starts the audio node (`audio_signals_FRI_II/tools/run_node.sh`). It rebuilds `audio_context`, opens the Kinect microphone, and publishes `/audio_context` once each second.
 3. Starts the Kinect driver (`hri_vision/scripts/run_driver.sh`), and waits for `K4A Started`. The driver publishes the camera images.
 4. Starts the vision pipeline (`hri_vision/scripts/run_pipeline.sh`). It rebuilds `hri_vision` and publishes `/hri/vision/context` several times each second.
 5. Publishes the newest audio and vision messages together on `/social_context`, 10 times each second, with the age of each.
 
-It prints a ✅ for audio, driver, vision, and publish as each one works, then `Press Ctrl+C to stop.`, and then nothing more.
+It prints a ✅ for audio, driver, vision, base, and publish as each one works, then `Press Ctrl+C to stop.`, and then nothing more.
 If a part does not work, it prints a ❌ and that program's last log lines, then stops what it started.
 A program that already runs is used as it is. Each program writes its output to `fusion/logs/`, and each run clears that folder first.
 `audio.log` also has every `/audio_context` message, one JSON object per line. `pipeline.log` has the vision JSON.

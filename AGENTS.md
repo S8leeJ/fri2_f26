@@ -23,7 +23,7 @@ The repo has six parts:
 | LLM decision layer | `conversation_initiator/` | Python | Offline MVP works. `mvp/live_node.py` runs on `flexo` and speaks. See §4.1. |
 | Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.2. |
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.5. |
-| Fusion | `fusion/` | Python | `fusion_publisher.py` starts the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. |
+| Fusion | `fusion/` | Python | `fusion_publisher.py` starts the BWI base (optional, for turning; `--no-base` skips it), the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. |
 | Attention | `attention/` | Python | `turn_to_person.py` turns the base in place toward the person while `/engaged` is true, and turns back after. `live_node.py --speak` starts it in its own process; `--turn-off`, no base, or no `attention/` folder means no turning. It turns only while `/engaged` is true, and turns back when it becomes false. Rules in `turner.py`, tested offline. Not run on the robot yet. See `attention/RUN_ON_FLEXO.md`. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.

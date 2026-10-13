@@ -25,19 +25,18 @@ The rules were tested offline (`test_turner.py`). A turn test on flexo showed th
 `live_node.py --speak` starts the turner by itself. It needs no terminal of its own.
 It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
-1. **Terminal 1: the base.** It gives `/cmd_vel` and `/odom`. `gui:=false` keeps RViz closed, to save CPU.
+1. **Turn on the Segway.**
 
-   ```bash
-   source /home/justin/bwi_ros2/install/setup.bash && export ROS_LOCALHOST_ONLY=1 && ros2 launch bwi_launch segbot_v2.launch.py gui:=false
-   ```
-
-2. **Terminal 2: the sensors.**
+2. **Terminal 1: the sensors and the base.** `fusion_publisher.py` also starts the BWI base (`attention/run_base.sh`, without RViz), which gives `/cmd_vel` and `/odom`.
 
    ```bash
    python3 ~/fri2_f26/fusion/fusion_publisher.py
    ```
 
-3. **Terminal 3: the decision node, with a dry run of the turner first.** It prints the turns and does not move the robot.
+   - Expected: `✅ base     /odom arrives` among the check marks.
+   - `⚠️ base ... did not happen, so the robot will not turn`: the Segway is off or the base did not start. Everything else works.
+
+3. **Terminal 2: the decision node, with a dry run of the turner first.** It prints the turns and does not move the robot.
 
    ```bash
    cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider jev --turn-dry-run
@@ -49,7 +48,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
    - If it says `left` when you stand on the right, stop and tell the team: the image is mirrored, and the turner needs `--flip`.
    - In a dry run the robot does not move, so you stay off center. `turn took too long, stopped` after 6 seconds is normal here.
 
-4. **Terminal 3: the real run.** Press Ctrl+C, then start it without `--turn-dry-run`:
+4. **Terminal 2: the real run.** Press Ctrl+C, then start it without `--turn-dry-run`:
 
    ```bash
    python3 live_node.py --speak --provider jev
@@ -62,7 +61,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 ## Turn it off or remove it
 
 - Turning is on with `--speak`. The only switch that turns it off is `--turn-off`: `python3 live_node.py --speak --provider jev --turn-off`.
-- Without the base (Terminal 1), there is no `/odom`, so the robot never turns.
+- Without the base (`fusion_publisher.py --no-base`, or the Segway off), there is no `/odom`, so the robot never turns.
 - To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found` and works as before.
 - The turner can also run alone, for tests: `python3 ~/fri2_f26/attention/turn_to_person.py --dry-run`.
 

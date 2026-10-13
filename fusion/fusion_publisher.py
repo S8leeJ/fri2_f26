@@ -7,10 +7,16 @@ One command, in any terminal on flexo:
 
 It starts these run scripts, in this order:
 
+    attention/run_base.sh                    BWI base: Segway, lasers, map, AMCL, no RViz.
+                                             It gives /cmd_vel and /odom for turning.
     audio_signals_FRI_II/tools/run_node.sh   audio node, publishes /audio_context
     hri_vision/scripts/run_driver.sh         Kinect driver
     hri_vision/scripts/run_pipeline.sh       vision pipeline, publishes /hri/vision/context
                                              (starts when the driver says "K4A Started")
+
+The base is optional. If /odom does not arrive, for example because the Segway is
+off, it prints a warning and goes on: everything works except turning.
+--no-base does not start it.
 
 A program that already runs is used as it is, and is not started again.
 Each run clears fusion/logs/ first. Each program writes its output to
@@ -29,7 +35,8 @@ yet is null. A growing age shows a program that stopped.
 
 It prints a check mark for each part when the part works: audio (the first
 /audio_context message arrives), driver (K4A Started), vision (the first
-/hri/vision/context message arrives), and publish. If a part does not work, it
+/hri/vision/context message arrives), base (the first /odom message arrives),
+and publish. If a part does not work, it
 prints a cross and the program's last log lines, then stops what it started.
 
 After it says "Press Ctrl+C to stop", it prints nothing more. Each program's
@@ -37,12 +44,13 @@ output is in fusion/logs/, and a growing age in /social_context shows a program
 that stopped.
 
 Ctrl+C stops the programs that this script started: the pipeline and the audio
-node first, the driver last.
+node first, then the driver, and the base last.
 
 Run the setup script in each folder once before you use this script. This
 script does not install or check anything.
 """
 
+import argparse
 import json
 import os
 import signal
@@ -57,6 +65,7 @@ os.environ["ROS_LOCALHOST_ONLY"] = "1"
 try:
     import rclpy
     from rclpy import executors
+    from nav_msgs.msg import Odometry
     from std_msgs.msg import String
 except ImportError as error:
     # ROS is not loaded in this terminal. Start again inside a shell that loads it.
@@ -72,12 +81,14 @@ RATE_HZ = 10.0
 AUDIO_TIMEOUT_S = 60.0
 DRIVER_TIMEOUT_S = 30.0
 VISION_TIMEOUT_S = 60.0
+BASE_TIMEOUT_S = 30.0      # after vision is ready; the base starts first
 
 # name: (run script, pgrep pattern that matches the program when it already runs)
 PROGRAMS = {
     "audio": (REPO / "audio_signals_FRI_II/tools/run_node.sh", "audio_context[ /]node"),
     "driver": (REPO / "hri_vision/scripts/run_driver.sh", "azure_kinect_ros_driver"),
     "pipeline": (REPO / "hri_vision/scripts/run_pipeline.sh", r"vision_pipeline\.launch\.py"),
+    "base": (REPO / "attention/run_base.sh", r"segbot_v2\.launch\.py"),
 }
 
 
@@ -141,11 +152,12 @@ class StartFailed(Exception):
     pass
 
 
-def check(node, started, reused, label, program, what, ready, timeout):
+def check(node, started, reused, label, program, what, ready, timeout, required=True):
     """Spin the node until ready() is true, then print a check mark.
 
     Raises StartFailed, after it prints the program's last log lines, when the
-    program stops or the time runs out.
+    program stops or the time runs out. A part that is not required prints a
+    warning instead, and check returns False.
     """
     end = time.time() + timeout
     while time.time() < end:
@@ -153,18 +165,23 @@ def check(node, started, reused, label, program, what, ready, timeout):
         if ready():
             note = " (already running)" if program in reused else ""
             print(f"✅ {label:<8} {what}{note}", flush=True)
-            return
+            return True
         proc = started.get(program)
         if proc is not None and proc.poll() is not None:
             break
-    print(f"❌ {label:<8} {what}: did not happen", flush=True)
+    if required:
+        print(f"❌ {label:<8} {what}: did not happen", flush=True)
+    else:
+        print(f"⚠️  {label:<8} {what}: did not happen, so the robot will not turn", flush=True)
     if program in started:
         print(f"   The last lines of {LOGS / (program + '.log')}:", flush=True)
         print(log_tail(program), flush=True)
-    raise StartFailed()
+    if required:
+        raise StartFailed()
+    return False
 
 
-def run(node, latest, started, sender):
+def run(node, latest, started, sender, base):
     reused = set()
 
     def launch(name):
@@ -174,7 +191,10 @@ def run(node, latest, started, sender):
         else:
             started[name] = start(name)
 
-    say(f"starting audio, driver, and vision. Their output is in {LOGS}/")
+    say(f"starting {'the base, ' if base is not None else ''}audio, driver, and vision. "
+        f"Their output is in {LOGS}/")
+    if base is not None:
+        launch("base")             # the slowest to start, so it goes first
     launch("audio")
     launch("driver")
     check(node, started, reused, "audio", "audio", "/audio_context arrives",
@@ -184,6 +204,9 @@ def run(node, latest, started, sender):
     launch("pipeline")
     check(node, started, reused, "vision", "pipeline", "/hri/vision/context arrives",
           lambda: latest["vision"][1] is not None, VISION_TIMEOUT_S)
+    if base is not None:
+        check(node, started, reused, "base", "base", "/odom arrives",
+              lambda: base["odom"], BASE_TIMEOUT_S, required=False)
 
     pub = node.create_publisher(String, "/social_context", 10)
 
@@ -203,6 +226,9 @@ def run(node, latest, started, sender):
 
 
 def main():
+    ap = argparse.ArgumentParser(description="Start audio, vision, and the base, then publish /social_context.")
+    ap.add_argument("--no-base", action="store_true", help="do not start the BWI base, so the robot does not turn")
+    args = ap.parse_args()
     rclpy.init()
     node = rclpy.create_node("fusion_publisher")
     latest = {"audio": (None, None), "vision": (None, None)}
@@ -225,6 +251,9 @@ def main():
 
     node.create_subscription(String, "/audio_context", keep("audio", audio_log), 10)
     node.create_subscription(String, "/hri/vision/context", keep("vision"), 10)
+    base = None if args.no_base else {"odom": False}
+    if base is not None:
+        node.create_subscription(Odometry, "/odom", lambda msg: base.update(odom=True), 10)
 
     # Ctrl+C ends spin with KeyboardInterrupt, or with ExternalShutdownException
     # in newer rclpy versions.
@@ -232,11 +261,11 @@ def main():
                getattr(executors, "ExternalShutdownException", KeyboardInterrupt))
     started = {}
     try:
-        run(node, latest, started, sender)
+        run(node, latest, started, sender, base)
     except stopped:
         pass
     finally:
-        for name in ("pipeline", "audio", "driver"):
+        for name in ("pipeline", "audio", "driver", "base"):
             if name in started:
                 stop(name, started[name])
         audio_log.close()
