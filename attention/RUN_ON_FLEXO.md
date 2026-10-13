@@ -21,7 +21,8 @@ The rules were tested offline (`test_turner.py`). A turn test on flexo showed th
 
 ## Run it
 
-You need four terminals.
+`live_node.py --speak` starts the turner by itself. It needs no terminal of its own.
+It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
 1. **Terminal 1: the base.** It gives `/cmd_vel` and `/odom`. `gui:=false` keeps RViz closed, to save CPU.
 
@@ -35,33 +36,38 @@ You need four terminals.
    python3 ~/fri2_f26/fusion/fusion_publisher.py
    ```
 
-3. **Terminal 3: the decision node.**
+3. **Terminal 3: the decision node, with a dry run of the turner first.** It prints the turns and does not move the robot.
 
    ```bash
-   cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider jev
+   cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider jev --turn-dry-run
    ```
 
-4. **Terminal 4: a dry run first.** It prints what it would do and does not move the robot.
-
-   ```bash
-   python3 ~/fri2_f26/attention/turn_to_person.py --dry-run
-   ```
-
+   - Expected at start: `turning: dry run, prints only`.
    - Stand to the robot's right, about 1.5 m away, and let it greet you.
-   - Expected: `turning right, person ... deg off center (dry run)`.
-   - If it says `left` when you stand on the right, add `--flip` to every command below.
+   - Expected: `turn: turning right, person ... deg off center (dry run)`.
+   - If it says `left` when you stand on the right, stop and tell the team: the image is mirrored, and the turner needs `--flip`.
    - In a dry run the robot does not move, so you stay off center. `turn took too long, stopped` after 6 seconds is normal here.
 
-5. **Terminal 4: the real run.** Press Ctrl+C to end the dry run, then:
+4. **Terminal 3: the real run.** Press Ctrl+C, then start it without `--turn-dry-run`:
 
    ```bash
-   python3 ~/fri2_f26/attention/turn_to_person.py
+   python3 live_node.py --speak --provider jev
    ```
 
-   - Expected: after the greeting, it turns slowly until you are in the middle, then `centered, ... deg from the start`.
-   - Walk away for more than 10 seconds. Expected: `conversation over, turning back ... deg`, then `back at the start heading`.
+   - Expected at start: `turning: on, moves only when the base sends /odom`.
+   - After the greeting, it turns slowly until you are in the middle, then `turn: centered, ... deg from the start`.
+   - Walk away for more than 10 seconds. Expected: `turn: conversation over, turning back ... deg`, then `turn: back at the start heading`.
+
+## Turn it off or remove it
+
+- One run without turning: add `--no-turn` to the `live_node.py` command.
+- Without the base (Terminal 1), there is no `/odom`, so the robot never turns.
+- To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found` and works as before.
+- The turner can also run alone, for tests: `python3 ~/fri2_f26/attention/turn_to_person.py --dry-run`.
 
 ## Settings
+
+These are options of `turn_to_person.py` when it runs alone. `live_node.py` uses the defaults.
 
 | Option | Default | Meaning |
 |---|---|---|
@@ -70,7 +76,7 @@ You need four terminals.
 | `--hold` | 1.0 | Seconds off center before a turn starts |
 | `--stop-within` | 4 | Degrees off center where a turn stops |
 | `--max-turn` | 40 | Most degrees from the rest heading |
-| `--flip` | off | Use it if the dry run names the wrong side |
+| `--flip` | off | Use it if the dry run names the wrong side. Only when the turner runs alone. |
 | `--hfov`, `--image-width` | 90, 1280 | The Kinect color camera at 720P |
 
 ## Known limits

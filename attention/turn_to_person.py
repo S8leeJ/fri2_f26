@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Turn the robot toward the person it talks to, then turn back when the talk ends.
 
-Start it after fusion_publisher.py and live_node.py, with the BWI base running:
+live_node.py --speak starts it in its own process, so it needs no terminal of its own.
+It moves only when the BWI base runs, because it needs /odom. It also runs alone:
 
     python3 ~/fri2_f26/attention/turn_to_person.py --dry-run   # prints, does not move
     python3 ~/fri2_f26/attention/turn_to_person.py             # moves the robot
@@ -114,7 +115,7 @@ class TurnToPerson:
 
         omega, note = self.turner.update(now, engaged, bearing, yaw)
         if note:
-            self.node.get_logger().info(note + (" (dry run)" if self.args.dry_run else ""))
+            self.node.get_logger().info("turn: " + note + (" (dry run)" if self.args.dry_run else ""))
         if self.args.dry_run:
             return
         if omega != 0.0:
@@ -140,7 +141,8 @@ class TurnToPerson:
                 pass
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
+    """The options. live_node.py uses the defaults."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--dry-run", action="store_true", help="print what it would do, do not move")
     ap.add_argument("--speed", type=float, default=0.1, help="turn speed to command, rad/s (default 0.1)")
@@ -152,7 +154,11 @@ def main():
     ap.add_argument("--image-width", type=int, default=1280, help="camera image width in pixels")
     ap.add_argument("--flip", action="store_true", help="use if the dry run names the wrong side")
     ap.add_argument("--topic", default="/hri/vision/person_context")
-    args = ap.parse_args()
+    return ap
+
+
+def main():
+    args = build_parser().parse_args()
 
     try:
         from rclpy.signals import SignalHandlerOptions

@@ -66,6 +66,14 @@ from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
 LOGS = HERE / "live_logs"
+
+# Optional: turn toward the person (attention/ at the repo root). Without that folder,
+# or with --no-turn, this node runs the same and never moves the robot.
+sys.path.insert(0, str(HERE.parent.parent / "attention"))
+try:
+    import turn_to_person  # noqa: E402
+except ImportError:
+    turn_to_person = None
 SUMMARY_EVERY_S = 30.0
 
 
@@ -108,7 +116,19 @@ class LiveInitiator(Node):
         self.tracer = Tracer(LOGS / f"trace_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.jsonl")
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, log {self.log_path}")
+        self.turn = self._start_turning()
         self._warm_up()
+
+    def _start_turning(self):
+        if not self.args.speak or self.args.no_turn:
+            return None
+        if turn_to_person is None:
+            self.get_logger().info("turning: off, attention/turn_to_person.py not found")
+            return None
+        options = turn_to_person.build_parser().parse_args(["--dry-run"] if self.args.turn_dry_run else [])
+        self.get_logger().info("turning: " + ("dry run, prints only" if options.dry_run else
+                                              "on, moves only when the base sends /odom"))
+        return turn_to_person.TurnToPerson(self, options)
 
     def _warm_up(self):
         """Make the clients and open their connections now, not during the first reply."""
@@ -259,6 +279,8 @@ class LiveInitiator(Node):
 
     def stop(self):
         print(self.tracer.summary(), flush=True)
+        if self.turn is not None:
+            self.turn.stop()
         for pub in (self.pub_speaking, self.pub_engaged):
             if pub:
                 try:
@@ -283,6 +305,10 @@ def main():
                     help="dry run with /engaged true, so the audio node transcribes")
     ap.add_argument("--speak", action="store_true",
                     help="say the line with tts.py and publish /robot_speaking and /engaged")
+    ap.add_argument("--no-turn", action="store_true",
+                    help="never turn the robot (attention/turn_to_person.py)")
+    ap.add_argument("--turn-dry-run", action="store_true",
+                    help="print the turns that attention/turn_to_person.py would make, do not move")
     args = ap.parse_args()
     if not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")
