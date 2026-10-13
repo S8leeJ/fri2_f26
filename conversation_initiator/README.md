@@ -397,7 +397,7 @@ goes up after 8 s.
 | `target.dwell_s` | `dwell_time_s` |
 | `target.speech` | A new audio `transcript`, held until one LLM call uses it. A transcript more than 3 s old when first seen is skipped. |
 | `bystanders` | Everyone else with a distance. |
-| `robot`, `recent_decisions`, `conversation` | Kept by the node. A new target, or no target for 10 s, ends the interaction. |
+| `robot`, `recent_decisions`, `conversation` | Kept by the node. A new target ends the interaction. No target for 10 s ends the visit: the robot also forgets that it spoke, so it can greet the next person. |
 
 Vision does not measure `in_conversation`, `activity` or `bearing_deg`, so
 the adapter leaves them out. Rules R1 and R4 then depend on the model alone.
