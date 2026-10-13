@@ -7,7 +7,7 @@
 import math
 import unittest
 
-from turner import Turner, wrap
+from turner import Turner, compensate, wrap
 
 
 def run(turner, t, engaged, bearing, yaw):
@@ -22,14 +22,14 @@ class RuleTests(unittest.TestCase):
     def test_small_offsets_never_turn(self):
         t = Turner()
         for i in range(100):
-            omega, _ = run(t, i * 0.05, True, 10.0, 0.0)
+            omega, _ = run(t, i * 0.05, True, 6.0, 0.0)
             self.assertEqual(omega, 0.0)
 
     def test_waits_hold_time_then_turns_toward_the_person(self):
         t = Turner()
         self.assertEqual(run(t, 0.0, True, 20.0, 0.0)[0], 0.0)
-        self.assertEqual(run(t, 0.5, True, 20.0, 0.0)[0], 0.0)
-        omega, note = run(t, 1.0, True, 20.0, 0.0)
+        self.assertEqual(run(t, 0.2, True, 20.0, 0.0)[0], 0.0)
+        omega, note = run(t, 0.4, True, 20.0, 0.0)
         self.assertLess(omega, 0.0)                 # person on the right: turn right
         self.assertIn("turning right", note)
         omega, _ = Turner().update(0.0, True, -20.0, 0.0)
@@ -118,6 +118,20 @@ class RuleTests(unittest.TestCase):
         self.assertEqual(omega, 0.0)
         self.assertIn("could not get back", note)
 
+    def test_speed_follows_the_angle(self):
+        t = Turner()
+        run(t, 0.0, True, 40.0, 0.0)
+        far, _ = run(t, 0.5, True, 40.0, 0.0)
+        near, _ = run(t, 0.6, True, 6.0, -30.0)
+        self.assertAlmostEqual(far, -t.speed)                 # far off: the fastest speed
+        self.assertLess(abs(near), abs(far))                  # near the center: slower
+        self.assertGreaterEqual(abs(near), t.min_speed)
+
+    def test_compensate_for_an_old_frame(self):
+        # The frame said 20 deg right, but the robot turned 15 deg right since then.
+        self.assertAlmostEqual(compensate(20.0, -15.0, 0.0), 5.0)
+        self.assertAlmostEqual(compensate(-10.0, 175.0, -175.0), -20.0)
+
     def test_wrap(self):
         self.assertAlmostEqual(wrap(-349.2), 10.8)
         self.assertAlmostEqual(wrap(190.0), -170.0)
@@ -152,6 +166,29 @@ class SimulationTests(unittest.TestCase):
             yaw += math.degrees(omega * 2.0) * dt
             now += dt
         self.assertLessEqual(abs(yaw), 40.0 + 1.5)
+
+
+class LagTests(unittest.TestCase):
+    """The camera frame is 0.25 s old, as on flexo."""
+
+    def simulate(self, use_compensation, lag_s=0.25, person_deg=30.0):
+        t, yaw, dt, now, history, worst = Turner(), 0.0, 0.05, 0.0, [], 0.0
+        while now < 8.0:
+            history.append((now, yaw))
+            then = next((y for (ht, y) in reversed(history) if ht <= now - lag_s), history[0][1])
+            seen = wrap(person_deg + then)                     # where the old frame shows the person
+            bearing = compensate(seen, yaw, then) if use_compensation else seen
+            omega, _ = t.update(now, True, bearing, yaw)
+            yaw += math.degrees(omega * 2.0) * dt
+            worst = max(worst, -(person_deg + yaw))            # how far past the person it went
+            now += dt
+        return person_deg + yaw, worst
+
+    def test_compensation_reduces_overshoot(self):
+        end_with, past_with = self.simulate(True)
+        end_without, past_without = self.simulate(False)
+        self.assertLess(abs(end_with), 3.5)                    # centered
+        self.assertLessEqual(past_with, past_without)          # never worse than without
 
 
 if __name__ == "__main__":

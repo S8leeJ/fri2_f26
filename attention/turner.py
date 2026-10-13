@@ -13,6 +13,8 @@ Rules:
   heading, and use it for the whole run, so small errors do not add up.
 - Start a turn only when the person stays more than deadband_deg off center for hold_s,
   then stop within stop_within_deg. So small movements do not turn the robot.
+- Turn faster when the person is far off center and slower near the center, so the turn
+  is smooth: gain times the angle, between min_speed and speed.
 - Never turn more than max_turn_deg away from the remembered heading.
 - When the conversation ends, turn back to the remembered heading.
 - Stop when the person is lost, when the heading is unknown, or when a turn takes too long.
@@ -30,14 +32,25 @@ def wrap(deg: float) -> float:
     return (deg + 180.0) % 360.0 - 180.0
 
 
+def compensate(bearing: float, yaw_now: float, yaw_then: float) -> float:
+    """Where the person is now, from a camera frame taken at heading yaw_then.
+
+    The image is a little old. A right turn since then (yaw goes down) moves the person
+    toward the left of the image by the same angle.
+    """
+    return bearing + wrap(yaw_now - yaw_then)
+
+
 @dataclass
 class Turner:
     # The base turned about twice as fast as commanded on flexo (October 12, 2026), so
-    # 0.1 rad/s gives about 11 degrees each second.
-    speed: float = 0.1
-    deadband_deg: float = 12.0
-    hold_s: float = 1.0
-    stop_within_deg: float = 4.0
+    # 0.2 rad/s gives about 23 degrees each second.
+    speed: float = 0.2                  # fastest commanded turn, rad/s
+    min_speed: float = 0.05             # slowest commanded turn, so the base still moves
+    gain: float = 0.8                   # commanded rad/s for each radian off center
+    deadband_deg: float = 8.0
+    hold_s: float = 0.4
+    stop_within_deg: float = 3.0
     max_turn_deg: float = 40.0
     home_within_deg: float = 2.0
     move_timeout_s: float = 6.0
@@ -52,6 +65,9 @@ class Turner:
 
     def turned(self, yaw: float) -> float:
         return 0.0 if self.home is None else wrap(yaw - self.home)
+
+    def _rate(self, off_deg: float) -> float:
+        return min(self.speed, max(self.min_speed, self.gain * math.radians(abs(off_deg))))
 
     def update(self, now: float, engaged: bool, bearing: Optional[float],
                yaw: Optional[float]) -> Tuple[float, Optional[str]]:
@@ -82,7 +98,7 @@ class Turner:
                 return self._stop("stopped at the %.0f deg limit" % self.max_turn_deg)
             if now - self._since > self.move_timeout_s:
                 return self._stop("turn took too long, stopped")
-            return direction * self.speed, None
+            return direction * self._rate(bearing), None
 
         self.state = "watching"
         if abs(bearing) <= self.deadband_deg or at_limit:
@@ -94,7 +110,7 @@ class Turner:
             return 0.0, None
         self.state, self._since, self._off_since = "turning", now, None
         side = "right" if bearing > 0 else "left"
-        return direction * self.speed, self._note("turning %s, person %.0f deg off center" % (side, abs(bearing)))
+        return direction * self._rate(bearing), self._note("turning %s, person %.0f deg off center" % (side, abs(bearing)))
 
     def _not_engaged(self, now, yaw):
         if self.home is None:
@@ -106,11 +122,11 @@ class Turner:
             return self._stop("back at the start heading", state="idle")
         if self.state != "returning":
             self.state, self._since = "returning", now
-            return (-1.0 if turned > 0 else 1.0) * self.speed, self._note("conversation over, turning back %.0f deg" % turned)
+            return (-1.0 if turned > 0 else 1.0) * self._rate(turned), self._note("conversation over, turning back %.0f deg" % turned)
         if now - self._since > self.return_timeout_s:
             self.home = None
             return self._stop("could not get back to the start heading, stopped", state="idle")
-        return (-1.0 if turned > 0 else 1.0) * self.speed, None
+        return (-1.0 if turned > 0 else 1.0) * self._rate(turned), None
 
     def _stop(self, why: str, state: Optional[str] = None) -> Tuple[float, Optional[str]]:
         moving = self.state in ("turning", "returning")

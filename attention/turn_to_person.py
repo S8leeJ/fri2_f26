@@ -20,11 +20,13 @@ Ctrl+C sends a stop.
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
 import math
 import os
 import sys
 import time
+from collections import deque
 
 # Must match the other nodes on flexo, or they cannot see each other.
 os.environ["ROS_LOCALHOST_ONLY"] = "1"
@@ -43,12 +45,13 @@ except ImportError as error:
     os.execvp("bash", ["bash", "-c", 'source /opt/ros/humble/setup.bash && exec python3 "$0" "$@"',
                        os.path.abspath(__file__), *sys.argv[1:]])
 
-from turner import Turner  # noqa: E402
+from turner import Turner, compensate  # noqa: E402
 
 ENGAGED_STALE_S = 3.0      # live_node.py sends /engaged once a second
 VISION_STALE_S = 1.0
 ODOM_STALE_S = 0.5
 STICKY_M = 0.5             # keep the same person unless someone else is this much nearer
+FRAME_LAG_S = 0.15         # image age to assume when the frame has no usable time
 
 
 def yaw_deg(q) -> float:
@@ -78,6 +81,8 @@ class TurnToPerson:
         self.node, self.args = node, args
         self.turner = Turner(speed=args.speed, deadband_deg=args.deadband, hold_s=args.hold,
                              stop_within_deg=args.stop_within, max_turn_deg=args.max_turn)
+        self.yaw_history = deque(maxlen=200)      # (time, heading), about 10 s of /odom
+        self.frame_t = 0.0                        # when the newest camera frame was taken
         self.engaged = (False, 0.0)
         self.people = ([], 0.0)
         self.yaw = (None, 0.0)
@@ -94,13 +99,28 @@ class TurnToPerson:
         self.engaged = (bool(msg.data), time.time())
 
     def _on_people(self, msg):
+        now = time.time()
         try:
-            self.people = (json.loads(msg.data).get("people", []), time.time())
+            data = json.loads(msg.data)
         except json.JSONDecodeError:
-            pass
+            return
+        self.people = (data.get("people", []), now)
+        stamp = data.get("stamp") or {}
+        taken = stamp.get("sec", 0) + stamp.get("nanosec", 0) / 1e9 if isinstance(stamp, dict) else 0.0
+        # Use the camera time only when it agrees with this clock.
+        self.frame_t = taken if now - 2.0 < taken <= now + 0.1 else now - FRAME_LAG_S
 
     def _on_odom(self, msg):
-        self.yaw = (yaw_deg(msg.pose.pose.orientation), time.time())
+        now = time.time()
+        self.yaw = (yaw_deg(msg.pose.pose.orientation), now)
+        self.yaw_history.append((now, self.yaw[0]))
+
+    def _yaw_at(self, t):
+        if not self.yaw_history:
+            return None
+        times = [h[0] for h in self.yaw_history]
+        i = min(bisect.bisect_left(times, t), len(times) - 1)
+        return self.yaw_history[i][1]
 
     def _tick(self):
         now = time.time()
@@ -114,6 +134,9 @@ class TurnToPerson:
                 bearing = bearing_deg(person["bbox"], self.args.image_width, self.args.hfov)
                 if self.args.flip:
                     bearing = -bearing
+                then = self._yaw_at(self.frame_t)
+                if yaw is not None and then is not None:
+                    bearing = compensate(bearing, yaw, then)
 
         omega, note = self.turner.update(now, engaged, bearing, yaw)
         if note:
@@ -147,10 +170,10 @@ def build_parser() -> argparse.ArgumentParser:
     """The options. live_node.py uses the defaults."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--dry-run", action="store_true", help="print what it would do, do not move")
-    ap.add_argument("--speed", type=float, default=0.1, help="turn speed to command, rad/s (default 0.1)")
-    ap.add_argument("--deadband", type=float, default=12.0, help="degrees off center before a turn starts")
-    ap.add_argument("--hold", type=float, default=1.0, help="seconds off center before a turn starts")
-    ap.add_argument("--stop-within", type=float, default=4.0, help="stop when this many degrees off center")
+    ap.add_argument("--speed", type=float, default=0.2, help="fastest turn speed to command, rad/s (default 0.2)")
+    ap.add_argument("--deadband", type=float, default=8.0, help="degrees off center before a turn starts")
+    ap.add_argument("--hold", type=float, default=0.4, help="seconds off center before a turn starts")
+    ap.add_argument("--stop-within", type=float, default=3.0, help="stop when this many degrees off center")
     ap.add_argument("--max-turn", type=float, default=40.0, help="most degrees from the start heading")
     ap.add_argument("--hfov", type=float, default=90.0, help="camera field of view, degrees (Kinect 720P: 90)")
     ap.add_argument("--image-width", type=int, default=1280, help="camera image width in pixels")
