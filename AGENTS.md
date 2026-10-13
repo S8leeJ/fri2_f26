@@ -15,7 +15,7 @@ The robot is a BWIbot on ROS 2 Humble.
 The research question: can an LLM decide when it is polite for a robot to start a conversation?
 The LLM gets a small JSON description of the scene. It returns a structured decision.
 
-The repo has five parts:
+The repo has six parts:
 
 | Part | Directories | Language | Status |
 |---|---|---|---|
@@ -24,6 +24,7 @@ The repo has five parts:
 | Audio subsystem | `audio_signals_FRI_II/` | Python, `ament_python` | Runs standalone and as a ROS node on `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.2. |
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.5. |
 | Fusion | `fusion/` | Python | `fusion_publisher.py` starts the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. |
+| Attention | `attention/` | Python | `turn_to_person.py` turns the base in place toward the person while `/engaged` is true, and turns back after. Rules in `turner.py`, tested offline. Not run on the robot yet. See `attention/RUN_ON_FLEXO.md`. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
 The homework packages are old. Do not change them unless a person asks.
