@@ -75,11 +75,42 @@ try:
 except ImportError:
     turn_to_person = None
 SUMMARY_EVERY_S = 30.0
+# This run only, next to the audio and vision logs. Each start clears them.
+RUN_LOGS = HERE.parent.parent / "fusion" / "logs"
+
+
+class _TeeLogger:
+    """Sends each line to the ROS log and to fusion/logs/decision.log."""
+
+    def __init__(self, logger, file):
+        self._logger, self._file = logger, file
+
+    def _line(self, level, msg):
+        self._file.write(datetime.datetime.now().strftime("%H:%M:%S") + " " + level + " " + msg + chr(10))
+
+    def info(self, msg, **kwargs):
+        self._logger.info(msg, **kwargs)
+        self._line("INFO", msg)
+
+    def warning(self, msg, **kwargs):
+        self._logger.warning(msg, **kwargs)
+        self._line("WARN", msg)
+
+    def error(self, msg, **kwargs):
+        self._logger.error(msg, **kwargs)
+        self._line("ERROR", msg)
+
+    def __getattr__(self, name):
+        return getattr(self._logger, name)
 
 
 class LiveInitiator(Node):
     def __init__(self, args):
         super().__init__("live_initiator")
+        RUN_LOGS.mkdir(parents=True, exist_ok=True)
+        self.run_log = open(RUN_LOGS / "decision.log", "w", buffering=1)
+        self.run_jsonl = open(RUN_LOGS / "decisions.jsonl", "w", buffering=1)
+        self._tee = _TeeLogger(super().get_logger(), self.run_log)
         self.args = args
         self.model = args.model or DEFAULT_MODEL[args.provider]
         self.client = make_client(args.provider, args.timeout)
@@ -269,10 +300,15 @@ class LiveInitiator(Node):
         if heard_at:
             self.get_logger().info(self.tracer.add(heard_at, r.ms1, r.ms2, tts_s, time.time()))
 
+    def get_logger(self):
+        return getattr(self, "_tee", None) or super().get_logger()
+
     def _publish(self, ctx, out):
         self.pub_decision.publish(String(data=json.dumps(out)))
+        line = json.dumps({"context": ctx, "result": out}) + chr(10)
         with open(self.log_path, "a") as f:
-            f.write(json.dumps({"context": ctx, "result": out}) + "\n")
+            f.write(line)
+        self.run_jsonl.write(line)
 
     def _summary(self):
         g = self.gate
@@ -282,7 +318,9 @@ class LiveInitiator(Node):
                 f"{g.suppression_rate:.0%} suppressed {g.suppressions}")
 
     def stop(self):
-        print(self.tracer.summary(), flush=True)
+        summary = self.tracer.summary()
+        print(summary, flush=True)
+        self.run_log.write(summary + chr(10))
         if self.turn is not None:
             self.turn.stop()
         for pub in (self.pub_speaking, self.pub_engaged):

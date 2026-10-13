@@ -44,6 +44,7 @@ npm-debug.log*
 # Logs. live_logs/ holds transcripts of what people said.
 *.log
 live_logs/
+fusion/logs/
 
 # Local agent config
 .claude/
