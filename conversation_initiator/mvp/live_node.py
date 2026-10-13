@@ -68,7 +68,7 @@ from turn_trace import Tracer  # noqa: E402
 LOGS = HERE / "live_logs"
 
 # Optional: turn toward the person (attention/ at the repo root). Without that folder,
-# or with --no-turn, this node runs the same and never moves the robot.
+# or with --turn-off, this node runs the same and never moves the robot.
 sys.path.insert(0, str(HERE.parent.parent / "attention"))
 try:
     import turn_to_person  # noqa: E402
@@ -120,7 +120,7 @@ class LiveInitiator(Node):
         self._warm_up()
 
     def _start_turning(self):
-        if not self.args.speak or self.args.no_turn:
+        if not self.args.speak or self.args.turn_off:
             return None
         if turn_to_person is None:
             self.get_logger().info("turning: off, attention/turn_to_person.py not found")
@@ -305,7 +305,7 @@ def main():
                     help="dry run with /engaged true, so the audio node transcribes")
     ap.add_argument("--speak", action="store_true",
                     help="say the line with tts.py and publish /robot_speaking and /engaged")
-    ap.add_argument("--no-turn", action="store_true",
+    ap.add_argument("--turn-off", action="store_true",
                     help="never turn the robot (attention/turn_to_person.py)")
     ap.add_argument("--turn-dry-run", action="store_true",
                     help="print the turns that attention/turn_to_person.py would make, do not move")

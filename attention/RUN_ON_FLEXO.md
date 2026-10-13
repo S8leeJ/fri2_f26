@@ -60,7 +60,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
 ## Turn it off or remove it
 
-- One run without turning: add `--no-turn` to the `live_node.py` command.
+- Turning is on with `--speak`. The only switch that turns it off is `--turn-off`: `python3 live_node.py --speak --provider jev --turn-off`.
 - Without the base (Terminal 1), there is no `/odom`, so the robot never turns.
 - To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found` and works as before.
 - The turner can also run alone, for tests: `python3 ~/fri2_f26/attention/turn_to_person.py --dry-run`.
