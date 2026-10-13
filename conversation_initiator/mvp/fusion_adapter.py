@@ -34,7 +34,8 @@ TRANSCRIPT_FRESH_S = 6.0
 # A transcript waits this long for the gate to let an LLM call through.
 PENDING_MAX_S = 15.0
 NO_REPLY_S = 8.0
-LOST_TARGET_S = 10.0
+# Out of view this long ends the conversation (engaged false) and the visit.
+LOST_TARGET_S = 5.0
 # The current target stays the target unless someone else is this much nearer.
 TARGET_STICKY_M = 0.5
 MAX_IGNORED = 2

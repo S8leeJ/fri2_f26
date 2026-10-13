@@ -57,7 +57,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
    - Expected at start: `turning: on, moves only when the base sends /odom`.
    - After the greeting, it turns slowly until you are in the middle, then `turn: centered, ... deg from the start`.
-   - Walk away for more than 10 seconds. Expected: `turn: conversation over, turning back ... deg`, then `turn: back at the start heading`.
+   - Walk away for more than 5 seconds. Expected: `turn: conversation over, turning back ... deg`, then `turn: back at the start heading`.
 
 ## Turn it off or remove it
 
