@@ -75,6 +75,13 @@ class Memory:
         self.pending = None
         self.conversation = []
 
+    def end_visit(self) -> None:
+        """The person left, so the next person starts fresh and can be greeted."""
+        self.end_interaction()
+        self.last_spoke_t = None
+        self.last_utterance = None
+        self.recent = []
+
 
 def _fresh(msg: Dict[str, Any], name: str, limit: float) -> Optional[Dict[str, Any]]:
     data, age = msg.get(name), msg.get(name + "_age_s")
@@ -171,7 +178,7 @@ def fusion_to_context(msg: Dict[str, Any], mem: Memory, now: float) -> Dict[str,
         mem.target_id = chosen.get("id")
         mem.last_target_t = now
     elif mem.last_target_t is not None and now - mem.last_target_t > LOST_TARGET_S:
-        mem.end_interaction()
+        mem.end_visit()
         mem.last_target_t = None
 
     if audio is not None and chosen is not None:

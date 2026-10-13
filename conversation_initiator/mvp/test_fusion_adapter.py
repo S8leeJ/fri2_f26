@@ -169,6 +169,30 @@ class AdapterTests(unittest.TestCase):
         ctx, _ = self.build(wrapper([]), mem, T0 + LOST_TARGET_S + 1)
         self.assertFalse(ctx["robot"]["engaged"])
 
+    def test_after_the_person_leaves_the_robot_can_greet_again(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.5)]), mem, T0)
+        apply_result(mem, "greet", "R5 facing", "Hi!", T0)
+        self.build(wrapper([]), mem, T0 + LOST_TARGET_S + 1)
+        ctx, _ = self.build(wrapper([person(1, 1.5)]), mem, T0 + LOST_TARGET_S + 2)
+        self.assertIsNone(ctx["robot"]["last_spoke_s_ago"])
+        self.assertEqual(ctx["recent_decisions"], [])
+
+    def test_a_short_absence_keeps_the_visit(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.5)]), mem, T0)
+        apply_result(mem, "greet", "R5 facing", "Hi!", T0)
+        self.build(wrapper([]), mem, T0 + 3)
+        ctx, _ = self.build(wrapper([person(1, 1.5)]), mem, T0 + 5)
+        self.assertEqual(ctx["robot"]["last_spoke_s_ago"], 5.0)
+
+    def test_a_new_track_id_does_not_reset_greeted(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.5)]), mem, T0)
+        apply_result(mem, "greet", "R5 facing", "Hi!", T0)
+        ctx, _ = self.build(wrapper([person(2, 1.5)]), mem, T0 + 2)
+        self.assertEqual(ctx["robot"]["last_spoke_s_ago"], 2.0)
+
     def test_missing_sources_still_valid(self):
         msg = {"t": T0, "audio": None, "audio_age_s": None, "vision": None, "vision_age_s": None}
         ctx, _ = self.build(msg)
