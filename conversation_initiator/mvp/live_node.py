@@ -120,7 +120,10 @@ class LiveInitiator(Node):
         self._warm_up()
 
     def _start_turning(self):
-        if not self.args.speak or self.args.turn_off:
+        if not self.args.speak:
+            return None
+        if self.args.turn_off:
+            self.get_logger().info("turning: off (--turn-off)")
             return None
         if turn_to_person is None:
             self.get_logger().info("turning: off, attention/turn_to_person.py not found")
