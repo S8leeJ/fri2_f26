@@ -18,7 +18,10 @@ The base is optional. If /odom does not arrive, for example because the Segway i
 off, it prints a warning and goes on: everything works except turning.
 --no-base does not start it. Without the attention/ folder, it is skipped too.
 
-A program that already runs is used as it is, and is not started again.
+Before it starts anything, it stops what earlier runs left running: an older
+fusion_publisher.py, then the vision pipeline, the audio node, the Kinect driver,
+and the BWI base. It does not stop live_node.py. If a program does not stop,
+for example because another account runs it, it prints the owner and exits.
 Each run clears fusion/logs/ first. Each program writes its output to
 fusion/logs/<name>.log. audio.log also gets every /audio_context message, one
 JSON object per line. pipeline.log has the vision JSON.
@@ -83,33 +86,79 @@ DRIVER_TIMEOUT_S = 30.0
 VISION_TIMEOUT_S = 60.0
 BASE_TIMEOUT_S = 30.0      # after vision is ready; the base starts first
 
-# name: (run script, pgrep pattern that matches the program when it already runs)
+# name: (run script, pgrep pattern for a copy that runs from before)
+# The patterns need "python" or a ROS command, so that an editor with the file open does not match.
 PROGRAMS = {
-    "audio": (REPO / "audio_signals_FRI_II/tools/run_node.sh", "audio_context[ /]node"),
+    "audio": (REPO / "audio_signals_FRI_II/tools/run_node.sh", "python[0-9.]* .*audio_context[ /]node"),
     "driver": (REPO / "hri_vision/scripts/run_driver.sh", "azure_kinect_ros_driver"),
-    "pipeline": (REPO / "hri_vision/scripts/run_pipeline.sh", r"vision_pipeline\.launch\.py"),
-    "base": (REPO / "attention/run_base.sh", r"segbot_v2\.launch\.py"),
+    "pipeline": (REPO / "hri_vision/scripts/run_pipeline.sh",
+                 "ros2 launch hri_vision vision_pipeline|lib/hri_vision/[a-z_]+_node"),
+    "base": (REPO / "attention/run_base.sh", "ros2 launch bwi_launch segbot_v2"),
 }
+# What to stop before a run, in this order, with the seconds to wait after Ctrl+C.
+# An older fusion_publisher.py goes first: on Ctrl+C it stops its own programs.
+OLD = [("older fusion_publisher.py", r"python[0-9.]* [^ ]*fusion_publisher\.py", 60),
+       ("vision pipeline", PROGRAMS["pipeline"][1], 10),
+       ("audio node", PROGRAMS["audio"][1], 10),
+       ("Kinect driver", PROGRAMS["driver"][1], 10),
+       ("BWI base", PROGRAMS["base"][1], 10)]
 
 
 def say(text):
     print(f"[fusion] {text}", flush=True)
 
 
-def already_runs(name):
-    pattern = PROGRAMS[name][1]
-    return subprocess.run(["pgrep", "-f", pattern], capture_output=True).returncode == 0
+def find(pattern):
+    out = subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True).stdout
+    return [int(pid) for pid in out.split() if int(pid) not in (os.getpid(), os.getppid())]
+
+
+def stop_old(pattern, wait_s):
+    """Stop the matching processes and their process groups: Ctrl+C, then SIGTERM, then SIGKILL.
+
+    Returns False if they still run after all three.
+    """
+    for sig, wait in ((signal.SIGINT, wait_s), (signal.SIGTERM, 5), (signal.SIGKILL, 2)):
+        pids = find(pattern)
+        if not pids:
+            return True
+        for pid in pids:
+            try:
+                group = os.getpgid(pid)
+                if group in (0, 1, os.getpgrp()):
+                    os.kill(pid, sig)
+                else:
+                    os.killpg(group, sig)
+            except (ProcessLookupError, PermissionError):
+                pass
+        end = time.time() + wait
+        while time.time() < end and find(pattern):
+            time.sleep(0.2)
+    return not find(pattern)
+
+
+def stop_old_runs():
+    for label, pattern, wait_s in OLD:
+        if not find(pattern):
+            continue
+        if stop_old(pattern, wait_s):
+            say(f"stopped the {label} that ran from before")
+            continue
+        pids = ",".join(str(pid) for pid in find(pattern))
+        owners = subprocess.run(["ps", "-o", "user=,pid=,args=", "-p", pids],
+                                capture_output=True, text=True).stdout
+        print(f"❌ the {label} that ran from before does not stop:", flush=True)
+        for line in owners.splitlines():
+            print("    " + line[:150], flush=True)
+        print("   If another account runs it, log that account out. Then start again.", flush=True)
+        return False
+    return True
 
 
 def clear_logs():
     LOGS.mkdir(parents=True, exist_ok=True)
     for name in PROGRAMS:
         (LOGS / f"{name}.log").write_text("")
-
-
-def note(name, text):
-    with open(LOGS / f"{name}.log", "a") as log:
-        log.write(f"[fusion] {text}\n")
 
 
 def start(name):
@@ -152,7 +201,11 @@ class StartFailed(Exception):
     pass
 
 
-def check(node, started, reused, label, program, what, ready, timeout, required=True):
+def ctrl_c(*_):
+    raise KeyboardInterrupt
+
+
+def check(node, started, label, program, what, ready, timeout, required=True):
     """Spin the node until ready() is true, then print a check mark.
 
     Raises StartFailed, after it prints the program's last log lines, when the
@@ -163,8 +216,7 @@ def check(node, started, reused, label, program, what, ready, timeout, required=
     while time.time() < end:
         rclpy.spin_once(node, timeout_sec=0.2)
         if ready():
-            note = " (already running)" if program in reused else ""
-            print(f"✅ {label:<8} {what}{note}", flush=True)
+            print(f"✅ {label:<8} {what}", flush=True)
             return True
         proc = started.get(program)
         if proc is not None and proc.poll() is not None:
@@ -182,14 +234,8 @@ def check(node, started, reused, label, program, what, ready, timeout, required=
 
 
 def run(node, latest, started, sender, base):
-    reused = set()
-
     def launch(name):
-        if already_runs(name):
-            reused.add(name)
-            note(name, "This program ran before fusion started, so its output is not in this file.")
-        else:
-            started[name] = start(name)
+        started[name] = start(name)
 
     say(f"starting {'the base, ' if base is not None else ''}audio, driver, and vision. "
         f"Their output is in {LOGS}/")
@@ -197,15 +243,15 @@ def run(node, latest, started, sender, base):
         launch("base")             # the slowest to start, so it goes first
     launch("audio")
     launch("driver")
-    check(node, started, reused, "audio", "audio", "/audio_context arrives",
+    check(node, started, "audio", "audio", "/audio_context arrives",
           lambda: latest["audio"][1] is not None, AUDIO_TIMEOUT_S)
-    check(node, started, reused, "driver", "driver", "K4A Started",
-          lambda: "driver" in reused or log_has("driver", "K4A Started"), DRIVER_TIMEOUT_S)
+    check(node, started, "driver", "driver", "K4A Started",
+          lambda: log_has("driver", "K4A Started"), DRIVER_TIMEOUT_S)
     launch("pipeline")
-    check(node, started, reused, "vision", "pipeline", "/hri/vision/context arrives",
+    check(node, started, "vision", "pipeline", "/hri/vision/context arrives",
           lambda: latest["vision"][1] is not None, VISION_TIMEOUT_S)
     if base is not None:
-        check(node, started, reused, "base", "base", "/odom arrives",
+        check(node, started, "base", "base", "/odom arrives",
               lambda: base["odom"], BASE_TIMEOUT_S, required=False)
 
     pub = node.create_publisher(String, "/social_context", 10)
@@ -229,7 +275,11 @@ def main():
     ap = argparse.ArgumentParser(description="Start audio, vision, and the base, then publish /social_context.")
     ap.add_argument("--no-base", action="store_true", help="do not start the BWI base, so the robot does not turn")
     args = ap.parse_args()
+    if not stop_old_runs():
+        sys.exit(1)
     rclpy.init()
+    # Closing the terminal sends SIGHUP. Treat it as Ctrl+C, so the programs stop too.
+    signal.signal(signal.SIGHUP, ctrl_c)
     node = rclpy.create_node("fusion_publisher")
     latest = {"audio": (None, None), "vision": (None, None)}
     sender = {}

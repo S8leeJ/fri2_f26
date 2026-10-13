@@ -118,7 +118,9 @@ It does these steps in order:
 
 It prints a ✅ for audio, driver, vision, base, and publish as each one works, then `Press Ctrl+C to stop.`, and then nothing more.
 If a part does not work, it prints a ❌ and that program's last log lines, then stops what it started.
-A program that already runs is used as it is. Each program writes its output to `fusion/logs/`, and each run clears that folder first.
+Before it starts anything, it stops what earlier runs left running: an older `fusion_publisher.py`, the vision pipeline, the audio node, the Kinect driver, and the base. It does not stop `live_node.py`. If a program does not stop, for example because another account runs it, it prints the owner and exits.
+If you close the terminal, it stops its programs as Ctrl+C does.
+Each program writes its output to `fusion/logs/`, and each run clears that folder first.
 `live_node.py` adds three files there, cleared at each start: `decision.log` holds what its terminal shows, `decisions.jsonl` holds each LLM call with the scene it saw, and `trace.jsonl` holds the time of each step of each reply.
 `conversation_initiator/mvp/live_logs/<date>.jsonl` keeps all LLM calls of the day. Each `live_node.py` start adds a `run_start` line with the run number, and each call has its `run` number. Git ignores `fusion/logs/`, because the logs hold transcripts.
 `audio.log` also has every `/audio_context` message, one JSON object per line. `pipeline.log` has the vision JSON.

@@ -14,10 +14,10 @@
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-if pgrep -f "audio_context[ /]node" > /dev/null; then
+if pgrep -f "python[0-9.]* .*audio_context[ /]node" > /dev/null; then
     echo "❌ FAILED: an audio node already runs. Two nodes would both publish /audio_context."
     echo "   Find it with: ps -eo user,pid,cmd | grep audio_context | grep -v grep"
-    echo "   If it is yours, stop it with: pkill -INT -f \"audio_context[ /]node\""
+    echo "   If it is yours, stop it with: pkill -INT -f \"python[0-9.]* .*audio_context[ /]node\""
     exit 1
 fi
 
