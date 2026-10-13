@@ -9,11 +9,11 @@ The rules were tested offline (`test_turner.py`). A turn test on flexo showed th
 ## What it does
 
 - It turns only while `/engaged` is `true`, that is, after the robot greets or replies.
-- It starts a turn only when the person is more than 8° off center for 0.4 seconds. It stops when the person is within 3°. Small movements do not turn the robot.
+- It starts a turn only when the person is more than 8° off center for 0.3 seconds. It stops when the person is within 3°. Small movements do not turn the robot.
 - It turns faster when the person is far off center and slower near the center, so the turn is smooth. It corrects for the age of the camera image (about 0.2 s), from the `/odom` headings since the image was taken.
 - It never turns more than 40° from the rest heading. The rest heading is the robot's heading at the first conversation of the run.
 - When `/engaged` becomes `false`, it turns back to the rest heading.
-- It turns in place only, at up to about 23° each second. It stops when the person is lost, when `/odom` stops, or when a turn takes longer than 6 seconds. Ctrl+C sends a stop.
+- It turns in place only, at up to about 29° each second. It stops when the person is lost, when `/odom` stops, or when a turn takes longer than 6 seconds. Ctrl+C sends a stop.
 
 ## Before you start
 
@@ -72,9 +72,9 @@ These are options of `turn_to_person.py` when it runs alone. `live_node.py` uses
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--speed` | 0.2 | Fastest turn speed to command, in rad/s. The base turns about twice as fast. |
+| `--speed` | 0.25 | Fastest turn speed to command, in rad/s. The base turns about twice as fast. |
 | `--deadband` | 8 | Degrees off center before a turn starts |
-| `--hold` | 0.4 | Seconds off center before a turn starts |
+| `--hold` | 0.3 | Seconds off center before a turn starts |
 | `--stop-within` | 3 | Degrees off center where a turn stops |
 | `--max-turn` | 40 | Most degrees from the rest heading |
 | `--flip` | off | Use it if the dry run names the wrong side. Only when the turner runs alone. |

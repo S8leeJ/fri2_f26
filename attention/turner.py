@@ -44,12 +44,12 @@ def compensate(bearing: float, yaw_now: float, yaw_then: float) -> float:
 @dataclass
 class Turner:
     # The base turned about twice as fast as commanded on flexo (October 12, 2026), so
-    # 0.2 rad/s gives about 23 degrees each second.
-    speed: float = 0.2                  # fastest commanded turn, rad/s
+    # 0.25 rad/s gives about 29 degrees each second.
+    speed: float = 0.25                 # fastest commanded turn, rad/s
     min_speed: float = 0.05             # slowest commanded turn, so the base still moves
-    gain: float = 0.8                   # commanded rad/s for each radian off center
+    gain: float = 1.0                   # commanded rad/s for each radian off center
     deadband_deg: float = 8.0
-    hold_s: float = 0.4
+    hold_s: float = 0.3
     stop_within_deg: float = 3.0
     max_turn_deg: float = 40.0
     home_within_deg: float = 2.0

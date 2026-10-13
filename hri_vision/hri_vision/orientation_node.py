@@ -32,6 +32,8 @@ class OrientationNode(Node):
         self.declare_parameter("max_rate_hz", 5.0)
         self.declare_parameter("min_pose_detection_confidence", 0.45)
         self.declare_parameter("min_face_detection_confidence", 0.45)
+        # 1: MediaPipe's full-range face model, about 5 m. 0: short-range, about 2 m.
+        self.declare_parameter("face_model_selection", 1)
         self.declare_parameter("sideways_shoulder_ratio", 0.55)
         self.declare_parameter("min_visibility", 0.45)
 
@@ -58,7 +60,7 @@ class OrientationNode(Node):
             ),
         )
         self.face_detector = mp.solutions.face_detection.FaceDetection(
-            model_selection=0,
+            model_selection=int(self.get_parameter("face_model_selection").value),
             min_detection_confidence=float(
                 self.get_parameter("min_face_detection_confidence").value
             ),

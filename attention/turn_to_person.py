@@ -170,9 +170,9 @@ def build_parser() -> argparse.ArgumentParser:
     """The options. live_node.py uses the defaults."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--dry-run", action="store_true", help="print what it would do, do not move")
-    ap.add_argument("--speed", type=float, default=0.2, help="fastest turn speed to command, rad/s (default 0.2)")
+    ap.add_argument("--speed", type=float, default=0.25, help="fastest turn speed to command, rad/s (default 0.25)")
     ap.add_argument("--deadband", type=float, default=8.0, help="degrees off center before a turn starts")
-    ap.add_argument("--hold", type=float, default=0.4, help="seconds off center before a turn starts")
+    ap.add_argument("--hold", type=float, default=0.3, help="seconds off center before a turn starts")
     ap.add_argument("--stop-within", type=float, default=3.0, help="stop when this many degrees off center")
     ap.add_argument("--max-turn", type=float, default=40.0, help="most degrees from the start heading")
     ap.add_argument("--hfov", type=float, default=90.0, help="camera field of view, degrees (Kinect 720P: 90)")

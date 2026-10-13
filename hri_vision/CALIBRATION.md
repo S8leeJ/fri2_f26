@@ -33,7 +33,7 @@ All are in `config/vision.yaml`.
 | person context | `max_depth_age_s` | 0.25 | Depth older than this gives `depth_fresh: false`. |
 | orientation | `max_rate_hz` | 5 | Orientation updates up to 5 times each second. |
 | orientation | `sideways_shoulder_ratio` | 0.55 | Shoulder width divided by torso height. Below this value gives `sideways`. |
-| orientation | face detector | `model_selection=0` | MediaPipe's short-range face model, for faces within about 2 m. |
+| orientation | `face_model_selection` | 1 | MediaPipe's full-range face model, for faces up to about 5 m. It was 0 (short-range, about 2 m) until October 12, 2026. Set it back to 0 in `orientation_node.py` if faces near the robot get missed. |
 | context builder | `orientation_max_age_s` | 1.0 | Orientation older than this gives `orientation_fresh: false`. |
 
 ## Observed on flexo
@@ -74,6 +74,5 @@ Do these on flexo, at the place where the robot will stand. Run the driver and t
 
 These are options for the team. Nothing here is changed.
 
-- MediaPipe's full-range face model (`model_selection=1`) works up to about 5 m. It could extend `facing_robot` beyond 2 m.
 - The center of the person's box could give a left or right angle. Matched with the direction of a voice from the Kinect's microphones, it could tell who talks.
 - A change in the box's left-right position could detect `passing`.
