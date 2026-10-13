@@ -62,7 +62,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
 - Turning is on with `--speak`. The only switch that turns it off is `--turn-off`: `python3 live_node.py --speak --provider jev --turn-off`.
 - Without the base (`fusion_publisher.py --no-base`, or the Segway off), there is no `/odom`, so the robot never turns.
-- To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found` and works as before.
+- To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found`, `fusion_publisher.py` does not start the base, and both work as before.
 - The turner can also run alone, for tests: `python3 ~/fri2_f26/attention/turn_to_person.py --dry-run`.
 
 ## Settings

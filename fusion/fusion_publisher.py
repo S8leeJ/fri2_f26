@@ -16,7 +16,7 @@ It starts these run scripts, in this order:
 
 The base is optional. If /odom does not arrive, for example because the Segway is
 off, it prints a warning and goes on: everything works except turning.
---no-base does not start it.
+--no-base does not start it. Without the attention/ folder, it is skipped too.
 
 A program that already runs is used as it is, and is not started again.
 Each run clears fusion/logs/ first. Each program writes its output to
@@ -252,6 +252,9 @@ def main():
     node.create_subscription(String, "/audio_context", keep("audio", audio_log), 10)
     node.create_subscription(String, "/hri/vision/context", keep("vision"), 10)
     base = None if args.no_base else {"odom": False}
+    if base is not None and not PROGRAMS["base"][0].exists():
+        say("no attention/run_base.sh, so the base is not started and the robot does not turn")
+        base = None
     if base is not None:
         node.create_subscription(Odometry, "/odom", lambda msg: base.update(odom=True), 10)
 
