@@ -35,6 +35,8 @@ try:
     from nav_msgs.msg import Odometry
     from std_msgs.msg import Bool, String
 except ImportError as error:
+    if __name__ != "__main__":
+        raise   # imported by live_node.py: never restart that process
     if os.environ.get("TURN_ROS_LOADED"):
         sys.exit(f"ROS 2 does not load, even after /opt/ros/humble/setup.bash: {error}")
     os.environ["TURN_ROS_LOADED"] = "1"
