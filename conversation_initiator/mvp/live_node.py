@@ -19,12 +19,15 @@ Topics:
     out  /robot_speaking        std_msgs/Bool    only with --speak
 
 Each tick: fusion_adapter builds a v2.0 context, the gate decides whether to
-ask, and one worker thread at a time calls the LLM and the post-filter. Every
-LLM call is appended to live_logs/<date>.jsonl.
+ask, and one worker thread at a time calls the LLM and the post-filter.
 
 Each reply to speech logs one "turn N:" line with the seconds for each step
-(turn_trace.py), and appends it to live_logs/trace_<start time>.jsonl.
-Ctrl+C prints the median and max of each step for the session.
+(turn_trace.py). Ctrl+C prints the median and max of each step for the session.
+
+Logs go to fusion/logs/, and each start clears them: decision.log (the terminal
+lines), decisions.jsonl (each LLM call), and trace.jsonl (each reply's steps).
+Each LLM call also goes to live_logs/<date>.jsonl, which keeps the whole day.
+There, each start adds one "run_start" line, and each call has its run number.
 """
 
 from __future__ import annotations
@@ -65,8 +68,6 @@ from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_w
 from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
-LOGS = HERE / "live_logs"
-
 # Optional: turn toward the person (attention/ at the repo root). Without that folder,
 # or with --turn-off, this node runs the same and never moves the robot.
 sys.path.insert(0, str(HERE.parent.parent / "attention"))
@@ -77,6 +78,8 @@ except ImportError:
 SUMMARY_EVERY_S = 30.0
 # This run only, next to the audio and vision logs. Each start clears them.
 RUN_LOGS = HERE.parent.parent / "fusion" / "logs"
+# The whole day, all runs.
+LOGS = HERE / "live_logs"
 
 
 class _TeeLogger:
@@ -110,6 +113,7 @@ class LiveInitiator(Node):
         RUN_LOGS.mkdir(parents=True, exist_ok=True)
         self.run_log = open(RUN_LOGS / "decision.log", "w", buffering=1)
         self.run_jsonl = open(RUN_LOGS / "decisions.jsonl", "w", buffering=1)
+        (RUN_LOGS / "trace.jsonl").write_text("")
         self._tee = _TeeLogger(super().get_logger(), self.run_log)
         self.args = args
         self.model = args.model or DEFAULT_MODEL[args.provider]
@@ -143,11 +147,13 @@ class LiveInitiator(Node):
             self.create_timer(1.0, self._publish_engaged)
         self.create_timer(SUMMARY_EVERY_S, self._summary)
 
+        self.tracer = Tracer(RUN_LOGS / "trace.jsonl")
         LOGS.mkdir(exist_ok=True)
         self.log_path = LOGS / f"{datetime.date.today().isoformat()}.jsonl"
-        self.tracer = Tracer(LOGS / f"trace_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.jsonl")
+        self.run = self._mark_run_start()
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
-        self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, log {self.log_path}")
+        self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, "
+                               f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
         self.turn = self._start_turning()
         self._warm_up()
 
@@ -305,10 +311,20 @@ class LiveInitiator(Node):
 
     def _publish(self, ctx, out):
         self.pub_decision.publish(String(data=json.dumps(out)))
-        line = json.dumps({"context": ctx, "result": out}) + chr(10)
+        self.run_jsonl.write(json.dumps({"context": ctx, "result": out}) + chr(10))
         with open(self.log_path, "a") as f:
-            f.write(line)
-        self.run_jsonl.write(line)
+            f.write(json.dumps({"run": self.run, "context": ctx, "result": out}) + chr(10))
+
+    def _mark_run_start(self) -> int:
+        try:
+            run = self.log_path.read_text().count('"run_start"') + 1
+        except FileNotFoundError:
+            run = 1
+        mark = {"run_start": datetime.datetime.now().isoformat(timespec="seconds"), "run": run,
+                "provider": self.args.provider, "model": self.model, "speak": self.args.speak}
+        with open(self.log_path, "a") as f:
+            f.write(json.dumps(mark) + chr(10))
+        return run
 
     def _summary(self):
         g = self.gate
