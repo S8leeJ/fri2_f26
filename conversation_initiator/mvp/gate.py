@@ -31,6 +31,10 @@ DEFAULTS: Dict[str, Any] = {
     "noise_delta_db": 6.0,     # material change: noise floor jumped this much
     "max_stale_sec": 10.0,     # force a re-ask even if nothing else changed
     "greet_cooldown_sec": 30.0,  # last_spoke_s_ago under this = greeted recently (R2)
+    # Before a conversation starts, the person must be in view this long and look at the
+    # robot this long before the LLM is asked. 0 turns the check off; live_node.py sets them.
+    "settle_dwell_s": 0.0,
+    "settle_gaze_s": 0.0,
 }
 
 
@@ -78,6 +82,13 @@ def _heard(ctx: Optional[Dict[str, Any]]) -> Optional[str]:
     return (((ctx or {}).get("target") or {}).get("speech") or {}).get("partial_transcript")
 
 
+def settled(ctx: Optional[Dict[str, Any]], cfg: Dict[str, Any]) -> bool:
+    """The person stayed and looked at the robot long enough to be worth asking about."""
+    p = _target(ctx or {}) or {}
+    return (float(p.get("dwell_s") or 0.0) >= cfg["settle_dwell_s"]
+            and float(p.get("gaze_at_robot_s") or 0.0) >= cfg["settle_gaze_s"])
+
+
 def greeted_recently(robot: Dict[str, Any], cfg: Dict[str, Any]) -> bool:
     last = robot.get("last_spoke_s_ago")
     return last is not None and float(last) < cfg["greet_cooldown_sec"]
@@ -113,6 +124,8 @@ def materially_changed(
         if bool(p.get("in_conversation")) != bool(p0.get("in_conversation")):
             return True
         if p.get("motion") != p0.get("motion"):
+            return True
+        if settled(ctx, cfg) != settled(prev, cfg):
             return True
         heard = (p.get("speech") or {}).get("partial_transcript")
         if heard and heard != (p0.get("speech") or {}).get("partial_transcript"):
@@ -166,6 +179,10 @@ def should_ask_llm(
     heard = _heard(ctx)
     if heard and heard != _heard(state.last_ctx):
         return True, "ok"
+
+    # Someone who walks past, even slowly, has not stopped and looked at the robot yet.
+    if not robot.get("engaged") and not settled(ctx, cfg):
+        return False, "not_settled"
 
     if state.last_asked_t is not None:
         if now - state.last_asked_t < cfg["min_cooldown_sec"]:

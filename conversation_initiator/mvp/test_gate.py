@@ -110,6 +110,27 @@ class GateUnitTests(unittest.TestCase):
                        robot={"is_speaking": True})
         self.assertEqual(should_ask_llm(ctx, state), (False, "self_speaking"))
 
+    def test_settle_blocks_a_person_walking_past(self):
+        cfg = {"settle_dwell_s": 2.0, "settle_gaze_s": 1.0}
+        passing = base_ctx(target={"dwell_s": 0.8, "gaze_at_robot_s": 0.3})
+        self.assertEqual(should_ask_llm(passing, GateState(), cfg), (False, "not_settled"))
+        stayed = base_ctx(target={"dwell_s": 2.5, "gaze_at_robot_s": 1.2})
+        self.assertEqual(should_ask_llm(stayed, GateState(), cfg), (True, "ok"))
+
+    def test_settle_does_not_block_a_conversation_or_speech(self):
+        cfg = {"settle_dwell_s": 2.0, "settle_gaze_s": 1.0}
+        engaged = base_ctx(target={"dwell_s": 0.5, "gaze_at_robot_s": 0.0}, robot={"engaged": True})
+        self.assertEqual(should_ask_llm(engaged, GateState(), cfg), (True, "ok"))
+        spoke = base_ctx(target={"dwell_s": 0.5, "gaze_at_robot_s": 0.0,
+                                 "speech": {"detected": True, "partial_transcript": "Hi robot"}})
+        self.assertEqual(should_ask_llm(spoke, GateState(), cfg), (True, "ok"))
+
+    def test_becoming_settled_is_material(self):
+        cfg = {"settle_dwell_s": 2.0, "settle_gaze_s": 1.0}
+        a = base_ctx(target={"dwell_s": 1.5, "gaze_at_robot_s": 1.2})
+        b = base_ctx(target={"dwell_s": 2.1, "gaze_at_robot_s": 1.2})
+        self.assertTrue(materially_changed(b, a, cfg))
+
     def test_no_material_change_after_cooldown(self):
         state = GateState()
         ctx0 = base_ctx(t=0.0)

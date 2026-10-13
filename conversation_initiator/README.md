@@ -374,6 +374,7 @@ A context from that log can be copied into a vignette.
 | `--provider`, `--model` | Default `groq` and its default model. |
 | `--rate` | Ticks per second. Default 10, the same rate as fusion. |
 | `--stale-sec` | Ask again after this long, even with no change. Default 30, because 10 uses up Groq's free tier. |
+| `--settle-dwell`, `--settle-gaze` | Before a conversation starts, a person must be in view this many seconds (default 2) and look at the robot this many seconds (default 1) before the LLM is asked. This stops greetings to people who walk past slowly, because vision reports sideways walking as `stationary`. 0 turns a check off. Speech and an ongoing conversation skip it. |
 | `--timeout` | Seconds per LLM call. Default 8. On a timeout the robot stays silent. |
 
 In a dry run, the node acts as if the robot said each line. So
