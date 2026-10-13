@@ -374,6 +374,7 @@ A context from that log can be copied into a vignette.
 | `--provider`, `--model` | Default `groq` and its default model. |
 | `--rate` | Ticks per second. Default 10, the same rate as fusion. |
 | `--stale-sec` | Ask again after this long, even with no change. Default 30, because 10 uses up Groq's free tier. |
+| `--greet-distance` | Before a conversation starts, nobody farther than this many meters (default 1.5) is greeted, and a person with no measured distance is not greeted. Once a conversation runs, stepping back does not end it. 0 turns it off. |
 | `--settle-dwell`, `--settle-gaze` | Before a conversation starts, a person must be in view this many seconds (default 2) and look at the robot this many seconds (default 1) before the LLM is asked. This stops greetings to people who walk past slowly, because vision reports sideways walking as `stationary`. 0 turns a check off. Speech and an ongoing conversation skip it. |
 | `--turn-off`, `--turn-dry-run` | With `--speak`, the node also runs `attention/turn_to_person.py`, which turns the base toward the person and back. It moves only when the BWI base sends `/odom`. `--turn-dry-run` prints the turns only. `--turn-off` turns it off. It turns only while `/engaged` is true, and turns back to the start heading when `/engaged` becomes false. Without the `attention/` folder, the node runs the same and never moves. |
 | `--timeout` | Seconds per LLM call. Default 8. On a timeout the robot stays silent. |

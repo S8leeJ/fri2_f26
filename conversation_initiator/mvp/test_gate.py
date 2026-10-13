@@ -125,6 +125,20 @@ class GateUnitTests(unittest.TestCase):
                                  "speech": {"detected": True, "partial_transcript": "Hi robot"}})
         self.assertEqual(should_ask_llm(spoke, GateState(), cfg), (True, "ok"))
 
+    def test_nobody_farther_than_the_greet_distance(self):
+        cfg = {"settle_max_distance_m": 1.5}
+        far = base_ctx(target={"distance_m": 2.2, "dwell_s": 5.0, "gaze_at_robot_s": 3.0})
+        self.assertEqual(should_ask_llm(far, GateState(), cfg), (False, "not_settled"))
+        near = base_ctx(target={"distance_m": 1.3, "dwell_s": 5.0, "gaze_at_robot_s": 3.0})
+        self.assertEqual(should_ask_llm(near, GateState(), cfg), (True, "ok"))
+        unknown = base_ctx(target={"distance_m": None, "dwell_s": 5.0, "gaze_at_robot_s": 3.0})
+        self.assertEqual(should_ask_llm(unknown, GateState(), cfg), (False, "not_settled"))
+
+    def test_stepping_back_does_not_end_a_conversation(self):
+        cfg = {"settle_max_distance_m": 1.5}
+        talking = base_ctx(target={"distance_m": 2.5}, robot={"engaged": True})
+        self.assertEqual(should_ask_llm(talking, GateState(), cfg), (True, "ok"))
+
     def test_becoming_settled_is_material(self):
         cfg = {"settle_dwell_s": 2.0, "settle_gaze_s": 1.0}
         a = base_ctx(target={"dwell_s": 1.5, "gaze_at_robot_s": 1.2})

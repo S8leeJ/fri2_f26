@@ -34,7 +34,7 @@ Each field describes what the camera sees. No single field decides what the robo
 - `sideways`: the shoulders look narrow from the robot.
 - `likely_facing_away`: the shoulders look wide, but no face is visible.
 - `unknown`: not measured, for example in the first moment after a person appears.
-- The face detector works up to about 5 m. Farther away, a person who faces the robot can read `likely_facing_away` or `unknown`.
+- The face detector works up to about 2 m. Farther away, a person who faces the robot can read `likely_facing_away` or `unknown`.
 
 **`face_visible`**: `true` when a face is visible, `false` when not. `null` when not measured.
 

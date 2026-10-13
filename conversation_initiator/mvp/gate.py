@@ -31,8 +31,10 @@ DEFAULTS: Dict[str, Any] = {
     "noise_delta_db": 6.0,     # material change: noise floor jumped this much
     "max_stale_sec": 10.0,     # force a re-ask even if nothing else changed
     "greet_cooldown_sec": 30.0,  # last_spoke_s_ago under this = greeted recently (R2)
-    # Before a conversation starts, the person must be in view this long and look at the
-    # robot this long before the LLM is asked. 0 turns the check off; live_node.py sets them.
+    # Before a conversation starts, the person must be within this distance, in view this
+    # long, and look at the robot this long before the LLM is asked. 0 turns a check off;
+    # live_node.py sets them.
+    "settle_max_distance_m": 0.0,
     "settle_dwell_s": 0.0,
     "settle_gaze_s": 0.0,
 }
@@ -83,9 +85,12 @@ def _heard(ctx: Optional[Dict[str, Any]]) -> Optional[str]:
 
 
 def settled(ctx: Optional[Dict[str, Any]], cfg: Dict[str, Any]) -> bool:
-    """The person stayed and looked at the robot long enough to be worth asking about."""
+    """The person is close, stayed, and looked at the robot long enough to be worth asking about."""
     p = _target(ctx or {}) or {}
-    return (float(p.get("dwell_s") or 0.0) >= cfg["settle_dwell_s"]
+    limit = cfg["settle_max_distance_m"]
+    near = limit <= 0 or (p.get("distance_m") is not None and float(p["distance_m"]) <= limit)
+    return (near
+            and float(p.get("dwell_s") or 0.0) >= cfg["settle_dwell_s"]
             and float(p.get("gaze_at_robot_s") or 0.0) >= cfg["settle_gaze_s"])
 
 

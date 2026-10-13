@@ -91,7 +91,8 @@ class LiveInitiator(Node):
         self.mem = Memory()
         self.gate = GateState()
         self.gate_cfg = {"max_stale_sec": args.stale_sec, "settle_dwell_s": args.settle_dwell,
-                         "settle_gaze_s": args.settle_gaze}
+                         "settle_gaze_s": args.settle_gaze,
+                         "settle_max_distance_m": args.greet_distance}
         self.lock = threading.Lock()
         self.busy = False
         self.latest = None
@@ -298,6 +299,8 @@ def main():
     ap.add_argument("--model", default=None, help="overrides the provider default")
     ap.add_argument("--rate", type=float, default=10.0, help="ticks per second, the same rate as fusion")
     ap.add_argument("--timeout", type=float, default=8.0, help="seconds per LLM call")
+    ap.add_argument("--greet-distance", type=float, default=1.5,
+                    help="meters: nobody farther away is greeted; 0 turns it off")
     ap.add_argument("--settle-dwell", type=float, default=2.0,
                     help="seconds a person must be in view before the LLM is asked; 0 turns it off")
     ap.add_argument("--settle-gaze", type=float, default=1.0,
