@@ -56,6 +56,9 @@ class Memory:
     last_target_t: Optional[float] = None
     gaze_since: Dict[int, float] = field(default_factory=dict)
     gaze_last: Dict[int, float] = field(default_factory=dict)
+    # With the rules on (live_node.py --rules), MAX_IGNORED unanswered lines end the
+    # conversation. Without them, the model sees consecutive_no_response and decides.
+    end_when_ignored: bool = True
 
     last_utterance_end: Optional[float] = None
     last_transcript: Optional[str] = None
@@ -198,7 +201,7 @@ def fusion_to_context(msg: Dict[str, Any], mem: Memory, now: float) -> Dict[str,
     if mem.awaiting_reply_since is not None and now - mem.awaiting_reply_since > NO_REPLY_S:
         mem.no_response += 1
         mem.awaiting_reply_since = None
-        if mem.no_response >= MAX_IGNORED:
+        if mem.end_when_ignored and mem.no_response >= MAX_IGNORED:
             mem.engaged = False
 
     target = None

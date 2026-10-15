@@ -125,7 +125,7 @@ class LiveInitiator(Node):
             from tts import from_env
             self.tts = from_env()
 
-        self.mem = Memory()
+        self.mem = Memory(end_when_ignored=self.rules)
         self.gate = GateState()
         self.gate_cfg = {"max_stale_sec": args.stale_sec,
                          "min_cooldown_sec": getattr(args, "cooldown", 1.0),

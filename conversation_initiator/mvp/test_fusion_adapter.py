@@ -154,6 +154,22 @@ class AdapterTests(unittest.TestCase):
         ctx, _ = self.build(wrapper([person(1, 1.5)]), mem, T0 + NO_REPLY_S + 1)
         self.assertEqual(ctx["robot"]["consecutive_no_response"], 1)
 
+    def ignored_twice(self, mem):
+        self.build(wrapper([person(1, 1.5)]), mem, T0)
+        apply_result(mem, "greet", None, "Hi there!", T0)
+        self.build(wrapper([person(1, 1.5)]), mem, T0 + NO_REPLY_S + 1)
+        t = T0 + NO_REPLY_S + 2
+        apply_result(mem, "greet", None, "Hello?", t)
+        ctx, _ = self.build(wrapper([person(1, 1.5)]), mem, t + NO_REPLY_S + 1)
+        self.assertEqual(ctx["robot"]["consecutive_no_response"], 2)
+        return ctx
+
+    def test_ignored_twice_ends_engaged_with_rules(self):
+        self.assertFalse(self.ignored_twice(Memory())["robot"]["engaged"])
+
+    def test_ignored_twice_leaves_it_to_the_model_without_rules(self):
+        self.assertTrue(self.ignored_twice(Memory(end_when_ignored=False))["robot"]["engaged"])
+
     def test_reply_resets_no_response(self):
         mem = Memory(no_response=1)
         self.build(wrapper([person(1, 1.5)]), mem, T0)
