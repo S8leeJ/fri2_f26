@@ -39,6 +39,9 @@ LOST_TARGET_S = 5.0
 # The current target stays the target unless someone else is this much nearer.
 TARGET_STICKY_M = 0.5
 MAX_IGNORED = 2
+# A face missed for this long or less still counts as looking. The face detector
+# runs about 5 times a second and misses single frames.
+GAZE_GRACE_S = 0.6
 MAX_RECENT = 5
 MAX_CONVERSATION = 20
 
@@ -52,6 +55,7 @@ class Memory:
     target_id: Optional[int] = None
     last_target_t: Optional[float] = None
     gaze_since: Dict[int, float] = field(default_factory=dict)
+    gaze_last: Dict[int, float] = field(default_factory=dict)
 
     last_utterance_end: Optional[float] = None
     last_transcript: Optional[str] = None
@@ -109,9 +113,13 @@ def _gaze_s(person: Dict[str, Any], mem: Memory, now: float, orientation_fresh: 
     # The orientation node writes "unknown" when no face is seen, so with fresh
     # orientation it means "not looking".
     if person.get("gaze") != "toward_robot":
+        last = mem.gaze_last.get(pid)
+        if pid in mem.gaze_since and last is not None and now - last <= GAZE_GRACE_S:
+            return round(now - mem.gaze_since[pid], 1)
         mem.gaze_since.pop(pid, None)
         return 0.0
     since = mem.gaze_since.setdefault(pid, now)
+    mem.gaze_last[pid] = now
     return round(now - since, 1)
 
 

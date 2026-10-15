@@ -28,7 +28,7 @@ All are in `config/vision.yaml`.
 | detection | `max_rate_hz` | 12 | The highest detection rate. The real rate depends on the CPU. |
 | person context | `center_crop_fraction` | 0.60 | Distance is the median depth of the middle 60% of the person's box. |
 | person context | `distance_window` | 4 | `distance_m` is the mean of the last 4 readings, so it is about 0.5 seconds late. |
-| person context | `direction_threshold_mm` | 100 | The smoothed distance must change by more than 100 mm between two updates to give `approaching` or `receding`. |
+| person context | `direction_speed_mm_s`, `direction_window_s` | 250, 1.0 | Speed toward or away from the camera, fitted over the last 1 s of depth readings. Faster than 0.25 m/s gives `approaching` or `receding`. Until October 15, 2026, the check was a 100 mm change between two frames, which needed about 1 m/s at 10 frames a second and missed normal walking. |
 | person context | `track_grace_s` | 2.0 | An `id` that is gone for more than 2 seconds starts a new dwell time when it returns. |
 | person context | `max_depth_age_s` | 0.25 | Depth older than this gives `depth_fresh: false`. |
 | orientation | `max_rate_hz` | 5 | Orientation updates up to 5 times each second. |

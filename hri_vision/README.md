@@ -185,7 +185,7 @@ Edit `config/vision.yaml`.
 
 Useful parameters:
 
-- `direction_threshold_mm`: increase if stationary people fluctuate between approaching/receding.
+- `direction_speed_mm_s` (default 250, over `direction_window_s` = 1.0): increase if stationary people fluctuate between approaching/receding.
 - `distance_window`: larger = smoother but slower response.
 - `center_crop_fraction`: smaller values reduce background depth leaking into boxes.
 - `max_rate_hz`: lower if CPU usage is high.

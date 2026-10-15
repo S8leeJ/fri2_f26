@@ -15,7 +15,8 @@ person_context_node:
     center_crop_fraction: 0.60
     min_depth_mm: 250
     max_depth_mm: 8000
-    direction_threshold_mm: 100.0
+    direction_speed_mm_s: 250.0
+    direction_window_s: 1.0
     distance_window: 4
     track_grace_s: 2.0
     max_depth_age_s: 0.25

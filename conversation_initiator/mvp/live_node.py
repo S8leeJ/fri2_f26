@@ -116,7 +116,7 @@ class LiveInitiator(Node):
         (RUN_LOGS / "trace.jsonl").write_text("")
         self._tee = _TeeLogger(super().get_logger(), self.run_log)
         self.args = args
-        self.rules = not getattr(args, "no_rules", False)
+        self.rules = getattr(args, "rules", False)
         use_rules(self.rules)
         self.model = args.model or DEFAULT_MODEL[args.provider]
         self.client = make_client(args.provider, args.timeout)
@@ -133,7 +133,7 @@ class LiveInitiator(Node):
                          "settle_gaze_s": args.settle_gaze,
                          "settle_max_distance_m": args.greet_distance,
                          "social_rules": self.rules,
-                         "fixed_interval_s": 0.0 if self.rules else getattr(args, "every", 1.5)}
+                         "fixed_interval_s": 0.0 if self.rules else getattr(args, "every", 1.0)}
         self.lock = threading.Lock()
         self.speak_lock = threading.Lock()
         self.busy = False
@@ -161,8 +161,8 @@ class LiveInitiator(Node):
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, "
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
-        self.get_logger().info("rules: on (R1 to R6, settle check, social post-filter)" if self.rules
-                               else "rules: off (--no-rules): scene only, the model decides, "
+        self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
+                               else "rules: off: scene only, the model decides, "
                                     f"asked every {self.gate_cfg['fixed_interval_s']:g} s")
         self.turn = self._start_turning()
         self._warm_up()
@@ -297,7 +297,7 @@ class LiveInitiator(Node):
             apply_result(self.mem, final, reason, line, time.time())
 
     def _say_in_background(self, speech, r, heard_at):
-        """--no-rules: talk in another thread, so the LLM is still asked while the robot talks.
+        """Without --rules: talk in another thread, so the LLM is still asked while the robot talks.
 
         Returns False, and says nothing, if a line is already playing.
         """
@@ -388,7 +388,8 @@ def main():
     ap.add_argument("--provider", default="groq", choices=sorted(DEFAULT_MODEL))
     ap.add_argument("--model", default=None, help="overrides the provider default")
     ap.add_argument("--rate", type=float, default=10.0, help="ticks per second, the same rate as fusion")
-    ap.add_argument("--timeout", type=float, default=8.0, help="seconds per LLM call")
+    ap.add_argument("--timeout", type=float, default=2.0,
+                    help="seconds per LLM call; a stuck call blocks decisions this long")
     ap.add_argument("--greet-distance", type=float, default=1.5,
                     help="meters: nobody farther away is greeted; 0 turns it off")
     ap.add_argument("--settle-dwell", type=float, default=2.0,
@@ -407,11 +408,12 @@ def main():
                     help="never turn the robot (attention/turn_to_person.py)")
     ap.add_argument("--turn-dry-run", action="store_true",
                     help="print the turns that attention/turn_to_person.py would make, do not move")
-    ap.add_argument("--no-rules", action="store_true",
-                    help="scene only: no R1 to R6 in the prompt, no settle check, and only the "
-                         "practical post-filter checks; the model decides when to speak")
-    ap.add_argument("--every", type=float, default=1.5,
-                    help="with --no-rules: ask the LLM every this many seconds, with or without "
+    ap.add_argument("--rules", action="store_true",
+                    help="the old rule set: R1 to R6 in the prompt, the settle check, and the "
+                         "social post-filter. Without it, the model decides from the scene alone")
+    ap.add_argument("--no-rules", action="store_true", help=argparse.SUPPRESS)  # the default now
+    ap.add_argument("--every", type=float, default=1.0,
+                    help="without --rules: ask the LLM every this many seconds, with or without "
                          "a person; a new sentence asks at once")
     args = ap.parse_args()
     if not os.environ.get(ENV_KEY[args.provider]):

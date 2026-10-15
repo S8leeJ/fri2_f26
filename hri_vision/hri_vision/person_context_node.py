@@ -8,7 +8,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import classify_direction, median_distance_mm, now_float, safe_json_loads
+from .common import classify_direction, median_distance_mm, now_float, safe_json_loads, speed_mm_s
 
 
 class PersonContextNode(Node):
@@ -21,7 +21,10 @@ class PersonContextNode(Node):
         self.declare_parameter("center_crop_fraction", 0.60)
         self.declare_parameter("min_depth_mm", 250)
         self.declare_parameter("max_depth_mm", 8000)
-        self.declare_parameter("direction_threshold_mm", 100.0)
+        # Walking speed toward or away from the camera, over the last second. A
+        # per-frame distance change depended on the frame rate and missed normal walking.
+        self.declare_parameter("direction_speed_mm_s", 250.0)
+        self.declare_parameter("direction_window_s", 1.0)
         self.declare_parameter("distance_window", 4)
         self.declare_parameter("track_grace_s", 2.0)
         self.declare_parameter("max_depth_age_s", 0.25)
@@ -33,6 +36,7 @@ class PersonContextNode(Node):
         self.first_seen = {}
         self.last_seen = {}
         self.distance_history = defaultdict(lambda: deque(maxlen=4))
+        self.speed_samples = defaultdict(deque)
 
         self.depth_sub = self.create_subscription(
             Image,
@@ -112,6 +116,7 @@ class PersonContextNode(Node):
                 # Same numerical ID returned after a real gap: start a new dwell episode.
                 self.first_seen[track_id] = current
                 self.distance_history[track_id].clear()
+                self.speed_samples[track_id].clear()
 
             self.last_seen[track_id] = current
 
@@ -129,19 +134,19 @@ class PersonContextNode(Node):
                 )
 
             history = self.distance_history[track_id]
-            previous_smoothed = float(np.mean(history)) if history else None
 
             if raw_distance is not None:
                 history.append(raw_distance)
                 smoothed_distance = float(np.mean(history))
-                if previous_smoothed is not None:
-                    delta = smoothed_distance - previous_smoothed
-                    direction = classify_direction(
-                        delta,
-                        float(self.get_parameter("direction_threshold_mm").value),
-                    )
-                else:
-                    direction = "stationary"
+                samples = self.speed_samples[track_id]
+                samples.append((current, raw_distance))
+                window_s = float(self.get_parameter("direction_window_s").value)
+                while current - samples[0][0] > window_s:
+                    samples.popleft()
+                speed = speed_mm_s(samples)
+                direction = "stationary" if speed is None else classify_direction(
+                    speed, float(self.get_parameter("direction_speed_mm_s").value)
+                )
 
             output_people.append(
                 {
@@ -168,6 +173,7 @@ class PersonContextNode(Node):
             self.first_seen.pop(track_id, None)
             self.last_seen.pop(track_id, None)
             self.distance_history.pop(track_id, None)
+            self.speed_samples.pop(track_id, None)
 
         payload = {
             "stamp": data.get("stamp"),

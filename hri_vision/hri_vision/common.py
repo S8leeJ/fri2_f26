@@ -12,6 +12,20 @@ def now_float(node) -> float:
     return node.get_clock().now().nanoseconds / 1_000_000_000.0
 
 
+def speed_mm_s(samples) -> Optional[float]:
+    """Least-squares slope of distance over time, in mm per second. Negative is closer.
+
+    samples: (time_s, distance_mm) pairs, oldest first. None when they span under 0.3 s.
+    """
+    if len(samples) < 3:
+        return None
+    t = np.array([s[0] for s in samples], dtype=float)
+    if t[-1] - t[0] < 0.3:
+        return None
+    d = np.array([s[1] for s in samples], dtype=float)
+    return float(np.polyfit(t - t[0], d, 1)[0])
+
+
 def safe_json_loads(data: str) -> Optional[Dict[str, Any]]:
     try:
         value = json.loads(data)
