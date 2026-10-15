@@ -132,7 +132,8 @@ class LiveInitiator(Node):
                          "settle_dwell_s": args.settle_dwell,
                          "settle_gaze_s": args.settle_gaze,
                          "settle_max_distance_m": args.greet_distance,
-                         "social_rules": self.rules}
+                         "social_rules": self.rules,
+                         "fixed_interval_s": 0.0 if self.rules else getattr(args, "every", 1.5)}
         self.lock = threading.Lock()
         self.busy = False
         self.latest = None
@@ -160,7 +161,8 @@ class LiveInitiator(Node):
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, "
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
         self.get_logger().info("rules: on (R1 to R6, settle check, social post-filter)" if self.rules
-                               else "rules: off (--no-rules): scene only, the model decides")
+                               else "rules: off (--no-rules): scene only, the model decides, "
+                                    f"asked every {self.gate_cfg['fixed_interval_s']:g} s")
         self.turn = self._start_turning()
         self._warm_up()
 
@@ -385,6 +387,9 @@ def main():
     ap.add_argument("--no-rules", action="store_true",
                     help="scene only: no R1 to R6 in the prompt, no settle check, and only the "
                          "practical post-filter checks; the model decides when to speak")
+    ap.add_argument("--every", type=float, default=1.5,
+                    help="with --no-rules: ask the LLM every this many seconds, with or without "
+                         "a person; a new sentence asks at once")
     args = ap.parse_args()
     if not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")

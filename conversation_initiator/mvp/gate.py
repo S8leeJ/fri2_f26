@@ -40,6 +40,9 @@ DEFAULTS: Dict[str, Any] = {
     # False (live_node.py --no-rules): the gate and the post-filter keep only the
     # practical checks, and the model alone decides when it is polite to speak.
     "social_rules": True,
+    # Over 0 (live_node.py --no-rules): ask on this fixed clock, with or without a
+    # person and whether or not the scene changed. A new sentence still asks at once.
+    "fixed_interval_s": 0.0,
 }
 
 
@@ -174,6 +177,9 @@ def should_ask_llm(
     now = _t(ctx)
     robot = _robot(ctx)
 
+    if cfg["fixed_interval_s"] > 0:
+        return _on_the_clock(ctx, state, cfg)
+
     if _target(ctx) is None:
         return False, "no_person"
 
@@ -207,6 +213,17 @@ def should_ask_llm(
     if not stale and not materially_changed(ctx, state.last_ctx, cfg):
         return False, "no_material_change"
 
+    return True, "ok"
+
+
+def _on_the_clock(ctx: Dict[str, Any], state: GateState, cfg: Dict[str, Any]) -> Tuple[bool, str]:
+    if _robot(ctx).get("is_speaking"):
+        return False, "self_speaking"
+    heard = _heard(ctx)
+    if heard and heard != _heard(state.last_ctx):
+        return True, "ok"
+    if state.last_asked_t is not None and _t(ctx) - state.last_asked_t < cfg["fixed_interval_s"]:
+        return False, "interval"
     return True, "ok"
 
 

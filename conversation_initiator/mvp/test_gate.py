@@ -152,6 +152,25 @@ class GateUnitTests(unittest.TestCase):
         self.assertEqual(should_ask_llm(base_ctx(t=1.0, target={"distance_m": 1.0}), state, cfg),
                          (False, "cooldown"))
 
+    def test_fixed_clock_asks_even_with_nobody_and_no_change(self):
+        cfg = {"social_rules": False, "fixed_interval_s": 1.5}
+        state = GateState()
+        self.assertEqual(should_ask_llm(base_ctx(t=0.0, target=None), state, cfg), (True, "ok"))
+        note_asked(state, base_ctx(t=0.0, target=None))
+        self.assertEqual(should_ask_llm(base_ctx(t=1.0, target=None), state, cfg), (False, "interval"))
+        self.assertEqual(should_ask_llm(base_ctx(t=1.6, target=None), state, cfg), (True, "ok"))
+        note_asked(state, base_ctx(t=1.6))
+        self.assertEqual(should_ask_llm(base_ctx(t=3.2), state, cfg), (True, "ok"))
+
+    def test_fixed_clock_asks_at_once_for_a_new_sentence(self):
+        cfg = {"social_rules": False, "fixed_interval_s": 1.5}
+        state = GateState()
+        note_asked(state, base_ctx(t=0.0))
+        spoke = base_ctx(t=0.3, target={"speech": {"detected": True, "partial_transcript": "Hi"}})
+        self.assertEqual(should_ask_llm(spoke, state, cfg), (True, "ok"))
+        speaking = base_ctx(t=5.0, robot={"is_speaking": True})
+        self.assertEqual(should_ask_llm(speaking, state, cfg), (False, "self_speaking"))
+
     def test_stepping_back_does_not_end_a_conversation(self):
         cfg = {"settle_max_distance_m": 1.5}
         talking = base_ctx(target={"distance_m": 2.5}, robot={"engaged": True})
