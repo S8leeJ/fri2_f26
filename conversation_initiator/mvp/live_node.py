@@ -127,7 +127,9 @@ class LiveInitiator(Node):
 
         self.mem = Memory()
         self.gate = GateState()
-        self.gate_cfg = {"max_stale_sec": args.stale_sec, "settle_dwell_s": args.settle_dwell,
+        self.gate_cfg = {"max_stale_sec": args.stale_sec,
+                         "min_cooldown_sec": getattr(args, "cooldown", 1.0),
+                         "settle_dwell_s": args.settle_dwell,
                          "settle_gaze_s": args.settle_gaze,
                          "settle_max_distance_m": args.greet_distance,
                          "social_rules": self.rules}
@@ -368,6 +370,8 @@ def main():
                     help="seconds a person must be in view before the LLM is asked; 0 turns it off")
     ap.add_argument("--settle-gaze", type=float, default=1.0,
                     help="seconds a person must look at the robot before the LLM is asked; 0 turns it off")
+    ap.add_argument("--cooldown", type=float, default=1.0,
+                    help="seconds between LLM calls; a new sentence skips it (was 3)")
     ap.add_argument("--stale-sec", type=float, default=30.0,
                     help="re-ask after this long even if nothing changed")
     ap.add_argument("--engaged", action="store_true",

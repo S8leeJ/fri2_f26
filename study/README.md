@@ -13,7 +13,7 @@ to the robot's logged decisions and makes the tables for the paper.
 | Part | With `--no-rules` |
 |---|---|
 | LLM prompt | The scene JSON, the field guide, the six rubric scales, the actions. No R1 to R6. Jev gets no `rule_fired` question. |
-| Gate (before the LLM) | Practical checks only: nobody in view, the robot is talking, under 3 s since the last call, nothing changed. No settle check, no 1.5 m limit, no "gave up". |
+| Gate (before the LLM) | Practical checks only: nobody in view, the robot is talking, under 1 s since the last call (`--cooldown`), nothing changed. No settle check, no 1.5 m limit, no "gave up". |
 | Post-filter (after the LLM) | Practical checks only: nobody there, the robot is talking, a reply with no transcript, the person is mid-sentence. No R1 or R2 blocks. |
 | Session handling | Unchanged: 5 s out of view ends the conversation. Two replies with no answer end `engaged` (`fusion_adapter.py`). |
 
