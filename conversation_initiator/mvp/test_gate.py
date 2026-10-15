@@ -169,7 +169,7 @@ class GateUnitTests(unittest.TestCase):
         spoke = base_ctx(t=0.3, target={"speech": {"detected": True, "partial_transcript": "Hi"}})
         self.assertEqual(should_ask_llm(spoke, state, cfg), (True, "ok"))
         speaking = base_ctx(t=5.0, robot={"is_speaking": True})
-        self.assertEqual(should_ask_llm(speaking, state, cfg), (False, "self_speaking"))
+        self.assertEqual(should_ask_llm(speaking, state, cfg), (True, "ok"))
 
     def test_stepping_back_does_not_end_a_conversation(self):
         cfg = {"settle_max_distance_m": 1.5}

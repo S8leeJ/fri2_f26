@@ -13,9 +13,9 @@ to the robot's logged decisions and makes the tables for the paper.
 | Part | With `--no-rules` |
 |---|---|
 | LLM prompt | The scene JSON, the field guide, the six rubric scales, the actions. No R1 to R6. Jev gets no `rule_fired` question. |
-| Gate (before the LLM) | A fixed clock: the LLM is asked every 1.5 s (`--every`), with or without a person in view, whether or not the scene changed. A new sentence from the person asks at once. No call while the robot talks. No settle check, no 1.5 m limit, no "gave up". |
-| Post-filter (after the LLM) | Practical checks only: nobody there, the robot is talking, a reply with no transcript, the person is mid-sentence. No R1 or R2 blocks. |
-| Session handling | Unchanged: 5 s out of view ends the conversation. Two replies with no answer end `engaged` (`fusion_adapter.py`). |
+| Gate (before the LLM) | A fixed clock: the LLM is asked every 1.5 s (`--every`), with or without a person in view, whether or not the scene changed. A new sentence from the person asks at once. The LLM is also asked while the robot talks; it sees `is_speaking: true`. No settle check, no 1.5 m limit, no "gave up". |
+| Post-filter (after the LLM) | Practical checks only: nobody there, the robot is talking, a reply with no transcript, the person is mid-sentence. No R1 or R2 blocks. If the LLM chooses to speak while a line is playing, the second line is not played, and the log keeps the LLM's choice (`analyze.py` counts these). |
+| Session handling | The robot talks in the background, so the LLM keeps deciding. `last_spoke_s_ago` counts from the start of the line. 5 s out of view ends the conversation. Two replies with no answer end `engaged` (`fusion_adapter.py`). |
 
 Report all of these in the method section.
 

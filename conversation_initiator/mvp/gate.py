@@ -217,8 +217,7 @@ def should_ask_llm(
 
 
 def _on_the_clock(ctx: Dict[str, Any], state: GateState, cfg: Dict[str, Any]) -> Tuple[bool, str]:
-    if _robot(ctx).get("is_speaking"):
-        return False, "self_speaking"
+    # Also while the robot talks: the model sees is_speaking and decides.
     heard = _heard(ctx)
     if heard and heard != _heard(state.last_ctx):
         return True, "ok"

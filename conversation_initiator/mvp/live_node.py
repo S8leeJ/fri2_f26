@@ -135,6 +135,7 @@ class LiveInitiator(Node):
                          "social_rules": self.rules,
                          "fixed_interval_s": 0.0 if self.rules else getattr(args, "every", 1.5)}
         self.lock = threading.Lock()
+        self.speak_lock = threading.Lock()
         self.busy = False
         self.latest = None
         self.bad_ctx_logged = 0.0
@@ -286,11 +287,33 @@ class LiveInitiator(Node):
             + (f"  no line: {r.speech_error}" if r.speech_error and not line else ""))
 
         if speech and self.tts:
-            self._say(speech, r, heard_at)
+            if self.rules:
+                self._say(speech, r, heard_at)
+            elif not self._say_in_background(speech, r, heard_at):
+                line = None
         elif speech:
             self._trace(r, heard_at, None)
         with self.lock:
             apply_result(self.mem, final, reason, line, time.time())
+
+    def _say_in_background(self, speech, r, heard_at):
+        """--no-rules: talk in another thread, so the LLM is still asked while the robot talks.
+
+        Returns False, and says nothing, if a line is already playing.
+        """
+        if not self.speak_lock.acquire(blocking=False):
+            self.get_logger().info(f"line not played, the robot is already talking: {speech.text!r}")
+            return False
+        self.mem.speaking = True
+
+        def run():
+            try:
+                self._say(speech, r, heard_at)
+            finally:
+                self.speak_lock.release()
+
+        threading.Thread(target=run, daemon=True).start()
+        return True
 
     def _say(self, speech, r=None, heard_at=None):
         self.mem.speaking = True

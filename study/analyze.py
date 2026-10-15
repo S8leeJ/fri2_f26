@@ -93,6 +93,8 @@ def match(trials, decisions, traces, grace):
                                   "appropriate", "outcome", "outcome_text", "comment")},
             "duration_s": round(tr["end_t"] - tr["start_t"], 1),
             "llm_calls": len(inside),
+            "spoke_over": sum(1 for d in inside if d["blocked_by"] == "self_speaking"
+                              and d["action_raw"] in SPEAKS),
             "logged_mode": "/".join(sorted(modes)) or "no call",
             "robot_spoke": robot_spoke,
             "first_speech_s": round(spoken[0]["t"] - tr["start_t"], 2) if spoken else None,
@@ -171,6 +173,8 @@ def summarize(rows):
                + (f", mean rating {mean_sd([r['appropriate'] for r in false_starts])}" if false_starts else ""))
     out.append(f"- Stayed silent when the card intended speech: {len(missed)}"
                + (f", mean rating {mean_sd([r['appropriate'] for r in missed])}" if missed else ""))
+    out.append(f"- The LLM chose to speak while the robot was already talking (the line was not played): "
+               f"{sum(r['spoke_over'] for r in rows)} times")
     no_call = [r for r in rows if r["llm_calls"] == 0]
     out.append(f"- Trials with no LLM call (nobody detected, or the gate skipped all): {len(no_call)}")
     out.append("")
