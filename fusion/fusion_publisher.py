@@ -16,7 +16,8 @@ It starts these run scripts, in this order:
 
 The base is optional. If /odom does not arrive, for example because the Segway is
 off, it prints a warning and goes on: everything works except turning.
---no-base does not start it. Without the attention/ folder, it is skipped too.
+It starts only with --base, because the study keeps the robot still and the base
+adds a heavy load. Without the attention/ folder, it is skipped too.
 
 Before it starts anything, it stops what earlier runs left running: an older
 fusion_publisher.py, then the vision pipeline, the audio node, the Kinect driver,
@@ -273,7 +274,9 @@ def run(node, latest, started, sender, base):
 
 def main():
     ap = argparse.ArgumentParser(description="Start audio, vision, and the base, then publish /social_context.")
-    ap.add_argument("--no-base", action="store_true", help="do not start the BWI base, so the robot does not turn")
+    ap.add_argument("--base", action="store_true",
+                    help="also start the BWI base (Segway, lasers, map, AMCL), which turning needs")
+    ap.add_argument("--no-base", action="store_true", help=argparse.SUPPRESS)  # the default now
     args = ap.parse_args()
     if not stop_old_runs():
         sys.exit(1)
@@ -301,7 +304,7 @@ def main():
 
     node.create_subscription(String, "/audio_context", keep("audio", audio_log), 10)
     node.create_subscription(String, "/hri/vision/context", keep("vision"), 10)
-    base = None if args.no_base else {"odom": False}
+    base = {"odom": False} if args.base else None
     if base is not None and not PROGRAMS["base"][0].exists():
         say("no attention/run_base.sh, so the base is not started and the robot does not turn")
         base = None

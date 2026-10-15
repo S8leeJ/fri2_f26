@@ -114,7 +114,7 @@ python3 ~/fri2_f26/fusion/fusion_publisher.py
 It does these steps in order:
 
 1. Loads ROS 2 and sets `ROS_LOCALHOST_ONLY=1`.
-1. Starts the BWI base (`attention/run_base.sh`): the Segway driver, the lasers, the map, and AMCL, without RViz. It gives `/cmd_vel` and `/odom`, which the turner in `live_node.py` needs. Turn on the Segway first. If `/odom` does not arrive, it prints a ⚠️ warning and goes on, and only turning does not work. `--no-base` skips this step.
+1. Starts the BWI base (`attention/run_base.sh`): the Segway driver, the lasers, the map, and AMCL, without RViz. It gives `/cmd_vel` and `/odom`, which the turner in `live_node.py` needs. Turn on the Segway first. If `/odom` does not arrive, it prints a ⚠️ warning and goes on, and only turning does not work. Only with `--base`: without it, fusion skips this step (the default on the `no-rules` branch).
 2. Starts the audio node (`audio_signals_FRI_II/tools/run_node.sh`). It rebuilds `audio_context`, opens the Kinect microphone, and publishes `/audio_context` once each second.
 3. Starts the Kinect driver (`hri_vision/scripts/run_driver.sh`), and waits for `K4A Started`. The driver publishes the camera images.
 4. Starts the vision pipeline (`hri_vision/scripts/run_pipeline.sh`). It rebuilds `hri_vision` and publishes `/hri/vision/context` several times each second.

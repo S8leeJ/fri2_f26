@@ -30,7 +30,7 @@ Report all of these in the method section.
 **Terminal 1: sensors**
 
 ```bash
-python3 ~/fri2_f26/fusion/fusion_publisher.py --no-base
+python3 ~/fri2_f26/fusion/fusion_publisher.py
 ```
 
 **Terminal 2: the robot, with no rules**
@@ -40,7 +40,7 @@ cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provi
 ```
 
 Check that it prints `rules: off: scene only, the model decides, asked every 1 s`.
-`--no-base` and `--turn-off` keep the robot still. Turning is one more thing that can
+Fusion leaves the BWI base off unless you add `--base`, and `--turn-off` keeps the robot still. Turning is one more thing that can
 change how people react, so keep it off for every participant.
 
 **Terminal 3: the trials**

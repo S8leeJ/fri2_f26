@@ -27,10 +27,10 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 
 1. **Turn on the Segway.**
 
-2. **Terminal 1: the sensors and the base.** `fusion_publisher.py` also starts the BWI base (`attention/run_base.sh`, without RViz), which gives `/cmd_vel` and `/odom`.
+2. **Terminal 1: the sensors and the base.** `fusion_publisher.py --base` also starts the BWI base (`attention/run_base.sh`, without RViz), which gives `/cmd_vel` and `/odom`.
 
    ```bash
-   python3 ~/fri2_f26/fusion/fusion_publisher.py
+   python3 ~/fri2_f26/fusion/fusion_publisher.py --base
    ```
 
    - Expected: `✅ base     /odom arrives` among the check marks.
@@ -61,7 +61,7 @@ It moves only when the BWI base runs, because it needs `/odom` to measure turns.
 ## Turn it off or remove it
 
 - Turning is on with `--speak`. The only switch that turns it off is `--turn-off`: `python3 live_node.py --speak --provider jev --turn-off`.
-- Without the base (`fusion_publisher.py --no-base`, or the Segway off), there is no `/odom`, so the robot never turns.
+- Without the base (`fusion_publisher.py` without `--base`, or the Segway off), there is no `/odom`, so the robot never turns.
 - To remove it for good, delete the `attention/` folder. `live_node.py` then prints `turning: off, attention/turn_to_person.py not found`, `fusion_publisher.py` does not start the base, and both work as before.
 - The turner can also run alone, for tests: `python3 ~/fri2_f26/attention/turn_to_person.py --dry-run`.
 
