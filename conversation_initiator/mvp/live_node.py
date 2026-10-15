@@ -64,7 +64,7 @@ dotenv.load_dotenv(HERE / ".env")
 from context import validate  # noqa: E402
 from fusion_adapter import Memory, apply_result, consume_pending, fusion_to_context  # noqa: E402
 from gate import GateState, decide_tick, note_asked  # noqa: E402
-from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers  # noqa: E402
+from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers, use_rules  # noqa: E402
 from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
@@ -116,6 +116,8 @@ class LiveInitiator(Node):
         (RUN_LOGS / "trace.jsonl").write_text("")
         self._tee = _TeeLogger(super().get_logger(), self.run_log)
         self.args = args
+        self.rules = not getattr(args, "no_rules", False)
+        use_rules(self.rules)
         self.model = args.model or DEFAULT_MODEL[args.provider]
         self.client = make_client(args.provider, args.timeout)
         self.tts = None
@@ -127,7 +129,8 @@ class LiveInitiator(Node):
         self.gate = GateState()
         self.gate_cfg = {"max_stale_sec": args.stale_sec, "settle_dwell_s": args.settle_dwell,
                          "settle_gaze_s": args.settle_gaze,
-                         "settle_max_distance_m": args.greet_distance}
+                         "settle_max_distance_m": args.greet_distance,
+                         "social_rules": self.rules}
         self.lock = threading.Lock()
         self.busy = False
         self.latest = None
@@ -154,6 +157,8 @@ class LiveInitiator(Node):
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, "
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
+        self.get_logger().info("rules: on (R1 to R6, settle check, social post-filter)" if self.rules
+                               else "rules: off (--no-rules): scene only, the model decides")
         self.turn = self._start_turning()
         self._warm_up()
 
@@ -249,7 +254,7 @@ class LiveInitiator(Node):
             self.busy = False
 
     def _decide_once(self, ctx, heard_at=None):
-        out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model}
+        out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model, "rules": self.rules}
         try:
             r = decide(self.args.provider, self.client, self.model, ctx, 6)
         except Exception as e:  # noqa: BLE001 - any failure means silence
@@ -259,7 +264,7 @@ class LiveInitiator(Node):
             self._publish(ctx, out)
             return
 
-        final, blocked_by = enforce(ctx, r.action)
+        final, blocked_by = enforce(ctx, r.action, self.gate_cfg)
         speech = r.speech if (r.speech and final in SPEAKS) else None
         reason = blocked_by or (r.decision or {}).get("rule_fired")
         out.update(action_raw=r.action, action_final=final, blocked_by=blocked_by,
@@ -305,6 +310,9 @@ class LiveInitiator(Node):
         # Only replies to speech have a start point.
         if heard_at:
             self.get_logger().info(self.tracer.add(heard_at, r.ms1, r.ms2, tts_s, time.time()))
+            row = {k: round(v, 3) for k, v in self.tracer.turns[-1].items()}
+            with open(self.log_path, "a") as f:
+                f.write(json.dumps({"run": self.run, "t": time.time(), "trace": row}) + chr(10))
 
     def get_logger(self):
         return getattr(self, "_tee", None) or super().get_logger()
@@ -321,7 +329,8 @@ class LiveInitiator(Node):
         except FileNotFoundError:
             run = 1
         mark = {"run_start": datetime.datetime.now().isoformat(timespec="seconds"), "run": run,
-                "provider": self.args.provider, "model": self.model, "speak": self.args.speak}
+                "provider": self.args.provider, "model": self.model, "speak": self.args.speak,
+                "rules": self.rules}
         with open(self.log_path, "a") as f:
             f.write(json.dumps(mark) + chr(10))
         return run
@@ -369,6 +378,9 @@ def main():
                     help="never turn the robot (attention/turn_to_person.py)")
     ap.add_argument("--turn-dry-run", action="store_true",
                     help="print the turns that attention/turn_to_person.py would make, do not move")
+    ap.add_argument("--no-rules", action="store_true",
+                    help="scene only: no R1 to R6 in the prompt, no settle check, and only the "
+                         "practical post-filter checks; the model decides when to speak")
     args = ap.parse_args()
     if not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")

@@ -2,6 +2,8 @@
 
 No network, no API key. Runs on every decision after the LLM returns. It can
 only turn speech into silence or waiting. It never makes the robot speak.
+With cfg["social_rules"] False, only the practical checks run: nobody there,
+the robot is talking, no transcript to respond to, or the person is mid-sentence.
 
     from postfilter import enforce
 
@@ -34,13 +36,14 @@ def blocking_rule(
         return "no_person"
     if robot.get("is_speaking"):
         return "self_speaking"
-    if int(robot.get("consecutive_no_response", 0)) >= cfg["max_ignored"]:
-        return "R2 ignored twice"
-    if action == "greet":
-        if target.get("in_conversation"):
-            return "R1 target in conversation"
-        if greeted_recently(robot, cfg):
-            return "R2 spoke recently"
+    if cfg["social_rules"]:
+        if int(robot.get("consecutive_no_response", 0)) >= cfg["max_ignored"]:
+            return "R2 ignored twice"
+        if action == "greet":
+            if target.get("in_conversation"):
+                return "R1 target in conversation"
+            if greeted_recently(robot, cfg):
+                return "R2 spoke recently"
     if action == "respond":
         speech = target.get("speech") or {}
         if not speech.get("partial_transcript"):

@@ -134,6 +134,24 @@ class GateUnitTests(unittest.TestCase):
         unknown = base_ctx(target={"distance_m": None, "dwell_s": 5.0, "gaze_at_robot_s": 3.0})
         self.assertEqual(should_ask_llm(unknown, GateState(), cfg), (False, "not_settled"))
 
+    def test_no_social_rules_asks_about_anyone_in_view(self):
+        cfg = {"settle_max_distance_m": 1.5, "settle_dwell_s": 2.0, "settle_gaze_s": 1.0,
+               "social_rules": False}
+        passing = base_ctx(target={"distance_m": 3.0, "dwell_s": 0.5, "gaze_at_robot_s": 0.0})
+        self.assertEqual(should_ask_llm(passing, GateState(), cfg), (True, "ok"))
+        ignored = base_ctx(robot={"consecutive_no_response": 3})
+        self.assertEqual(should_ask_llm(ignored, GateState(), cfg), (True, "ok"))
+
+    def test_no_social_rules_keeps_the_practical_checks(self):
+        cfg = {"social_rules": False}
+        self.assertEqual(should_ask_llm(base_ctx(target=None), GateState(), cfg), (False, "no_person"))
+        speaking = base_ctx(robot={"is_speaking": True})
+        self.assertEqual(should_ask_llm(speaking, GateState(), cfg), (False, "self_speaking"))
+        state = GateState()
+        note_asked(state, base_ctx(t=0.0))
+        self.assertEqual(should_ask_llm(base_ctx(t=1.0, target={"distance_m": 1.0}), state, cfg),
+                         (False, "cooldown"))
+
     def test_stepping_back_does_not_end_a_conversation(self):
         cfg = {"settle_max_distance_m": 1.5}
         talking = base_ctx(target={"distance_m": 2.5}, robot={"engaged": True})

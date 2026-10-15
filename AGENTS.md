@@ -15,7 +15,7 @@ The robot is a BWIbot on ROS 2 Humble.
 The research question: can an LLM decide when it is polite for a robot to start a conversation?
 The LLM gets a small JSON description of the scene. It returns a structured decision.
 
-The repo has six parts:
+The repo has seven parts:
 
 | Part | Directories | Language | Status |
 |---|---|---|---|
@@ -25,6 +25,7 @@ The repo has six parts:
 | Vision subsystem | `hri_vision/` | Python, `ament_python` | Runs on the robot `flexo`. Reaches the LLM through fusion and `mvp/live_node.py`. See §4.5. |
 | Fusion | `fusion/` | Python | `fusion_publisher.py` starts the BWI base (optional, for turning; `--no-base` skips it), the audio node, the Kinect driver, and the vision pipeline, then publishes the newest audio and vision messages together on `/social_context` at 10 Hz. Before it starts, it stops what earlier runs left running, except `live_node.py`. Closing its terminal stops its programs, as Ctrl+C does. |
 | Attention | `attention/` | Python | `turn_to_person.py` turns the base in place toward the person while `/engaged` is true, and turns back after. `live_node.py --speak` starts it in its own process; `--turn-off`, no base, or no `attention/` folder means no turning. It turns only while `/engaged` is true, and turns back when it becomes false. Rules in `turner.py`, tested offline. Not run on the robot yet. See `attention/RUN_ON_FLEXO.md`. |
+| Study | `study/` | Python | `run_trials.py` shows task cards, times each trial, and records the participant's rating. `analyze.py` matches the ratings to the logged decisions and writes the tables and charts. It is meant for `live_node.py --no-rules`, where the LLM gets the scene and no social rules. See `study/README.md`. |
 
 Most future work touches `conversation_initiator/`, `audio_signals_FRI_II/`, and `hri_vision/`.
 The homework packages are old. Do not change them unless a person asks.

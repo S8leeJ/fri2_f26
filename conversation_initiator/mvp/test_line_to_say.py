@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import pathlib
 import tempfile
@@ -28,6 +29,60 @@ class JevQuestionTests(unittest.TestCase):
     def test_rule_choices_are_only_the_rules(self):
         self.assertEqual(list(mvp.RULE_TEXT), ["R1", "R2", "R3", "R4", "R5", "R6"])
         self.assertTrue(mvp.RULE_TEXT["R1"].startswith("Never greet someone who is in a conversation"))
+
+    def ask_jev(self, rules_on):
+        sent = {}
+
+        class Client:
+            def post(self, path, json):
+                sent.update(json)
+                answers = {d: {"score": 1.0} for d in mvp.Rubric.model_fields}
+                answers["action"] = {"choice": "remain_silent", "confidence": 0.8}
+                answers["category"] = {"choice": "insufficient_evidence"}
+                answers["rule_fired"] = {"choice": "R6"}
+                return mock.Mock(status_code=200, json=lambda: {"answers": answers})
+
+        mvp.use_rules(rules_on)
+        self.addCleanup(mvp.use_rules, True)
+        d, _ = mvp._ask_jev(Client(), "jev-latest", None, '{"t": 0}', mvp.Decision6, 400)
+        return d, sent["questions"]
+
+    def test_jev_with_rules_gets_the_rules(self):
+        d, questions = self.ask_jev(True)
+        self.assertIn("rule_fired", questions)
+        self.assertIn("rules", questions["action"]["instructions"])
+        self.assertTrue(d.rule_fired.startswith("R6"))
+
+    def test_jev_without_rules_gets_only_the_scene(self):
+        d, questions = self.ask_jev(False)
+        self.assertNotIn("rule_fired", questions)
+        text = json.dumps(questions)
+        for rule in ("R1", "R2", "R3", "R4", "R5", "R6", "rules"):
+            self.assertNotIn(rule, text)
+        self.assertEqual((d.action, d.rule_fired), ("remain_silent", ""))
+
+
+class SceneOnlyPromptTests(unittest.TestCase):
+    def test_scene_prompts_hold_no_rules(self):
+        for prompt in (mvp.SYSTEM_6_SCENE, mvp.SYSTEM_3_SCENE):
+            self.assertNotRegex(prompt, r"\bR[1-6]\b")
+            self.assertNotIn("Rules, in priority order", prompt)
+            self.assertIn("Score", prompt)
+
+    def test_rule_prompts_are_unchanged(self):
+        self.assertIn("Rules, in priority order", mvp.SYSTEM_6)
+        self.assertIn("R5 Greet when the person faces the robot", mvp.SYSTEM_6)
+
+    def test_decide_sends_the_prompt_for_the_mode(self):
+        d = decision("remain_silent")
+        with mock.patch.object(mvp, "ask", return_value=(d, 100.0, None)) as ask:
+            mvp.use_rules(False)
+            self.addCleanup(mvp.use_rules, True)
+            mvp.decide("anthropic", None, "m", base_ctx(), 6)
+            self.assertEqual(ask.call_args.args[3], mvp.SYSTEM_6_SCENE)
+            mvp.use_rules(True)
+            mvp.decide("anthropic", None, "m", base_ctx(), 6)
+            self.assertEqual(ask.call_args.args[3], mvp.SYSTEM_6)
 
 
 # Each spoken line sends the facts again, and Groq's free tier is 8,000 tokens a minute.
@@ -163,6 +218,13 @@ class LineToSayTests(unittest.TestCase):
         for provider in ("anthropic", "jev"):
             self.assertEqual(self.line(provider, ctx, "greet"), (None, None, None))
         self.ask.assert_not_called()
+
+    def test_without_rules_a_greet_to_a_busy_person_gets_a_line(self):
+        mvp.use_rules(False)
+        self.addCleanup(mvp.use_rules, True)
+        ctx = base_ctx(target={"in_conversation": True}, robot={"last_spoke_s_ago": 5.0})
+        speech, _, _ = self.line("jev", ctx, "greet")
+        self.assertIsNotNone(speech)
 
     def test_silence_skips_the_speech_call(self):
         self.assertEqual(self.line("anthropic", base_ctx(), "wait"), (None, None, None))

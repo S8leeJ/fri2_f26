@@ -50,7 +50,7 @@ class Decision3(BaseModel):
     interruption_cost: int = Field(ge=1, le=5, description="Cost of interrupting them now")
     ambient_fit: int = Field(ge=1, le=5, description="Would speech be heard and fit the room?")
     action: Literal["remain_silent", "wait", "greet"]
-    rule_fired: str = Field(description="The single rule that most drove this choice")
+    rule_fired: str = Field(description="The rule ID or main reason that most drove this choice")
     confidence: float = Field(ge=0.0, le=1.0)
 
 
@@ -74,7 +74,7 @@ class Decision6(BaseModel):
         "person_needs_assistance",
         "insufficient_evidence",
     ]
-    rule_fired: str = Field(description="The single rule that most drove this choice")
+    rule_fired: str = Field(description="The rule ID or main reason that most drove this choice")
     confidence: float = Field(ge=0.0, le=1.0)
     recheck_in_ms: int = Field(ge=0)
 
@@ -187,6 +187,24 @@ Set rule_fired to the rule ID and a few words, e.g. "R1 target in conversation".
 
 SYSTEM_3 = "\n\n".join([INTRO, DIMENSIONS_3, FIELD_GUIDE, RULES, ACTIONS_3])
 SYSTEM_6 = "\n\n".join([INTRO, DIMENSIONS_6, FIELD_GUIDE, RULES, ACTIONS_6])
+
+# --no-rules: the model gets the scene, the scales, and the actions, and no social rules.
+FIELD_GUIDE_SCENE = FIELD_GUIDE.replace(" This is what R1 reads.", "")
+_RULE_ID_LINE = 'Set rule_fired to the rule ID and a few words, e.g. "R1 target in conversation".'
+_REASON_LINE = "Set rule_fired to a few words that name the main reason."
+ACTIONS_3_SCENE = ACTIONS_3.replace(_RULE_ID_LINE, _REASON_LINE)
+ACTIONS_6_SCENE = (ACTIONS_6.replace(_RULE_ID_LINE, _REASON_LINE)
+                   .replace("R6: data missing or contradictory", "data missing or contradictory"))
+SYSTEM_3_SCENE = "\n\n".join([INTRO, DIMENSIONS_3, FIELD_GUIDE_SCENE, ACTIONS_3_SCENE])
+SYSTEM_6_SCENE = "\n\n".join([INTRO, DIMENSIONS_6, FIELD_GUIDE_SCENE, ACTIONS_6_SCENE])
+
+RULES_ON = True
+
+
+def use_rules(on: bool) -> None:
+    """False sends the scene-only prompt and turns off the social rules in the post-filter."""
+    global RULES_ON
+    RULES_ON = on
 
 FACTS_PATH = pathlib.Path(__file__).parent / "facts" / "ahg.md"
 
@@ -448,6 +466,7 @@ DIMENSION_ENDS = _parse_block("\n" + DIMENSIONS_6.split("\n\n", 1)[1])
 RULE_TEXT = dict(re.findall(r"^(R\d+) (.+)$", RULES.split("\n\n")[0], re.MULTILINE))
 ACTION_TEXT = _parse_block(ACTIONS_6.split("\n\nCategories")[0])
 CATEGORY_TEXT = _parse_block(ACTIONS_6.split("\n\n")[1])
+CATEGORY_TEXT_SCENE = _parse_block(ACTIONS_6_SCENE.split("\n\n")[1])
 
 
 def _ask_jev(client, model, system, user, schema, max_tokens):
@@ -457,25 +476,31 @@ def _ask_jev(client, model, system, user, schema, max_tokens):
     six = schema is Decision6
     dims = list(Rubric.model_fields) if six else ["invitation", "interruption_cost", "ambient_fit"]
     actions = list(ACTION_TEXT) if six else ["remain_silent", "wait", "greet"]
-    guide = {"field_guide": FIELD_GUIDE, "rules": RULES}
+    if RULES_ON:
+        guide = {"field_guide": FIELD_GUIDE, "rules": RULES}
+        action_question = ("Which action should the robot take now? "
+                           "Apply `rules` in priority order; a higher rule overrides a lower one.")
+    else:
+        guide = {"field_guide": FIELD_GUIDE_SCENE}
+        action_question = "Which action should the robot take now?"
 
     questions = {d: {"type": "score",
                      "instructions": {**guide, "question": "Rate `%s` for this moment." % d},
                      "criteria": _score_levels(DIMENSION_ENDS[d])} for d in dims}
     questions["action"] = {
         "type": "choice",
-        "instructions": {**guide, "question": "Which action should the robot take now? "
-                         "Apply `rules` in priority order; a higher rule overrides a lower one."},
+        "instructions": {**guide, "question": action_question},
         "criteria": {a: ACTION_TEXT[a] for a in actions}}
-    questions["rule_fired"] = {
-        "type": "choice",
-        "instructions": {**guide, "question": "Which single rule most decides this moment?"},
-        "criteria": RULE_TEXT}
+    if RULES_ON:
+        questions["rule_fired"] = {
+            "type": "choice",
+            "instructions": {**guide, "question": "Which single rule most decides this moment?"},
+            "criteria": RULE_TEXT}
     if six:
         questions["category"] = {
             "type": "choice",
             "instructions": {**guide, "question": "Which category describes this moment?"},
-            "criteria": CATEGORY_TEXT}
+            "criteria": CATEGORY_TEXT if RULES_ON else CATEGORY_TEXT_SCENE}
 
     response = client.post("/systemone", json={
         "model": model, "state": json.loads(user), "questions": questions})
@@ -486,9 +511,11 @@ def _ask_jev(client, model, system, user, schema, max_tokens):
     # Score levels come back 0-indexed and probability-weighted.
     scores = {d: min(5, max(1, round(answers[d]["score"]) + 1)) for d in dims}
     action = answers["action"]
-    rule = answers["rule_fired"]["choice"]
-    common = dict(action=action["choice"], confidence=action["confidence"],
-                  rule_fired="%s %s" % (rule, RULE_TEXT[rule]))
+    rule_fired = ""
+    if RULES_ON:
+        rule = answers["rule_fired"]["choice"]
+        rule_fired = "%s %s" % (rule, RULE_TEXT[rule])
+    common = dict(action=action["choice"], confidence=action["confidence"], rule_fired=rule_fired)
     if six:
         return Decision6(rubric=Rubric(**scores), category=answers["category"]["choice"],
                          recheck_in_ms=0, **common), None
@@ -579,7 +606,7 @@ def reply_writers() -> list:
 
 def line_to_say(provider, client, model, ctx, d):
     """Returns (speech, elapsed_ms, error). Skips the call when nothing will be said."""
-    if d.action not in SPEAKS or blocking_rule(ctx, d.action):
+    if d.action not in SPEAKS or blocking_rule(ctx, d.action, {"social_rules": RULES_ON}):
         return None, None, None
     writers = [(provider, client, model)]
     if provider == "jev":
@@ -607,11 +634,13 @@ def line_to_say(provider, client, model, ctx, d):
 def decide(provider, client, model, ctx, rubric) -> Result:
     user = json.dumps(ctx)
     if rubric == 3:
-        d, ms, thoughts = ask(provider, client, model, SYSTEM_3, user, Decision3, 400)
+        system = SYSTEM_3 if RULES_ON else SYSTEM_3_SCENE
+        d, ms, thoughts = ask(provider, client, model, system, user, Decision3, 400)
         return Result(d.action, [d.invitation, d.interruption_cost, d.ambient_fit],
                       ms, None, thoughts, None, None, d.model_dump())
 
-    d, ms, thoughts = ask(provider, client, model, SYSTEM_6, user, Decision6, 400)
+    system = SYSTEM_6 if RULES_ON else SYSTEM_6_SCENE
+    d, ms, thoughts = ask(provider, client, model, system, user, Decision6, 400)
     speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
     r = d.rubric
     return Result(d.action,

@@ -45,6 +45,9 @@ npm-debug.log*
 *.log
 live_logs/
 fusion/logs/
+# Study ratings and results. Kept off git, like the logs.
+study/data/
+study/results/
 
 # Local agent config
 .claude/

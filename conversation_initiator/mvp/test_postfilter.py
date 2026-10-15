@@ -33,6 +33,21 @@ class PostfilterUnitTests(unittest.TestCase):
     def test_self_speaking(self):
         self.assertBlocked(base_ctx(robot={"is_speaking": True}), "greet", "self_speaking")
 
+    def test_no_social_rules_lets_the_model_decide(self):
+        off = {"social_rules": False}
+        for robot in ({"consecutive_no_response": 2}, {"last_spoke_s_ago": 5.0}):
+            self.assertEqual(enforce(base_ctx(robot=robot), "greet", off), ("greet", None))
+        talking = base_ctx(target={"in_conversation": True})
+        self.assertEqual(enforce(talking, "greet", off), ("greet", None))
+
+    def test_no_social_rules_keeps_the_practical_checks(self):
+        off = {"social_rules": False}
+        self.assertEqual(enforce(base_ctx(target=None), "greet", off), ("remain_silent", "no_person"))
+        speaking = base_ctx(robot={"is_speaking": True})
+        self.assertEqual(enforce(speaking, "greet", off), ("remain_silent", "self_speaking"))
+        self.assertEqual(enforce(base_ctx(), "respond", off),
+                         ("remain_silent", "respond without transcript"))
+
     def test_ignored_twice_blocks_both_speech_actions(self):
         ctx = base_ctx(robot={"consecutive_no_response": 2})
         self.assertBlocked(ctx, "greet", "R2 ignored twice")

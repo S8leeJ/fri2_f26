@@ -84,6 +84,10 @@ There will be warnings after you build for the first time, but hopefully no erro
 
 ---
 
+## Run the study
+
+`study/README.md` has the steps: the robot runs with `live_node.py --no-rules`, `study/run_trials.py` records each trial and rating, and `study/analyze.py` makes the tables.
+
 ## Run audio and vision on flexo
 
 Use the robot flexo (IP `10.0.0.144`). Sit at its own screen, and log out every other account first.

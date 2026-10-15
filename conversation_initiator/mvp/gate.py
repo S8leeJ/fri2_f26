@@ -37,6 +37,9 @@ DEFAULTS: Dict[str, Any] = {
     "settle_max_distance_m": 0.0,
     "settle_dwell_s": 0.0,
     "settle_gaze_s": 0.0,
+    # False (live_node.py --no-rules): the gate and the post-filter keep only the
+    # practical checks, and the model alone decides when it is polite to speak.
+    "social_rules": True,
 }
 
 
@@ -177,7 +180,7 @@ def should_ask_llm(
     if robot.get("is_speaking"):
         return False, "self_speaking"
 
-    if int(robot.get("consecutive_no_response", 0)) >= cfg["max_ignored"]:
+    if cfg["social_rules"] and int(robot.get("consecutive_no_response", 0)) >= cfg["max_ignored"]:
         return False, "gave_up"
 
     # A new transcript is the person talking to the robot, so it skips the cooldown.
@@ -186,7 +189,7 @@ def should_ask_llm(
         return True, "ok"
 
     # Someone who walks past, even slowly, has not stopped and looked at the robot yet.
-    if not robot.get("engaged") and not settled(ctx, cfg):
+    if cfg["social_rules"] and not robot.get("engaged") and not settled(ctx, cfg):
         return False, "not_settled"
 
     if state.last_asked_t is not None:
