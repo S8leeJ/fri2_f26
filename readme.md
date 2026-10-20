@@ -124,7 +124,7 @@ Each program writes its output to `fusion/logs/`, and each run clears that folde
 `live_node.py` adds three files there, cleared at each start: `decision.log` holds what its terminal shows, `decisions.jsonl` holds each LLM call with the scene it saw, and `trace.jsonl` holds the time of each step of each reply.
 `conversation_initiator/mvp/live_logs/<date>.jsonl` keeps all LLM calls of the day. Each `live_node.py` start adds a `run_start` line with the run number, and each call has its `run` number. Git ignores `fusion/logs/`, because the logs hold transcripts.
 `audio.log` also has every `/audio_context` message, one JSON object per line. `pipeline.log` has the vision JSON.
-Ctrl+C stops everything that the script started, with the driver last. Then log out.
+Ctrl+C stops everything that the script started, with the driver last. Press it once, and wait for `all stopped`. It can take up to a minute, and the script ignores more presses until then. Then log out.
 
 To run the parts one at a time instead, run the three scripts from steps 2, 3, and 4 in separate terminals, in that order.
 `audio_signals_FRI_II/RUN_ON_FLEXO.md` and `hri_vision/RUN_ON_FLEXO.md` explain each part and list fixes.

@@ -318,9 +318,19 @@ def main():
     except stopped:
         pass
     finally:
+        # The programs run in their own sessions, so only this loop stops them. A second
+        # Ctrl+C here used to end the loop and leave them running, and the next start
+        # then ran two of each.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        if started:
+            say("stopping " + ", ".join(started) + ". This can take up to a minute. "
+                "Do not press Ctrl+C again.")
         for name in ("pipeline", "audio", "driver", "base"):
             if name in started:
                 stop(name, started[name])
+        if started:
+            say("all stopped")
         audio_log.close()
         node.destroy_node()
         if rclpy.ok():
