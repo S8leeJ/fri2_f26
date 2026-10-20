@@ -382,6 +382,7 @@ A context from that log can be copied into a vignette.
 | `--cooldown S` | With the rules on: seconds between LLM calls. Default 1 (it was 3). A new sentence from the person skips it. |
 | `--every S` | Without `--rules`: ask the LLM every S seconds. Default 1. |
 | (logs) | Each start clears three files in `fusion/logs/`: `decision.log` (what the terminal shows), `decisions.jsonl` (each LLM call), and `trace.jsonl` (the steps of each reply). `live_logs/<date>.jsonl` keeps the whole day. Each start adds a `run_start` line there, and each call has its `run` number. |
+| (summary) | `python3 summarize_run.py` prints the last run in `live_logs/` as one short line per LLM call: the person, speech, the action, the scores, and what was heard and said. `--run N` and `--log FILE` pick another run. Use it to share a run without the full JSON. |
 | `--timeout` | Seconds per LLM call. Default 2 (it was 8): a stuck call blocks decisions this long. On a timeout the robot stays silent. |
 
 In a dry run, the node acts as if the robot said each line. So
