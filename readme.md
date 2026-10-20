@@ -118,7 +118,7 @@ It does these steps in order:
 It prints a ✅ for audio, driver, vision, and publish as each one works, then `Press Ctrl+C to stop.`, and then nothing more.
 If a part does not work, it prints a ❌ and that program's last log lines, then stops what it started.
 A program that already runs is used as it is. Each program writes its output to `fusion/logs/`.
-Ctrl+C stops everything that the script started, with the driver last. Then log out.
+Ctrl+C stops everything that the script started, with the driver last. Press it once, and wait for `all stopped`. It can take up to a minute, and the script ignores more presses until then. Then log out.
 
 To run the parts one at a time instead, run the three scripts from steps 2, 3, and 4 in separate terminals, in that order.
 `audio_signals_FRI_II/RUN_ON_FLEXO.md` and `hri_vision/RUN_ON_FLEXO.md` explain each part and list fixes.
