@@ -101,6 +101,17 @@ class Transcriber:
         if self._thread is not None:
             self._thread.join(timeout=5.0)
 
+    def _open_connection(self):
+        try:
+            self._groq.get("/models")
+        except Exception:
+            pass
+
+    def reconnect(self):
+        # The Groq connection closes after a minute with no sentence. Returns at once.
+        if self._groq is not None:
+            threading.Thread(target=self._open_connection, daemon=True).start()
+
     def warm_up(self):
         # Load the model before the first real utterance, so the first
         # transcript is not delayed by a one-off setup cost.
@@ -116,10 +127,7 @@ class Transcriber:
             print(f"transcription unavailable, carrying on without it: "
                   f"{type(e).__name__}")
         if self._groq is not None:
-            try:
-                self._groq.get("/models")   # opens the connection before the first sentence
-            except Exception:
-                pass
+            self._open_connection()
             print(f"transcription: Groq {self.cfg.get('stt_groq_model')}, "
                   f"local {self.cfg['stt_model']} if Groq fails", flush=True)
         elif self._groq_note:
