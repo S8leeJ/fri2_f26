@@ -1,5 +1,6 @@
 import json
-from typing import Any, Dict, Optional
+import math
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -91,3 +92,51 @@ def classify_direction(delta_mm: float, threshold_mm: float) -> str:
     if delta_mm > threshold_mm:
         return "receding"
     return "stationary"
+
+
+def image_x(box, image_width) -> Optional[float]:
+    """Where the box center is across the image: -1 at the left edge, 0 at the center, 1 at the right edge."""
+    if not image_width:
+        return None
+    half = float(image_width) / 2.0
+    return round(((box[0] + box[2]) / 2.0 - half) / half, 3)
+
+
+def merge_orientation(person: Dict[str, Any], orientation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """One /hri/vision/context person: the person context and its orientation, without the box."""
+    merged = {k: v for k, v in person.items() if k != "bbox"}
+    o = orientation or {}
+    merged["orientation"] = o.get("orientation", "unknown")
+    merged["gaze"] = o.get("gaze", "unknown")
+    merged["face_visible"] = o.get("face_visible")
+    merged["head_yaw"] = o.get("head_yaw")
+    merged["head_pitch"] = o.get("head_pitch")
+    return merged
+
+
+Point = Tuple[float, float]
+
+
+def head_turn(right_eye: Point, left_eye: Point, nose: Point, mouth: Point) -> Optional[Tuple[float, float]]:
+    """(yaw, pitch) of a face from four keypoints in pixels, y down.
+
+    yaw: the sideways offset of the nose from the middle of the eyes, divided by
+    the eye distance. It is near 0 when the face points at the camera.
+    pitch: the drop from the eyes to the nose, divided by the drop from the eyes
+    to the mouth. It grows when the head tilts down.
+    Both are measured along the eye line, so a head tilted to one side gives the
+    same values. None when the points do not form a face.
+    """
+    mid_x = (right_eye[0] + left_eye[0]) / 2.0
+    mid_y = (right_eye[1] + left_eye[1]) / 2.0
+    ux, uy = left_eye[0] - right_eye[0], left_eye[1] - right_eye[1]
+    gap = math.hypot(ux, uy)
+    if gap < 1.0:
+        return None
+    ux, uy = ux / gap, uy / gap
+    vx, vy = -uy, ux
+    nx, ny = nose[0] - mid_x, nose[1] - mid_y
+    drop = (mouth[0] - mid_x) * vx + (mouth[1] - mid_y) * vy
+    if abs(drop) < 1.0:
+        return None
+    return abs(nx * ux + ny * uy) / gap, (nx * vx + ny * vy) / drop

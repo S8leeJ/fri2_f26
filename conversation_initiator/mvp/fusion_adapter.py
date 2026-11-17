@@ -15,8 +15,10 @@ unchanged, so this module owns the mapping to the schema:
     {"t", "audio": {...audio_builder JSON...}, "audio_age_s",
           "vision": {"people": [...], "sensor_status": {...}}, "vision_age_s"}
 
-Vision does not measure in_conversation, activity or bearing_deg, so they are
-left out. The robot, recent_decisions and conversation blocks come from Memory,
+Vision does not measure in_conversation or activity, so they are left out.
+Vision image_x, head_yaw and head_pitch are also left out: bearing_deg has an
+open sign question (AGENTS.md 5.2), and the schema has no head angle field.
+The robot, recent_decisions and conversation blocks come from Memory,
 because the initiator owns them.
 """
 
