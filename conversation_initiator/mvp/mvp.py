@@ -279,6 +279,12 @@ def load_vignettes() -> list:
 
 # Keep a connection open this long between calls, so the next call skips the TLS setup.
 KEEPALIVE_S = 60.0
+# While a person is in view, open idle connections again this often, before they close.
+WARM_EVERY_S = 45.0
+
+
+def warm_due(now: float, last_warm: float, person_present: bool) -> bool:
+    return person_present and now - last_warm >= WARM_EVERY_S
 
 
 def make_client(provider: str, timeout_s: float):
