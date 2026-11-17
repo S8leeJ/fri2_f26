@@ -2,10 +2,18 @@ import math
 
 import numpy as np
 
-from hri_vision.common import median_distance_mm, motion_label, sideways_mm, speed_mm_s
+from hri_vision.common import (
+    gaze_label,
+    head_turn,
+    median_distance_mm,
+    motion_label,
+    sideways_mm,
+    speed_mm_s,
+)
 
 HZ = 10.0
 LIMITS = (250.0, 750.0, 400.0)  # the defaults in person_context_node.py
+GAZE = (0.25, 0.70)  # the defaults in orientation_node.py
 
 
 def track(start, velocity, seconds=1.0, noise_mm=40.0, hz=HZ):
@@ -95,3 +103,51 @@ def test_median_depth():
     depth[0:10, :] = 0
     d = median_distance_mm(depth, [10, 10, 90, 90], 0.6, 250, 8000)
     assert d == 2000.0
+
+
+def face(nose_x=0.0, nose_drop=20.0, roll_deg=0.0):
+    """Right eye, left eye, nose, mouth: eyes 60 px apart, mouth 40 px below them."""
+    a = math.radians(roll_deg)
+    points = [(-30.0, 0.0), (30.0, 0.0), (nose_x, nose_drop), (0.0, 40.0)]
+    return [(200 + x * math.cos(a) - y * math.sin(a), 150 + x * math.sin(a) + y * math.cos(a))
+            for x, y in points]
+
+
+def test_face_toward_the_camera_is_toward_robot():
+    yaw, pitch = head_turn(*face())
+    assert math.isclose(yaw, 0.0, abs_tol=1e-9) and math.isclose(pitch, 0.5)
+    assert gaze_label(True, (yaw, pitch), *GAZE) == "toward_robot"
+
+
+def test_head_turned_to_the_side_is_away():
+    for nose_x in (20.0, -20.0):
+        turn = head_turn(*face(nose_x=nose_x))
+        assert math.isclose(turn[0], 1 / 3)
+        assert gaze_label(True, turn, *GAZE) == "away"
+
+
+def test_head_tilted_down_at_a_phone_is_away():
+    turn = head_turn(*face(nose_drop=32.0))
+    assert math.isclose(turn[1], 0.8)
+    assert gaze_label(True, turn, *GAZE) == "away"
+
+
+def test_head_tilted_to_one_side_gives_the_same_values():
+    for roll in (-25.0, 25.0):
+        assert all(math.isclose(a, b, abs_tol=1e-9)
+                   for a, b in zip(head_turn(*face(roll_deg=roll)), head_turn(*face())))
+
+
+def test_no_face_is_unknown():
+    assert gaze_label(False, None, *GAZE) == "unknown"
+
+
+def test_points_that_are_not_a_face_keep_the_old_rule():
+    assert head_turn((10.0, 10.0), (10.0, 10.0), (10.0, 20.0), (10.0, 30.0)) is None
+    assert gaze_label(True, None, *GAZE) == "toward_robot"
+
+
+def test_a_limit_of_zero_turns_its_check_off():
+    turned_and_down = (0.5, 0.9)
+    assert gaze_label(True, turned_and_down, 0.0, 0.0) == "toward_robot"
+    assert gaze_label(True, turned_and_down, 0.0, *GAZE[1:]) == "away"

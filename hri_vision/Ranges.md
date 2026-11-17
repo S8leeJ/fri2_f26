@@ -39,8 +39,11 @@ Each field describes what the camera sees. No single field decides what the robo
 
 **`face_visible`**: `true` when a face is visible, `false` when not. `null` when not measured.
 
-**`gaze`**: `toward_robot` when a face is visible, otherwise `unknown`.
-- It holds the same information as `face_visible`. It is not the direction of the eyes.
+**`gaze`**: where the person's head points.
+- `toward_robot`: a face is visible, and the head points at the robot.
+- `away`: a face is visible, but the head is turned to the side or tilted down, for example at a phone.
+- `unknown`: no face is visible.
+- It comes from the head, not the eyes. A person who looks down with the eyes only reads `toward_robot`.
 
 **`sensor_status`**: which measurements in this message are current.
 - `depth_fresh: false`: `distance_m` and `direction` are not measured in this message.

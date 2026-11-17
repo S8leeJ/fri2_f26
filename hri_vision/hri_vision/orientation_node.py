@@ -8,7 +8,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import clamp_box, safe_json_loads
+from .common import clamp_box, gaze_label, head_turn, safe_json_loads
 
 
 class OrientationNode(Node):
@@ -20,7 +20,8 @@ class OrientationNode(Node):
     Narrow shoulder projection -> sideways.
     Broad shoulders with no face -> likely facing away.
 
-    This is intentionally a coarse HRI signal, not an eye-gaze estimator.
+    Gaze comes from the head, not the eyes: a visible face that is turned to the
+    side or tilted down, for example at a phone, is "away".
     """
 
     def __init__(self):
@@ -36,6 +37,10 @@ class OrientationNode(Node):
         self.declare_parameter("face_model_selection", 0)
         self.declare_parameter("sideways_shoulder_ratio", 0.55)
         self.declare_parameter("min_visibility", 0.45)
+        # Head limits for gaze, from common.head_turn. 0 turns a check off.
+        # Not measured on the robot yet: see CALIBRATION.md.
+        self.declare_parameter("gaze_max_yaw_ratio", 0.25)
+        self.declare_parameter("gaze_max_pitch_ratio", 0.70)
 
         try:
             import mediapipe as mp
@@ -89,6 +94,20 @@ class OrientationNode(Node):
         except Exception as exc:
             self.get_logger().error(f"RGB conversion failed: {exc}")
 
+    def _head_turn(self, detections, rgb):
+        # A crop can hold a second face, for example a person behind. Use the surest one.
+        face = max(detections, key=lambda d: d.score[0])
+        fd = self.mp.solutions.face_detection
+        h, w = rgb.shape[:2]
+        points = []
+        for key in (fd.FaceKeyPoint.RIGHT_EYE, fd.FaceKeyPoint.LEFT_EYE,
+                    fd.FaceKeyPoint.NOSE_TIP, fd.FaceKeyPoint.MOUTH_CENTER):
+            p = fd.get_key_point(face, key)
+            if p is None:
+                return None
+            points.append((p.x * w, p.y * h))
+        return head_turn(*points)
+
     def _on_detections(self, msg: String):
         if self.latest_bgr is None:
             return
@@ -134,6 +153,7 @@ class OrientationNode(Node):
             pose_result = self.pose.process(rgb)
             face_result = self.face_detector.process(rgb)
             face_visible = bool(face_result.detections)
+            turn = self._head_turn(face_result.detections, rgb) if face_visible else None
 
             body_orientation = "unknown"
             shoulder_ratio = None
@@ -189,8 +209,14 @@ class OrientationNode(Node):
                         if shoulder_ratio is not None
                         else None
                     ),
-                    # Coarse gaze proxy. Fine eye-gaze can replace this later.
-                    "gaze": "toward_robot" if face_visible else "unknown",
+                    "gaze": gaze_label(
+                        face_visible,
+                        turn,
+                        float(self.get_parameter("gaze_max_yaw_ratio").value),
+                        float(self.get_parameter("gaze_max_pitch_ratio").value),
+                    ),
+                    "head_yaw": round(turn[0], 3) if turn else None,
+                    "head_pitch": round(turn[1], 3) if turn else None,
                 }
             )
 

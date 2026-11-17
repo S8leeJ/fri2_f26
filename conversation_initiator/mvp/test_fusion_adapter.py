@@ -97,6 +97,15 @@ class AdapterTests(unittest.TestCase):
         ctx, _ = self.build(wrapper([person(1, 2.0, "likely_facing_away")]), mem, T0 + 3.5)
         self.assertEqual(ctx["target"]["gaze_at_robot_s"], 0.0)
 
+    def test_visible_face_turned_away_resets_gaze(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.0)]), mem, T0)
+        self.build(wrapper([person(1, 1.0)]), mem, T0 + 2.0)
+        at_phone = {**person(1, 1.0), "gaze": "away"}
+        ctx, _ = self.build(wrapper([at_phone]), mem, T0 + 3.0)
+        self.assertEqual(ctx["target"]["gaze_at_robot_s"], 0.0)
+        self.assertTrue(ctx["target"]["facing_robot"])
+
     def test_one_missed_face_frame_does_not_reset_gaze(self):
         mem = Memory()
         self.build(wrapper([person(1, 2.0)]), mem, T0)

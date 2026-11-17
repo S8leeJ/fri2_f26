@@ -33,6 +33,8 @@ orientation_node:
     min_face_detection_confidence: 0.45
     sideways_shoulder_ratio: 0.55
     min_visibility: 0.45
+    gaze_max_yaw_ratio: 0.25
+    gaze_max_pitch_ratio: 0.70
 
 context_builder_node:
   ros__parameters:

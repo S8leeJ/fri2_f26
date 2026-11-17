@@ -1,6 +1,6 @@
 import json
 import math
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -125,3 +125,44 @@ def motion_label(samples, min_speed_mm_s: float, max_miss_mm: float,
         return "unknown"
     _, z, x = samples[-1]
     return classify_motion(x, z, vx, vz, min_speed_mm_s, max_miss_mm, passing_speed_mm_s)
+
+
+Point = Tuple[float, float]
+
+
+def head_turn(right_eye: Point, left_eye: Point, nose: Point, mouth: Point) -> Optional[Tuple[float, float]]:
+    """(yaw, pitch) of a face from four keypoints in pixels, y down.
+
+    yaw: the sideways offset of the nose from the middle of the eyes, divided by
+    the eye distance. It is near 0 when the face points at the camera.
+    pitch: the drop from the eyes to the nose, divided by the drop from the eyes
+    to the mouth. It grows when the head tilts down.
+    Both are measured along the eye line, so a head tilted to one side gives the
+    same values. None when the points do not form a face.
+    """
+    mid_x = (right_eye[0] + left_eye[0]) / 2.0
+    mid_y = (right_eye[1] + left_eye[1]) / 2.0
+    ux, uy = left_eye[0] - right_eye[0], left_eye[1] - right_eye[1]
+    gap = math.hypot(ux, uy)
+    if gap < 1.0:
+        return None
+    ux, uy = ux / gap, uy / gap
+    vx, vy = -uy, ux
+    nx, ny = nose[0] - mid_x, nose[1] - mid_y
+    drop = (mouth[0] - mid_x) * vx + (mouth[1] - mid_y) * vy
+    if abs(drop) < 1.0:
+        return None
+    return abs(nx * ux + ny * uy) / gap, (nx * vx + ny * vy) / drop
+
+
+def gaze_label(face_visible: bool, turn: Optional[Tuple[float, float]],
+               max_yaw: float, max_pitch: float) -> str:
+    """toward_robot, away, or unknown. A limit of 0 turns that check off."""
+    if not face_visible:
+        return "unknown"
+    if turn is None:
+        return "toward_robot"
+    yaw, pitch = turn
+    if (max_yaw > 0 and yaw > max_yaw) or (max_pitch > 0 and pitch > max_pitch):
+        return "away"
+    return "toward_robot"

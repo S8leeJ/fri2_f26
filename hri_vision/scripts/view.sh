@@ -3,6 +3,7 @@
 #
 #   bash scripts/view.sh          the camera image with a box on each person
 #   bash scripts/view.sh json     every JSON message on /hri/vision/context
+#   bash scripts/view.sh orientation  head_yaw and head_pitch for each person, to set the gaze limits
 #   bash scripts/view.sh camera   the plain camera image
 #
 # Stop it with Ctrl+C.
@@ -21,11 +22,15 @@ case "${1:-boxes}" in
         ros2 daemon stop > /dev/null 2>&1
         exec ros2 topic echo /hri/vision/context --field data
         ;;
+    orientation)
+        ros2 daemon stop > /dev/null 2>&1
+        exec ros2 topic echo /hri/vision/orientation --field data
+        ;;
     camera)
         exec ros2 run rqt_image_view rqt_image_view /rgb/image_raw
         ;;
     *)
-        echo "Use: bash $PKG/scripts/view.sh [boxes | json | camera]"
+        echo "Use: bash $PKG/scripts/view.sh [boxes | json | orientation | camera]"
         exit 1
         ;;
 esac

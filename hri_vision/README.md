@@ -43,7 +43,7 @@ Pipeline:
 - Depth is already aligned to the RGB frame
 - Depth encoding is `16UC1` in **millimeters**
 - The robot may already have a Kinect/other RGB-D ROS driver. If it does, use `camera_backend:=external`.
-- The orientation signal is deliberately coarse. `face_visible` is used as a proxy for "looking/facing toward robot"; this is not true eye-gaze estimation.
+- The orientation signal is deliberately coarse. `face_visible` is used as a proxy for "facing toward robot". `gaze` uses the face keypoints: a visible face that is turned to the side or tilted down gives `away`. This is head direction, not eye-gaze estimation.
 
 ## 1. Put package in your workspace
 

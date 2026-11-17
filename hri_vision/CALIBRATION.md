@@ -37,6 +37,8 @@ All are in `config/vision.yaml`.
 | orientation | `max_rate_hz` | 5 | Orientation updates up to 5 times each second. |
 | orientation | `sideways_shoulder_ratio` | 0.55 | Shoulder width divided by torso height. Below this value gives `sideways`. |
 | orientation | `face_model_selection` | 0 | MediaPipe's short-range face model, for faces within about 2 m. 1 selects the full-range model, up to about 5 m. |
+| orientation | `gaze_max_yaw_ratio` | 0.25 | `head_yaw` is the sideways offset of the nose from the middle of the eyes, divided by the eye distance. Above this value, a visible face gives `gaze: away`. 0 turns the check off. Not measured on the robot. |
+| orientation | `gaze_max_pitch_ratio` | 0.70 | `head_pitch` is the drop from the eyes to the nose, divided by the drop from the eyes to the mouth. It grows when the head tilts down, for example at a phone. Above this value, a visible face gives `gaze: away`. 0 turns the check off. Not measured on the robot. |
 | context builder | `orientation_max_age_s` | 1.0 | Orientation older than this gives `orientation_fresh: false`. |
 
 ## Observed on flexo
@@ -54,6 +56,7 @@ October 6, 2026, in the lab:
 - The farthest distance at which `facing_robot` still works.
 - The walking speed that `approaching` and `receding` need.
 - `passing` on the robot. It was tested only with simulated walks (`test/test_common.py`).
+- `head_yaw` and `head_pitch` on the robot, and the two gaze limits. They were tested only with drawn face points (`test/test_common.py`).
 - The real detection rate on flexo.
 
 ## How to measure
@@ -64,11 +67,13 @@ Do these on flexo, at the place where the robot will stand. Run the driver and t
 2. **Facing range.** Face the robot at 1 m, 1.5 m, 2 m, 2.5 m, and 3 m. Write down the farthest distance that still gives `facing_robot`.
 3. **Direction.** From 4 m, walk toward the robot at a normal speed, then slowly. Write down if `approaching` appears for each speed. Then walk across the view at 2 m, and check that it reads `stationary`.
 4. **Detection rate.** Run `ros2 topic hz /hri/vision/detections`, and write down the average rate.
+5. **Gaze limits.** Watch `bash scripts/view.sh orientation`, which shows `head_yaw` and `head_pitch`. At 1 m and 1.5 m, write down both values for each of these: look at the camera, turn the head about 30° to the left and to the right, and look down at a phone held at chest height. Set `gaze_max_yaw_ratio` between the values for "look at the camera" and "turn the head". Set `gaze_max_pitch_ratio` between the values for "look at the camera" and "look at a phone". Do this with two or three people, because faces differ.
 
 ## Known limits
 
 - `id` is not a stable identity. A person who is hidden, or leaves and comes back, can get a new `id`, and `dwell_time_s` starts again.
-- `gaze` is a copy of `face_visible`. Nothing measures eye direction.
+- `gaze` comes from the direction of the head, not the eyes. A person who keeps the head up and looks down with the eyes only reads `toward_robot`.
+- The camera height changes `head_pitch`. A camera below the face makes a level head look tilted up. So set the pitch limit at the place where the robot will stand.
 - `passing` uses the center of the person's box. A box that changes shape, for example when a person raises an arm, moves the center. Slow sideways walking, under 0.4 m/s, reads `stationary`.
 - The final JSON drops the person's box, so it has no left or right position.
 - Nothing measures whether people talk to each other.

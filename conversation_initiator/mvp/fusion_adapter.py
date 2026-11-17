@@ -114,8 +114,8 @@ def _gaze_s(person: Dict[str, Any], mem: Memory, now: float, orientation_fresh: 
     if not orientation_fresh:
         mem.gaze_since.pop(pid, None)
         return None
-    # The orientation node writes "unknown" when no face is seen, so with fresh
-    # orientation it means "not looking".
+    # The orientation node writes "unknown" when no face is seen and "away" when
+    # the head is turned or tilted down, so with fresh orientation both mean "not looking".
     if person.get("gaze") != "toward_robot":
         last = mem.gaze_last.get(pid)
         if pid in mem.gaze_since and last is not None and now - last <= GAZE_GRACE_S:
