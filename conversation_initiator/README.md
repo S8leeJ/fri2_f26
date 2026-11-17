@@ -422,7 +422,8 @@ tour. `mvp.py` reads it once at import and adds it to `SPEECH_SYSTEM`, the
 prompt that writes every spoken line. The live node, the playground and
 `mvp.py` all use it.
 
-The prompt tells the model to state only these facts. For directions, rooms,
+The prompt tells the model to state only these facts about the building. It
+may also answer general knowledge questions. For directions, rooms,
 schedules or people not in the file, the robot says it does not know yet and
 suggests asking someone nearby or emailing robotics@utexas.edu. A reply that
 answers a fact question may use up to 25 words. Other lines stay under 12.

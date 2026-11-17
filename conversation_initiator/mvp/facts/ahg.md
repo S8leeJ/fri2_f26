@@ -1,7 +1,7 @@
 # Facts about AHG
 
 Last checked: October 12, 2026, from the UT pages listed at the end.
-The robot may say only what is in this file. Keep each fact short.
+About this building and its people, the robot may say only what is in this file. Keep each fact short.
 
 ## The building
 
