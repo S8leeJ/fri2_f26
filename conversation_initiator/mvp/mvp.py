@@ -680,6 +680,18 @@ def decide(provider, client, model, ctx, rubric, early_reply=False) -> Result:
                   ms, ms2, thoughts, speech, speech_error, d.model_dump(), line_wait_ms)
 
 
+def baseline_result(ctx, action: str, decision: dict, ms: float) -> Result:
+    """A Result for the rule-based baseline (baseline.py). The lines come as for Jev:
+    the fixed greeting, and replies from reply_writers()."""
+    speech = ms2 = error = None
+    if action in SPEAKS and blocking_rule(ctx, action, {"social_rules": False}) is None:
+        if action == "greet":
+            speech = fixed_greeting(ctx)
+        else:
+            speech, ms2, error = _write_line(reply_writers(), ctx, {"action": "respond"})
+    return Result(action, [], ms, ms2, None, speech, error, decision)
+
+
 def is_timeout(e: BaseException) -> bool:
     # Each SDK wraps httpx's timeout in its own class; walk the chain for any of them.
     seen = set()

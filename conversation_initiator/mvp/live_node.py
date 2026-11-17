@@ -33,6 +33,7 @@ There, each start adds one "run_start" line, and each call has its run number.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime
 import json
 import os
@@ -61,10 +62,13 @@ import httpx
 HERE = pathlib.Path(__file__).resolve().parent
 dotenv.load_dotenv(HERE / ".env")
 
+from baseline import Baseline, BaselineConfig  # noqa: E402
 from context import validate  # noqa: E402
-from fusion_adapter import Memory, apply_result, consume_pending, fusion_to_context  # noqa: E402
+from fusion_adapter import (VISION_STALE_S, Memory, apply_result, consume_pending,  # noqa: E402
+                            fusion_to_context)
 from gate import GateState, decide_tick, note_asked  # noqa: E402
-from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers, warm_due, use_rules  # noqa: E402
+from mvp import (DEFAULT_MODEL, ENV_KEY, REPLY_WRITERS, baseline_result, decide, is_timeout,  # noqa: E402
+                 make_client, reply_writers, warm_due, use_rules)
 from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
@@ -118,8 +122,15 @@ class LiveInitiator(Node):
         self.args = args
         self.rules = getattr(args, "rules", False)
         use_rules(self.rules)
-        self.model = args.model or DEFAULT_MODEL[args.provider]
-        self.client = make_client(args.provider, args.timeout)
+        self.baseline = None
+        if args.provider == "baseline":
+            self.baseline = Baseline(BaselineConfig(
+                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
+                no_face=args.baseline_no_face))
+            self.model, self.client = "hriscu+webb", None
+        else:
+            self.model = args.model or DEFAULT_MODEL[args.provider]
+            self.client = make_client(args.provider, args.timeout)
         self.tts = None
         if args.speak:
             from tts import from_env
@@ -162,9 +173,15 @@ class LiveInitiator(Node):
         mode = "speak" if args.speak else "dry run" + (" (engaged)" if args.engaged else "")
         self.get_logger().info(f"{mode}: {args.provider} {self.model}, {args.rate:g} Hz, "
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
-        self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
-                               else "rules: off: scene only, the model decides, "
-                                    f"asked every {self.gate_cfg['fixed_interval_s']:g} s")
+        if self.baseline:
+            c = self.baseline.cfg
+            self.get_logger().info(f"baseline: greet once when engaged (Hriscu + Webb), window {c.window_s:g} s, "
+                                   f"k {c.k:g}, no face = {c.no_face}, "
+                                   f"checked every {self.gate_cfg['fixed_interval_s']:g} s")
+        else:
+            self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
+                                   else "rules: off: scene only, the model decides, "
+                                        f"asked every {self.gate_cfg['fixed_interval_s']:g} s")
         self.turn = self._start_turning()
         self._warm_up()
 
@@ -186,7 +203,7 @@ class LiveInitiator(Node):
         """Make the clients and open their connections now, not during the first reply."""
         start = self.last_warm = time.time()
         clients = [self.client]
-        if self.args.provider == "jev":
+        if self.args.provider in ("jev", "baseline"):
             clients += [client for _, client, _ in reply_writers()]
         if self.tts is not None:
             clients.append(self.tts.client)
@@ -205,6 +222,11 @@ class LiveInitiator(Node):
             self.latest = json.loads(msg.data)
         except json.JSONDecodeError:
             return
+        if self.baseline is not None:
+            age = self.latest.get("vision_age_s")
+            vision = self.latest.get("vision") if age is not None and age <= VISION_STALE_S else None
+            with self.lock:
+                self.baseline.update(vision if isinstance(vision, dict) else None, time.time())
         done = ((self.latest.get("audio") or {}).get("trace") or {}).get("stt_done")
         if done is not None and done != self.trace_arrived[0]:
             self.trace_arrived = (done, time.time())
@@ -264,9 +286,20 @@ class LiveInitiator(Node):
 
     def _decide_once(self, ctx, heard_at=None):
         out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model, "rules": self.rules}
+        pid = None
         try:
-            r = decide(self.args.provider, self.client, self.model, ctx, 6,
-                       early_reply=not self.args.serial_reply)
+            if self.baseline is not None:
+                with self.lock:
+                    pid = self.mem.target_id
+                    start = time.perf_counter()
+                    action, reason = self.baseline.decide(ctx, pid)
+                    ms = (time.perf_counter() - start) * 1000
+                    decision = {"action": action, "rule_fired": reason,
+                                "engagement": self.baseline.snapshot(pid)}
+                r = baseline_result(ctx, action, decision, ms)
+            else:
+                r = decide(self.args.provider, self.client, self.model, ctx, 6,
+                           early_reply=not self.args.serial_reply)
         except Exception as e:  # noqa: BLE001 - any failure means silence
             error = "TIMEOUT" if is_timeout(e) else str(e)[:300] or type(e).__name__
             out.update(action_final="remain_silent", error=error)
@@ -301,6 +334,8 @@ class LiveInitiator(Node):
             self._trace(r, heard_at, None)
         with self.lock:
             apply_result(self.mem, final, reason, line, time.time())
+            if self.baseline is not None and line and final == "greet":
+                self.baseline.greeted(pid)
 
     def _say_in_background(self, speech, r, heard_at):
         """Without --rules: talk in another thread, so the LLM is still asked while the robot talks.
@@ -365,6 +400,8 @@ class LiveInitiator(Node):
         mark = {"run_start": datetime.datetime.now().isoformat(timespec="seconds"), "run": run,
                 "provider": self.args.provider, "model": self.model, "speak": self.args.speak,
                 "rules": self.rules}
+        if self.baseline is not None:
+            mark["baseline"] = dataclasses.asdict(self.baseline.cfg)
         with open(self.log_path, "a") as f:
             f.write(json.dumps(mark) + chr(10))
         return run
@@ -392,7 +429,8 @@ class LiveInitiator(Node):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--provider", default="groq", choices=sorted(DEFAULT_MODEL))
+    ap.add_argument("--provider", default="groq", choices=sorted(DEFAULT_MODEL) + ["baseline"],
+                    help="baseline: the rule-based robot in baseline.py, no model")
     ap.add_argument("--model", default=None, help="overrides the provider default")
     ap.add_argument("--rate", type=float, default=10.0, help="ticks per second, the same rate as fusion")
     ap.add_argument("--timeout", type=float, default=2.0,
@@ -426,8 +464,20 @@ def main():
                     help="without --rules: ask the LLM every this many seconds, with or without "
                          "a person; a new sentence asks at once, and so does a person who "
                          "appears, turns to face the robot, or stops walking")
+    ap.add_argument("--baseline-window", type=float, default=2.0,
+                    help="baseline: seconds of engagement samples (ROS4HRI uses 10)")
+    ap.add_argument("--baseline-k", type=float, default=0.4,
+                    help="baseline: head_yaw / tan(head angle), measured on the robot")
+    ap.add_argument("--baseline-no-face", choices=("away", "skip"), default="away",
+                    help="baseline: a person with no visible face counts as not looking (away), "
+                         "or adds no sample (skip, as ROS4HRI does)")
     args = ap.parse_args()
-    if not os.environ.get(ENV_KEY[args.provider]):
+    if args.provider == "baseline":
+        if args.rules:
+            ap.error("--rules does not apply to --provider baseline")
+        if not any(os.environ.get(ENV_KEY[n]) for n in REPLY_WRITERS):
+            sys.exit(f"the baseline needs a GROQ, ANTHROPIC, or GEMINI key in {HERE / '.env'} to write replies")
+    elif not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")
 
     try:

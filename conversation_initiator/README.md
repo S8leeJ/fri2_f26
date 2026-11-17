@@ -385,11 +385,44 @@ A context from that log can be copied into a vignette.
 | (logs) | Each start clears three files in `fusion/logs/`: `decision.log` (what the terminal shows), `decisions.jsonl` (each LLM call), and `trace.jsonl` (the steps of each reply). `live_logs/<date>.jsonl` keeps the whole day. Each start adds a `run_start` line there, and each call has its `run` number. |
 | (summary) | `python3 summarize_run.py` prints the last run in `live_logs/` as one short line per LLM call: the person, speech, the action, the scores, and what was heard and said. `--run N` and `--log FILE` pick another run. Use it to share a run without the full JSON. |
 | `--timeout` | Seconds per LLM call. Default 2 (it was 8): a stuck call blocks decisions this long. On a timeout the robot stays silent. |
+| `--provider baseline` | The rule-based baseline in place of the LLM. See "Rule-based baseline" below. `--baseline-window`, `--baseline-k` and `--baseline-no-face` set it. It does not work with `--rules`. |
 
 In a dry run, the node acts as if the robot said each line. So
 `last_spoke_s_ago`, the 30 s cooldown and the conversation history behave as
 they would with `--speak`. Because nobody hears the line, the no-reply count
 goes up after 8 s.
+
+### Rule-based baseline
+
+`live_node.py --provider baseline` uses `mvp/baseline.py` in place of the LLM.
+The robot greets once when a person becomes engaged and has not spoken
+(Hriscu et al., RO-MAN 2026). It does not greet again until the person
+disengages. When the person speaks, it replies. "Engaged" is the score from
+Webb, Giuliani and Lemaignan (RO-MAN 2022), as the ROS4HRI `hri_engagement`
+code computes it. `baseline.py` has the formulas and our changes to them.
+
+These stay the same as with Jev: the scene, the gate clock (`--every`), the
+fixed greeting, the reply writers, the voice, and the post-filter. The baseline
+needs no model key, but it needs a Groq, Anthropic or Gemini key for replies.
+Each `run_start` line in `live_logs/` records the baseline settings. Each
+decision records the engagement level and score.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--baseline-window` | 2 | Seconds of samples for the engagement level. ROS4HRI uses 10. |
+| `--baseline-k` | 0.4 | `head_yaw` divided by tan(head angle). 0.4 is not measured. Measure it before the study (below). |
+| `--baseline-no-face` | `away` | `away`: a person with no visible face counts as not looking. `skip`: no sample, as in ROS4HRI. |
+
+Measure k on flexo, with `hri_vision/scripts/view.sh json`:
+
+1. A person stands 1.5 m in front of the robot, near the middle of the image (`image_x` near 0).
+2. Put marks 0.55 m (20°) and 1.26 m (40°) to each side of the robot.
+3. The person turns the head, not only the eyes, to each mark for about 5 s. Write down the median `head_yaw`.
+4. k = `head_yaw` / tan(angle). tan 20° = 0.36, tan 40° = 0.84.
+5. Do it again at 1 m, with marks at 0.36 m and 0.84 m. If k is about the same for all, use the mean.
+
+`test_baseline.py` checks the score and the levels against a copy of the
+ROS4HRI math, for the same scenes.
 
 ### How the fusion message maps to the schema
 
