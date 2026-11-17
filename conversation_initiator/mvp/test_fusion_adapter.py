@@ -83,6 +83,8 @@ class AdapterTests(unittest.TestCase):
         ctx, _ = self.build(wrapper([person(1, 2.0, direction="receding", dwell=7.5)]))
         self.assertEqual(ctx["target"]["motion"], "leaving")
         self.assertEqual(ctx["target"]["dwell_s"], 7.5)
+        ctx, _ = self.build(wrapper([person(1, 2.0, direction="passing")]))
+        self.assertEqual(ctx["target"]["motion"], "passing")
         ctx, _ = self.build(wrapper([person(1, 2.0, direction="unknown")]))
         self.assertNotIn("motion", ctx["target"])
 

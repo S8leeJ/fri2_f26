@@ -28,7 +28,10 @@ All are in `config/vision.yaml`.
 | detection | `max_rate_hz` | 12 | The highest detection rate. The real rate depends on the CPU. |
 | person context | `center_crop_fraction` | 0.60 | Distance is the median depth of the middle 60% of the person's box. |
 | person context | `distance_window` | 4 | `distance_m` is the mean of the last 4 readings, so it is about 0.5 seconds late. |
-| person context | `direction_speed_mm_s`, `direction_window_s` | 250, 1.0 | Speed toward or away from the camera, fitted over the last 1 s of depth readings. Faster than 0.25 m/s gives `approaching` or `receding`. Until October 15, 2026, the check was a 100 mm change between two frames, which needed about 1 m/s at 10 frames a second and missed normal walking. |
+| person context | `direction_speed_mm_s`, `direction_window_s` | 250, 1.0 | Speed on the floor, fitted over the last 1 s of depth and box-center readings. Slower than 0.25 m/s gives `stationary`. Faster, toward or away from the camera, gives `approaching` or `receding`. Until October 15, 2026, the check was a 100 mm change between two frames, which needed about 1 m/s at 10 frames a second and missed normal walking. |
+| person context | `passing_miss_mm` | 750 | A person who walks on a path that misses the camera by more than 0.75 m is `passing`. Not measured on the robot. |
+| person context | `passing_speed_mm_s` | 400 | `passing` also needs this speed. A raised arm moves the box center sideways, but slower. Not measured on the robot. |
+| person context | `horizontal_fov_deg` | 90 | The width of the color camera's view. It turns the box center into a sideways position. 90 is the Azure Kinect color camera. |
 | person context | `track_grace_s` | 2.0 | An `id` that is gone for more than 2 seconds starts a new dwell time when it returns. |
 | person context | `max_depth_age_s` | 0.25 | Depth older than this gives `depth_fresh: false`. |
 | orientation | `max_rate_hz` | 5 | Orientation updates up to 5 times each second. |
@@ -50,6 +53,7 @@ October 6, 2026, in the lab:
 - How accurate `distance_m` is against a tape measure.
 - The farthest distance at which `facing_robot` still works.
 - The walking speed that `approaching` and `receding` need.
+- `passing` on the robot. It was tested only with simulated walks (`test/test_common.py`).
 - The real detection rate on flexo.
 
 ## How to measure
@@ -65,7 +69,7 @@ Do these on flexo, at the place where the robot will stand. Run the driver and t
 
 - `id` is not a stable identity. A person who is hidden, or leaves and comes back, can get a new `id`, and `dwell_time_s` starts again.
 - `gaze` is a copy of `face_visible`. Nothing measures eye direction.
-- `direction` measures only the change in distance. A person who walks across the view reads `stationary`. There is no `passing`.
+- `passing` uses the center of the person's box. A box that changes shape, for example when a person raises an arm, moves the center. Slow sideways walking, under 0.4 m/s, reads `stationary`.
 - The final JSON drops the person's box, so it has no left or right position.
 - Nothing measures whether people talk to each other.
 - The orientation node uses the newest camera image with person boxes from a slightly older image. For a person who moves fast, the two can differ a little.
@@ -75,4 +79,3 @@ Do these on flexo, at the place where the robot will stand. Run the driver and t
 These are options for the team. Nothing here is changed.
 
 - The center of the person's box could give a left or right angle. Matched with the direction of a voice from the Kinect's microphones, it could tell who talks.
-- A change in the box's left-right position could detect `passing`.

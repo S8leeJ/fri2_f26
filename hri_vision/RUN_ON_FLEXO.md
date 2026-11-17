@@ -323,6 +323,7 @@ Watch the JSON lines in Terminal 2.
 | Turn your back | `"orientation":"likely_facing_away"` |
 | Turn sideways | `"orientation":"sideways"` |
 | Walk toward or away | `"direction":"approaching"` or `"receding"` |
+| Walk across the view | `"direction":"passing"` |
 | Stand still | `"direction":"stationary"`, and `"dwell_time_s"` increases |
 | Leave | `"person_count":0` again |
 

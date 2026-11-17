@@ -17,6 +17,9 @@ person_context_node:
     max_depth_mm: 8000
     direction_speed_mm_s: 250.0
     direction_window_s: 1.0
+    passing_miss_mm: 750.0
+    passing_speed_mm_s: 400.0
+    horizontal_fov_deg: 90.0
     distance_window: 4
     track_grace_s: 2.0
     max_depth_age_s: 0.25

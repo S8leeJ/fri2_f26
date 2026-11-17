@@ -8,7 +8,13 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import classify_direction, median_distance_mm, now_float, safe_json_loads, speed_mm_s
+from .common import (
+    median_distance_mm,
+    motion_label,
+    now_float,
+    safe_json_loads,
+    sideways_mm,
+)
 
 
 class PersonContextNode(Node):
@@ -21,10 +27,16 @@ class PersonContextNode(Node):
         self.declare_parameter("center_crop_fraction", 0.60)
         self.declare_parameter("min_depth_mm", 250)
         self.declare_parameter("max_depth_mm", 8000)
-        # Walking speed toward or away from the camera, over the last second. A
-        # per-frame distance change depended on the frame rate and missed normal walking.
+        # Walking speed over the last second. A per-frame distance change depended
+        # on the frame rate and missed normal walking.
         self.declare_parameter("direction_speed_mm_s", 250.0)
         self.declare_parameter("direction_window_s", 1.0)
+        # A moving person whose path misses the camera by more than this is passing.
+        self.declare_parameter("passing_miss_mm", 750.0)
+        # Such a person must also move faster than this, or a raised arm reads as passing.
+        self.declare_parameter("passing_speed_mm_s", 400.0)
+        # Width of the color image's view. The Azure Kinect color camera is 90 degrees.
+        self.declare_parameter("horizontal_fov_deg", 90.0)
         self.declare_parameter("distance_window", 4)
         self.declare_parameter("track_grace_s", 2.0)
         self.declare_parameter("max_depth_age_s", 0.25)
@@ -74,6 +86,13 @@ class PersonContextNode(Node):
         self.latest_depth = np.asarray(depth)
         self.latest_depth_time = now_float(self)
 
+    def _sideways(self, depth_mm, bbox, image_width) -> float:
+        # Without the image width, treat the person as on the camera axis.
+        if not image_width:
+            return 0.0
+        return sideways_mm(depth_mm, (bbox[0] + bbox[2]) / 2.0, float(image_width),
+                           float(self.get_parameter("horizontal_fov_deg").value))
+
     def _on_detections(self, msg: String):
         data = safe_json_loads(msg.data)
         if data is None:
@@ -93,6 +112,7 @@ class PersonContextNode(Node):
 
         visible_ids = set()
         output_people = []
+        image_width = data.get("image_width")
 
         depth_fresh = (
             self.latest_depth is not None
@@ -139,13 +159,15 @@ class PersonContextNode(Node):
                 history.append(raw_distance)
                 smoothed_distance = float(np.mean(history))
                 samples = self.speed_samples[track_id]
-                samples.append((current, raw_distance))
+                samples.append((current, raw_distance, self._sideways(raw_distance, bbox, image_width)))
                 window_s = float(self.get_parameter("direction_window_s").value)
                 while current - samples[0][0] > window_s:
                     samples.popleft()
-                speed = speed_mm_s(samples)
-                direction = "stationary" if speed is None else classify_direction(
-                    speed, float(self.get_parameter("direction_speed_mm_s").value)
+                direction = motion_label(
+                    samples,
+                    float(self.get_parameter("direction_speed_mm_s").value),
+                    float(self.get_parameter("passing_miss_mm").value),
+                    float(self.get_parameter("passing_speed_mm_s").value),
                 )
 
             output_people.append(
