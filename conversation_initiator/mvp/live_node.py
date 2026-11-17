@@ -414,7 +414,8 @@ def main():
     ap.add_argument("--no-rules", action="store_true", help=argparse.SUPPRESS)  # the default now
     ap.add_argument("--every", type=float, default=1.0,
                     help="without --rules: ask the LLM every this many seconds, with or without "
-                         "a person; a new sentence asks at once")
+                         "a person; a new sentence asks at once, and so does a person who "
+                         "appears, turns to face the robot, or stops walking")
     args = ap.parse_args()
     if not os.environ.get(ENV_KEY[args.provider]):
         sys.exit(f"{ENV_KEY[args.provider]} is not set in {HERE / '.env'}")

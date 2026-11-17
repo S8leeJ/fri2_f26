@@ -171,6 +171,44 @@ class GateUnitTests(unittest.TestCase):
         speaking = base_ctx(t=5.0, robot={"is_speaking": True})
         self.assertEqual(should_ask_llm(speaking, state, cfg), (True, "ok"))
 
+    def test_fixed_clock_asks_at_once_on_a_cue(self):
+        cfg = {"social_rules": False, "fixed_interval_s": 1.0}
+        walking = {"motion": "approaching", "facing_robot": False}
+        cues = [
+            ("a person appears", base_ctx(target=None), base_ctx(t=0.6)),
+            ("the person turns to face the robot", base_ctx(target=walking),
+             base_ctx(t=0.6, target={"motion": "approaching"})),
+            ("the person stops", base_ctx(target=walking),
+             base_ctx(t=0.6, target={"motion": "stationary", "facing_robot": False})),
+        ]
+        for name, before, after in cues:
+            with self.subTest(name):
+                state = GateState()
+                note_asked(state, before)
+                self.assertEqual(should_ask_llm(after, state, cfg), (True, "ok"))
+
+    def test_fixed_clock_waits_when_there_is_no_cue(self):
+        cfg = {"social_rules": False, "fixed_interval_s": 1.0}
+        no_cues = [
+            ("nothing changed", base_ctx(), base_ctx(t=0.6)),
+            ("the person left", base_ctx(), base_ctx(t=0.6, target=None)),
+            ("the person looks away", base_ctx(), base_ctx(t=0.6, target={"facing_robot": False})),
+            ("the person starts to walk", base_ctx(), base_ctx(t=0.6, target={"motion": "leaving"})),
+            ("a new person gets a first motion label", base_ctx(target={"motion": None}), base_ctx(t=0.6)),
+        ]
+        for name, before, after in no_cues:
+            with self.subTest(name):
+                state = GateState()
+                note_asked(state, before)
+                self.assertEqual(should_ask_llm(after, state, cfg), (False, "interval"))
+
+    def test_a_cue_too_soon_after_the_last_ask_waits(self):
+        cfg = {"social_rules": False, "fixed_interval_s": 1.0}
+        state = GateState()
+        note_asked(state, base_ctx(target=None))
+        self.assertEqual(should_ask_llm(base_ctx(t=0.3), state, cfg), (False, "interval"))
+        self.assertEqual(should_ask_llm(base_ctx(t=0.5), state, cfg), (True, "ok"))
+
     def test_stepping_back_does_not_end_a_conversation(self):
         cfg = {"settle_max_distance_m": 1.5}
         talking = base_ctx(target={"distance_m": 2.5}, robot={"engaged": True})
