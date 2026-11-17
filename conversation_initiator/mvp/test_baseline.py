@@ -179,11 +179,16 @@ class Decisions(unittest.TestCase):
         self.feed(2.0, person(), fresh=False)
         self.assertEqual(self.base.level(1), b.UNKNOWN)
 
-    def test_skip_mode_keeps_the_level_when_the_face_goes(self):
-        self.base = b.Baseline(b.BaselineConfig(no_face="skip"))
+    def test_by_default_the_level_stays_when_the_face_goes_as_in_ros4hri(self):
         self.feed(2.0, person())
         self.feed(3.0, person(face=False))
         self.assertEqual(self.base.level(1), b.ENGAGED)
+
+    def test_away_mode_counts_no_face_as_not_looking(self):
+        self.base = b.Baseline(b.BaselineConfig(no_face="away"))
+        self.feed(2.0, person())
+        self.feed(3.0, person(face=False))
+        self.assertEqual(self.base.level(1), b.DISENGAGED)
 
     def test_a_person_out_of_view_is_forgotten(self):
         self.feed(2.0, person())

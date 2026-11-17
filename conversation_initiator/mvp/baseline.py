@@ -28,8 +28,8 @@ From our vision data:
 
 Our changes to the ROS4HRI code, set before the study:
     - window_s: 2 s, not 10 s (the ROS4HRI README value).
-    - A face that is not visible counts as not looking (-1). ROS4HRI skips the
-      sample, which keeps the old level when a person turns away.
+    - A face that is not visible adds no sample, as in ROS4HRI. The old level
+      stays when a person turns away. no_face = "away" counts it as -1 instead.
     - A head tilted down past pitch_limit gives gaze_AB = 0. ROS4HRI uses one
       3D head angle. We have a yaw angle and a pitch ratio.
     - Height differences between the camera and the face are ignored.
@@ -59,7 +59,7 @@ class BaselineConfig:
     max_distance_m: float = 4.0
     threshold: float = 0.5
     pitch_limit: float = 0.70
-    no_face: str = "away"  # "away": count as -1. "skip": add no sample, as ROS4HRI does.
+    no_face: str = "skip"  # "skip": add no sample, as ROS4HRI does. "away": count as -1.
 
 
 def gaze_score(tan_angle: float, field_of_view_deg: float) -> float:

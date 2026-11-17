@@ -468,9 +468,9 @@ def main():
                     help="baseline: seconds of engagement samples (ROS4HRI uses 10)")
     ap.add_argument("--baseline-k", type=float, default=0.4,
                     help="baseline: head_yaw / tan(head angle), measured on the robot")
-    ap.add_argument("--baseline-no-face", choices=("away", "skip"), default="away",
-                    help="baseline: a person with no visible face counts as not looking (away), "
-                         "or adds no sample (skip, as ROS4HRI does)")
+    ap.add_argument("--baseline-no-face", choices=("away", "skip"), default="skip",
+                    help="baseline: a person with no visible face adds no sample (skip, as "
+                         "ROS4HRI does), or counts as not looking (away)")
     args = ap.parse_args()
     if args.provider == "baseline":
         if args.rules:

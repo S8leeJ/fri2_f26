@@ -411,7 +411,7 @@ decision records the engagement level and score.
 |---|---|---|
 | `--baseline-window` | 2 | Seconds of samples for the engagement level. ROS4HRI uses 10. |
 | `--baseline-k` | 0.4 | `head_yaw` divided by tan(head angle). 0.4 is not measured. Measure it before the study (below). |
-| `--baseline-no-face` | `away` | `away`: a person with no visible face counts as not looking. `skip`: no sample, as in ROS4HRI. |
+| `--baseline-no-face` | `skip` | `skip`: a person with no visible face adds no sample, as in ROS4HRI. `away`: it counts as not looking. |
 
 Measure k on flexo, with `hri_vision/scripts/view.sh json`:
 
