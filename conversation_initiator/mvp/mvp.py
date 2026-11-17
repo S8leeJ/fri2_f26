@@ -108,7 +108,12 @@ addressivity      1 = unclear who to address, 5 = one clear person"""
 FIELD_GUIDE = """Fields. Missing or null means not measured. Never read null as zero.
 
 target      the one person the robot would address. null means nobody is present.
-  distance_m, facing_robot, gaze_at_robot_s (seconds of sustained gaze)
+  distance_m
+  facing_robot     the person's face is toward the robot's camera. It does not
+                   mean they look at the robot.
+  gaze_at_robot_s  seconds the head has pointed at the robot without a break. It
+                   stays 0 while the head is turned or tilted away, for example
+                   down at a phone, even when facing_robot is true.
   motion           approaching, leaving, passing, or stationary
   in_conversation  talking with someone else. This is what R1 reads.
   activity         idle, working, socializing, transiting, or unknown
