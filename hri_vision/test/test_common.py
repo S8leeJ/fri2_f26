@@ -5,7 +5,9 @@ import numpy as np
 from hri_vision.common import (
     gaze_label,
     head_turn,
+    image_x,
     median_distance_mm,
+    merge_orientation,
     motion_label,
     sideways_mm,
     speed_mm_s,
@@ -151,3 +153,30 @@ def test_a_limit_of_zero_turns_its_check_off():
     turned_and_down = (0.5, 0.9)
     assert gaze_label(True, turned_and_down, 0.0, 0.0) == "toward_robot"
     assert gaze_label(True, turned_and_down, 0.0, *GAZE[1:]) == "away"
+
+
+def test_image_x_runs_from_the_left_edge_to_the_right_edge():
+    assert image_x((0, 0, 0, 10), 1280) == -1.0
+    assert image_x((600, 0, 680, 10), 1280) == 0.0
+    assert image_x((1280, 0, 1280, 10), 1280) == 1.0
+    assert image_x((800, 0, 960, 10), 1280) == 0.375
+
+
+def test_image_x_is_none_without_an_image_width():
+    assert image_x((600, 0, 680, 10), None) is None
+    assert image_x((600, 0, 680, 10), 0) is None
+
+
+def test_merge_keeps_the_head_angles_and_drops_the_box():
+    person = {"id": 3, "bbox": [1, 2, 3, 4], "distance_m": 1.5, "image_x": 0.2}
+    orientation = {"id": 3, "orientation": "facing_robot", "gaze": "away", "face_visible": True,
+                   "head_yaw": 0.31, "head_pitch": 0.5, "shoulder_ratio": 0.9}
+    assert merge_orientation(person, orientation) == {
+        "id": 3, "distance_m": 1.5, "image_x": 0.2, "orientation": "facing_robot", "gaze": "away",
+        "face_visible": True, "head_yaw": 0.31, "head_pitch": 0.5}
+
+
+def test_merge_without_orientation_is_unknown():
+    merged = merge_orientation({"id": 3, "bbox": [1, 2, 3, 4]}, None)
+    assert merged == {"id": 3, "orientation": "unknown", "gaze": "unknown", "face_visible": None,
+                      "head_yaw": None, "head_pitch": None}

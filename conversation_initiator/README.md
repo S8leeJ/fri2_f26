@@ -408,8 +408,11 @@ goes up after 8 s.
 | `bystanders` | Everyone else with a distance. |
 | `robot`, `recent_decisions`, `conversation` | Kept by the node. A new target ends the interaction. No target for 5 s ends the visit and sets `engaged` to false: the robot also forgets that it spoke, so it can greet the next person. |
 
-Vision does not measure `in_conversation`, `activity` or `bearing_deg`, so
-the adapter leaves them out. Rules R1 and R4 then depend on the model alone.
+Vision does not measure `in_conversation` or `activity`, so the adapter
+leaves them out. Rules R1 and R4 then depend on the model alone. Vision also
+publishes `image_x`, `head_yaw` and `head_pitch`. The adapter leaves them out
+too: `bearing_deg` has an open sign question (AGENTS.md §5.2), and the schema
+has no head angle field.
 
 ## Building facts
 

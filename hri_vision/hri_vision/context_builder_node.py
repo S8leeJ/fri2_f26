@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from .common import safe_json_loads
+from .common import merge_orientation, safe_json_loads
 
 
 class ContextBuilderNode(Node):
@@ -66,27 +66,13 @@ class ContextBuilderNode(Node):
 
         people = []
         for person in data.get("people", []):
-            merged = dict(person)
             track_id = int(person.get("id", -1))
-
             orientation = (
                 self.latest_orientation_by_id.get(track_id)
                 if orientation_is_fresh
                 else None
             )
-
-            if orientation:
-                merged["orientation"] = orientation.get("orientation", "unknown")
-                merged["gaze"] = orientation.get("gaze", "unknown")
-                merged["face_visible"] = orientation.get("face_visible")
-            else:
-                merged["orientation"] = "unknown"
-                merged["gaze"] = "unknown"
-                merged["face_visible"] = None
-
-            # Bounding boxes are useful internally but not needed by the LLM.
-            merged.pop("bbox", None)
-            people.append(merged)
+            people.append(merge_orientation(person, orientation))
 
         payload = {
             "person_count": len(people),

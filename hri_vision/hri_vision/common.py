@@ -86,6 +86,26 @@ def median_distance_mm(depth_image: np.ndarray, box, center_fraction: float, min
     return float(np.median(valid))
 
 
+def image_x(box, image_width) -> Optional[float]:
+    """Where the box center is across the image: -1 at the left edge, 0 at the center, 1 at the right edge."""
+    if not image_width:
+        return None
+    half = float(image_width) / 2.0
+    return round(((box[0] + box[2]) / 2.0 - half) / half, 3)
+
+
+def merge_orientation(person: Dict[str, Any], orientation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """One /hri/vision/context person: the person context and its orientation, without the box."""
+    merged = {k: v for k, v in person.items() if k != "bbox"}
+    o = orientation or {}
+    merged["orientation"] = o.get("orientation", "unknown")
+    merged["gaze"] = o.get("gaze", "unknown")
+    merged["face_visible"] = o.get("face_visible")
+    merged["head_yaw"] = o.get("head_yaw")
+    merged["head_pitch"] = o.get("head_pitch")
+    return merged
+
+
 def sideways_mm(depth_mm: float, center_x: float, image_width: float, hfov_deg: float) -> float:
     """How far left (negative) or right of the camera axis a point is, in mm."""
     half = image_width / 2.0

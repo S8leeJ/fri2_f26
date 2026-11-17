@@ -16,9 +16,12 @@ Ready-to-launch vision pipeline for the BWI/HRI robot project.
       "distance_m": 1.82,
       "direction": "approaching",
       "dwell_time_s": 6.4,
+      "image_x": -0.21,
       "orientation": "facing_robot",
       "gaze": "toward_robot",
-      "face_visible": true
+      "face_visible": true,
+      "head_yaw": 0.04,
+      "head_pitch": 0.52
     }
   ],
   "sensor_status": {

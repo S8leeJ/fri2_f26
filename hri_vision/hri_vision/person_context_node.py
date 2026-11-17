@@ -9,6 +9,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 from .common import (
+    image_x,
     median_distance_mm,
     motion_label,
     now_float,
@@ -182,6 +183,7 @@ class PersonContextNode(Node):
                     ),
                     "direction": direction,
                     "dwell_time_s": round(current - self.first_seen[track_id], 2),
+                    "image_x": image_x(bbox, image_width),
                 }
             )
 

@@ -30,6 +30,10 @@ Each field describes what the camera sees. No single field decides what the robo
 **`dwell_time_s`**: the seconds since this `id` first appeared.
 - It starts again at 0 when the person gets a new `id`.
 
+**`image_x`**: where the person is across the camera image.
+- -1 is the left edge, 0 is the center, and 1 is the right edge, as the camera sees them.
+- `null` when not measured.
+
 **`orientation`**: which way the person's body and face point.
 - `facing_robot`: a face is visible.
 - `sideways`: the shoulders look narrow from the robot.
@@ -45,9 +49,14 @@ Each field describes what the camera sees. No single field decides what the robo
 - `unknown`: no face is visible.
 - It comes from the head, not the eyes. A person who looks down with the eyes only reads `toward_robot`.
 
+**`head_yaw`** and **`head_pitch`**: the numbers that `gaze` comes from, as ratios of face points.
+- `head_yaw`: 0 when the face points at the camera. It increases as the head turns to either side.
+- `head_pitch`: it increases as the head tilts down.
+- `null` when no face is visible.
+- Not measured on the robot yet. See `CALIBRATION.md`.
+
 **`sensor_status`**: which measurements in this message are current.
 - `depth_fresh: false`: `distance_m` and `direction` are not measured in this message.
-- `orientation_fresh: false`: `orientation`, `gaze`, and `face_visible` are not measured in this message.
+- `orientation_fresh: false`: `orientation`, `gaze`, `face_visible`, `head_yaw`, and `head_pitch` are not measured in this message.
 
-The message does not say where in the view a person is, for example left or right.
-It has no field for whether people talk to each other.
+The message has no field for whether people talk to each other.
