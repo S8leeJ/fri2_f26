@@ -37,8 +37,8 @@ def steps(marks: Dict[str, float], ms1: float, ms2: Optional[float],
     else:
         out += [(name, max(0.0, marks[b] - marks[a])) for name, a, b in MARKED if a in marks and b in marks]
     out.append(("decide", ms1 / 1000))
-    if ms2:
-        out.append(("line", ms2 / 1000))
+    if ms2 is not None:
+        out.append(("line", ms2 / 1000))   # the wait after the decision
     if tts_s is not None:
         out.append(("tts", tts_s))     # until the first sound
     return out

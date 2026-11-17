@@ -31,6 +31,10 @@ class TurnTraceTests(unittest.TestCase):
         self.assertEqual(list(got), ["heard", "gate", "decide"])
         self.assertAlmostEqual(got["heard"], 1.5)
 
+    def test_a_line_that_was_ready_shows_as_zero(self):
+        got = dict(steps({"speech_end": 100.0, "seen": 101.5, "asked": 102.0}, 700, 0.0, None))
+        self.assertEqual(got["line"], 0.0)
+
     def test_add_logs_one_row_and_summary_has_each_step(self):
         with tempfile.TemporaryDirectory() as d:
             path = pathlib.Path(d) / "trace.jsonl"
