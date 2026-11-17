@@ -401,7 +401,7 @@ goes up after 8 s.
 | `target` | The nearest person with a distance. The current target stays unless someone is 0.5 m nearer. `null` if vision is more than 2 s old. |
 | `target.facing_robot` | `orientation == "facing_robot"` |
 | `target.gaze_at_robot_s` | Seconds of continuous `gaze == "toward_robot"`. Left out if orientation is stale. |
-| `target.motion` | `direction`: `approaching`, `receding` to `leaving`, `stationary`. Left out if `unknown`. |
+| `target.motion` | `direction`: `approaching`, `receding` to `leaving`, `passing`, `stationary`. Left out if `unknown`. |
 | `target.dwell_s` | `dwell_time_s` |
 | `target.speech` | A new audio `transcript`, held until one LLM call uses it. A transcript more than 3 s old when first seen is skipped. |
 | `bystanders` | Everyone else with a distance. |

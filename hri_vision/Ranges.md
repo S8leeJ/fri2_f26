@@ -20,10 +20,11 @@ Each field describes what the camera sees. No single field decides what the robo
 - `null` outside that range, near the edges of the view, or when `depth_fresh` is `false`.
 - It is smoothed, so it is about 0.5 seconds late.
 
-**`direction`**: `approaching`, `receding`, or `stationary`, along the line from the robot to the person.
-- A person who walks across the view, at the same distance, is `stationary`.
-- Slow walking can also read `stationary`.
-- A new person starts as `stationary`.
+**`direction`**: `approaching`, `receding`, `passing`, `stationary`, or `unknown`.
+- `passing`: the person walks, but on a path that misses the robot. This includes a walk across the view.
+- `approaching` and `receding`: the person walks toward the robot, or away from it.
+- Slow walking can read `stationary`.
+- A new person is `unknown` for about 0.3 seconds.
 - `unknown` when there is no distance.
 
 **`dwell_time_s`**: the seconds since this `id` first appeared.

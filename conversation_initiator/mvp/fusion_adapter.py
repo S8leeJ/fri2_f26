@@ -45,7 +45,8 @@ GAZE_GRACE_S = 0.6
 MAX_RECENT = 5
 MAX_CONVERSATION = 20
 
-MOTION = {"approaching": "approaching", "receding": "leaving", "stationary": "stationary"}
+MOTION = {"approaching": "approaching", "receding": "leaving", "stationary": "stationary",
+          "passing": "passing"}
 
 
 @dataclass
