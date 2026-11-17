@@ -14,6 +14,7 @@ import re
 import statistics
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import List, Literal, Optional
 
@@ -588,6 +589,8 @@ class Result:
     speech: Optional[Speech]
     speech_error: Optional[str]
     decision: Optional[dict] = None
+    # With an early reply: ms the caller waited for the line after the decision came back.
+    line_wait_ms: Optional[float] = None
 
 
 REPLY_WRITERS = ("groq", "anthropic", "gemini")
@@ -614,20 +617,26 @@ def line_to_say(provider, client, model, ctx, d):
     """Returns (speech, elapsed_ms, error). Skips the call when nothing will be said."""
     if d.action not in SPEAKS or blocking_rule(ctx, d.action, {"social_rules": RULES_ON}):
         return None, None, None
-    writers = [(provider, client, model)]
-    if provider == "jev":
-        # Jev answers typed questions only, so it cannot write a line.
-        if d.action == "greet":
-            return fixed_greeting(ctx), None, None
-        writers = reply_writers()
-        if not writers:
-            return None, None, "jev cannot write a reply. Add a GROQ, ANTHROPIC, or GEMINI key."
+    if provider == "jev" and d.action == "greet":
+        return fixed_greeting(ctx), None, None
+    return _write_line(_writers(provider, client, model), ctx, d.model_dump())
+
+
+def _writers(provider, client, model) -> list:
+    # Jev answers typed questions only, so it cannot write a line.
+    return reply_writers() if provider == "jev" else [(provider, client, model)]
+
+
+def _write_line(writers, ctx, decision: dict):
+    """Returns (speech, elapsed_ms, error). Tries each writer in order."""
+    if not writers:
+        return None, None, "jev cannot write a reply. Add a GROQ, ANTHROPIC, or GEMINI key."
     # A failed line should not cost the decision, which is what is being scored.
     error = None
     for provider, client, model in writers:
         try:
             speech, ms, _ = ask(provider, client, model, SPEECH_SYSTEM,
-                                json.dumps({"context": ctx, "decision": d.model_dump()}),
+                                json.dumps({"context": ctx, "decision": decision}),
                                 Speech, 150)
             return speech, ms, None
         except Exception as e:  # noqa: BLE001
@@ -637,7 +646,12 @@ def line_to_say(provider, client, model, ctx, d):
     return None, None, error
 
 
-def decide(provider, client, model, ctx, rubric) -> Result:
+_early = ThreadPoolExecutor(max_workers=4, thread_name_prefix="reply")
+
+
+def decide(provider, client, model, ctx, rubric, early_reply=False) -> Result:
+    """early_reply: when a finished sentence waits for an answer, write the reply
+    while the decision is made, and drop it unless the decision is respond."""
     user = json.dumps(ctx)
     if rubric == 3:
         system = SYSTEM_3 if RULES_ON else SYSTEM_3_SCENE
@@ -646,13 +660,24 @@ def decide(provider, client, model, ctx, rubric) -> Result:
                       ms, None, thoughts, None, None, d.model_dump())
 
     system = SYSTEM_6 if RULES_ON else SYSTEM_6_SCENE
+    early = None
+    if early_reply and blocking_rule(ctx, "respond", {"social_rules": RULES_ON}) is None:
+        # The writer does not have the decision yet, so it gets the action alone.
+        early = _early.submit(_write_line, _writers(provider, client, model), ctx,
+                              {"action": "respond"})
     d, ms, thoughts = ask(provider, client, model, system, user, Decision6, 400)
-    speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
+    line_wait_ms = None
+    if early is not None and d.action == "respond":
+        decided = time.perf_counter()
+        speech, ms2, speech_error = early.result()
+        line_wait_ms = (time.perf_counter() - decided) * 1000
+    else:
+        speech, ms2, speech_error = line_to_say(provider, client, model, ctx, d)
     r = d.rubric
     return Result(d.action,
                   [r.invitation, r.interruption_cost, r.urgency, r.redundancy,
                    r.ambient_fit, r.addressivity],
-                  ms, ms2, thoughts, speech, speech_error, d.model_dump())
+                  ms, ms2, thoughts, speech, speech_error, d.model_dump(), line_wait_ms)
 
 
 def is_timeout(e: BaseException) -> bool:

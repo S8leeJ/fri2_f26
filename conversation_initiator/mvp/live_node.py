@@ -265,7 +265,8 @@ class LiveInitiator(Node):
     def _decide_once(self, ctx, heard_at=None):
         out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model, "rules": self.rules}
         try:
-            r = decide(self.args.provider, self.client, self.model, ctx, 6)
+            r = decide(self.args.provider, self.client, self.model, ctx, 6,
+                       early_reply=not self.args.serial_reply)
         except Exception as e:  # noqa: BLE001 - any failure means silence
             error = "TIMEOUT" if is_timeout(e) else str(e)[:300] or type(e).__name__
             out.update(action_final="remain_silent", error=error)
@@ -278,7 +279,8 @@ class LiveInitiator(Node):
         reason = blocked_by or (r.decision or {}).get("rule_fired")
         out.update(action_raw=r.action, action_final=final, blocked_by=blocked_by,
                    decision=r.decision, speech=speech.model_dump() if speech else None,
-                   speech_error=r.speech_error, ms1=r.ms1, ms2=r.ms2)
+                   speech_error=r.speech_error, ms1=r.ms1, ms2=r.ms2,
+                   line_wait_ms=r.line_wait_ms)
         self._publish(ctx, out)
 
         heard = ((ctx.get("target") or {}).get("speech") or {}).get("partial_transcript")
@@ -340,7 +342,8 @@ class LiveInitiator(Node):
     def _trace(self, r, heard_at, tts_s):
         # Only replies to speech have a start point.
         if heard_at:
-            self.get_logger().info(self.tracer.add(heard_at, r.ms1, r.ms2, tts_s, time.time()))
+            line_ms = r.ms2 if r.line_wait_ms is None else r.line_wait_ms
+            self.get_logger().info(self.tracer.add(heard_at, r.ms1, line_ms, tts_s, time.time()))
             row = {k: round(v, 3) for k, v in self.tracer.turns[-1].items()}
             with open(self.log_path, "a") as f:
                 f.write(json.dumps({"run": self.run, "t": time.time(), "trace": row}) + chr(10))
@@ -412,6 +415,9 @@ def main():
                     help="never turn the robot (attention/turn_to_person.py)")
     ap.add_argument("--turn-dry-run", action="store_true",
                     help="print the turns that attention/turn_to_person.py would make, do not move")
+    ap.add_argument("--serial-reply", action="store_true",
+                    help="write the reply only after the decision, as before; the default "
+                         "writes it while the decision is made")
     ap.add_argument("--rules", action="store_true",
                     help="the old rule set: R1 to R6 in the prompt, the settle check, and the "
                          "social post-filter. Without it, the model decides from the scene alone")
