@@ -43,6 +43,8 @@ DEFAULTS: Dict[str, Any] = {
     # Over 0 (live_node.py --no-rules): ask on this fixed clock, with or without a
     # person and whether or not the scene changed. A new sentence still asks at once.
     "fixed_interval_s": 0.0,
+    # On that clock, a cue asks at once, but not sooner than this after the last ask.
+    "cue_min_gap_s": 0.5,
 }
 
 
@@ -216,14 +218,31 @@ def should_ask_llm(
     return True, "ok"
 
 
+def _cue(ctx: Dict[str, Any], prev: Optional[Dict[str, Any]]) -> bool:
+    """Since the last ask, a person appeared, turned to face the robot, or stopped walking."""
+    p, p0 = _target(ctx), _target(prev or {})
+    if p is None:
+        return False
+    if p0 is None:
+        return True
+    if p.get("facing_robot") and not p0.get("facing_robot"):
+        return True
+    return p.get("motion") == "stationary" and p0.get("motion") not in (None, "stationary")
+
+
 def _on_the_clock(ctx: Dict[str, Any], state: GateState, cfg: Dict[str, Any]) -> Tuple[bool, str]:
     # Also while the robot talks: the model sees is_speaking and decides.
     heard = _heard(ctx)
     if heard and heard != _heard(state.last_ctx):
         return True, "ok"
-    if state.last_asked_t is not None and _t(ctx) - state.last_asked_t < cfg["fixed_interval_s"]:
-        return False, "interval"
-    return True, "ok"
+    if state.last_asked_t is None:
+        return True, "ok"
+    since = _t(ctx) - state.last_asked_t
+    if since >= cfg["fixed_interval_s"]:
+        return True, "ok"
+    if since >= cfg["cue_min_gap_s"] and _cue(ctx, state.last_ctx):
+        return True, "ok"
+    return False, "interval"
 
 
 def note_asked(
