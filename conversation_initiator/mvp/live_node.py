@@ -126,7 +126,7 @@ class LiveInitiator(Node):
         if args.provider == "baseline":
             self.baseline = Baseline(BaselineConfig(
                 window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
-                no_face=args.baseline_no_face))
+                no_face=args.baseline_no_face, trigger=args.baseline_trigger))
             self.model, self.client = "hriscu+webb", None
         else:
             self.model = args.model or DEFAULT_MODEL[args.provider]
@@ -175,8 +175,8 @@ class LiveInitiator(Node):
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
         if self.baseline:
             c = self.baseline.cfg
-            self.get_logger().info(f"baseline: greet once when engaged (Hriscu + Webb), window {c.window_s:g} s, "
-                                   f"k {c.k:g}, no face = {c.no_face}, "
+            self.get_logger().info(f"baseline: greet once (Hriscu + Webb), trigger {c.trigger}, "
+                                   f"window {c.window_s:g} s, k {c.k:g}, no face = {c.no_face}, "
                                    f"checked every {self.gate_cfg['fixed_interval_s']:g} s")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
@@ -468,6 +468,9 @@ def main():
                     help="baseline: seconds of engagement samples (ROS4HRI uses 10)")
     ap.add_argument("--baseline-k", type=float, default=0.4,
                     help="baseline: head_yaw / tan(head angle), measured on the robot")
+    ap.add_argument("--baseline-trigger", choices=("moment", "level"), default="moment",
+                    help="baseline: greet at the first moment the person faces the robot "
+                         "(moment, Hriscu gives no time), or when the ROS4HRI level is engaged (level)")
     ap.add_argument("--baseline-no-face", choices=("away", "skip"), default="skip",
                     help="baseline: a person with no visible face adds no sample (skip, as "
                          "ROS4HRI does), or counts as not looking (away)")

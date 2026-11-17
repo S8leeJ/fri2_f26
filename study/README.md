@@ -47,7 +47,7 @@ For the rule-based baseline, use `--provider baseline` in place of `--provider j
 cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider baseline --baseline-k K --turn-off
 ```
 
-Check that it prints `baseline: greet once when engaged (Hriscu + Webb), window 2 s, k K`.
+Check that it prints `baseline: greet once (Hriscu + Webb), trigger moment, window 2 s, k K`.
 See "Rule-based baseline" in `conversation_initiator/README.md`.
 Fusion leaves the BWI base off unless you add `--base`, and `--turn-off` keeps the robot still. Turning is one more thing that can
 change how people react, so keep it off for every participant.

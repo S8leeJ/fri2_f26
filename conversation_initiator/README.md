@@ -395,11 +395,13 @@ goes up after 8 s.
 ### Rule-based baseline
 
 `live_node.py --provider baseline` uses `mvp/baseline.py` in place of the LLM.
-The robot greets once when a person becomes engaged and has not spoken
+The robot greets once when a person turns to face it and has not spoken
 (Hriscu et al., RO-MAN 2026). It does not greet again until the person
-disengages. When the person speaks, it replies. "Engaged" is the score from
+disengages. When the person speaks, it replies. "Faces" uses the score from
 Webb, Giuliani and Lemaignan (RO-MAN 2022), as the ROS4HRI `hri_engagement`
-code computes it. `baseline.py` has the formulas and our changes to them.
+code computes it. By default, the first sample with a score above 0.5 is
+enough, because Hriscu et al. give no time. `baseline.py` has the formulas and
+our changes to them.
 
 These stay the same as with Jev: the scene, the gate clock (`--every`), the
 fixed greeting, the reply writers, the voice, and the post-filter. The baseline
@@ -409,7 +411,8 @@ decision records the engagement level and score.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--baseline-window` | 2 | Seconds of samples for the engagement level. ROS4HRI uses 10. |
+| `--baseline-trigger` | `moment` | `moment`: greet at the first sample with a score above 0.5. `level`: greet only when the ROS4HRI level is engaged (about 1.2 s of looking with a 2 s window). |
+| `--baseline-window` | 2 | Seconds of samples for the engagement level. ROS4HRI uses 10. With `moment`, it only sets when the person has disengaged. |
 | `--baseline-k` | 0.4 | `head_yaw` divided by tan(head angle). 0.4 is not measured. Measure it before the study (below). |
 | `--baseline-no-face` | `skip` | `skip`: a person with no visible face adds no sample, as in ROS4HRI. `away`: it counts as not looking. |
 

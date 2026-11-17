@@ -8,6 +8,11 @@ When to speak: Hriscu et al., RO-MAN 2026, System 2. The robot gives one short
 greeting when a person turns to face it and has not spoken. It does not greet
 again until the person disengages. When the person speaks, the robot replies.
 
+Hriscu et al. give no time for "turns to face". trigger = "moment" (the default)
+greets at the first sample with S > 0.5. trigger = "level" greets only when the
+ROS4HRI level is engaged. In both, the next greeting waits until the ROS4HRI
+level is disengaged, so one missed frame does not cause a second greeting.
+
 Engaged: Webb, Giuliani and Lemaignan, RO-MAN 2022, as the ROS4HRI code computes
 it (github.com/ros4hri/hri_engagement, engagement_node.py, Apache-2.0):
 
@@ -27,6 +32,8 @@ From our vision data:
                         distance_m is depth along the camera axis.
 
 Our changes to the ROS4HRI code, set before the study:
+    - trigger "moment": one sample with S > 0.5 is enough to greet. The level
+      only decides when the person has disengaged (mean < -0.5).
     - window_s: 2 s, not 10 s (the ROS4HRI README value).
     - A face that is not visible adds no sample, as in ROS4HRI. The old level
       stays when a person turns away. no_face = "away" counts it as -1 instead.
@@ -60,6 +67,7 @@ class BaselineConfig:
     threshold: float = 0.5
     pitch_limit: float = 0.70
     no_face: str = "skip"  # "skip": add no sample, as ROS4HRI does. "away": count as -1.
+    trigger: str = "moment"  # "moment": first sample with S > threshold. "level": level engaged.
 
 
 def gaze_score(tan_angle: float, field_of_view_deg: float) -> float:
@@ -100,12 +108,13 @@ class Engagement:
         self.min_samples = int(0.5 * self.size)
         self.history: list = []
         self.level = UNKNOWN
+        self.mean: Optional[float] = None
 
     def add(self, sample: int) -> str:
         self.history = (self.history + [sample])[-self.size:]
         if len(self.history) < self.min_samples:
             return self.level
-        mean = sum(self.history) / len(self.history)
+        mean = self.mean = sum(self.history) / len(self.history)
         level = self.level
         if level == UNKNOWN:
             level = DISENGAGED
@@ -134,6 +143,8 @@ class _Person:
     engagement: Engagement
     last_seen: float
     armed: bool = True
+    # A sample with S > threshold since the last greeting (trigger = "moment").
+    faced: bool = False
     score: Optional[float] = None
 
 
@@ -153,7 +164,14 @@ class Baseline:
                     continue
                 p = self.people.setdefault(pid, _Person(Engagement(size), now))
                 p.last_seen, p.score = now, round(score, 3)
-                if p.engagement.add(1 if score > self.cfg.threshold else -1) == DISENGAGED:
+                if score > self.cfg.threshold and p.armed:
+                    p.faced = True
+                before = p.engagement.level
+                level = p.engagement.add(1 if score > self.cfg.threshold else -1)
+                # Re-arm once, when the level changes to disengaged. The first level is always
+                # disengaged, even for a person who looks, so most samples must also say
+                # "not looking" (ROS4HRI's disengaged threshold).
+                if level == DISENGAGED and before != DISENGAGED and p.engagement.mean < -0.5:
                     p.armed = True
         for pid in [pid for pid, p in self.people.items() if now - p.last_seen > FORGET_S]:
             del self.people[pid]
@@ -172,19 +190,25 @@ class Baseline:
         if any(turn.get("speaker") == "person" for turn in ctx.get("conversation") or []):
             return "remain_silent", "in conversation"
         p = self.people.get(pid)
-        if p is None or p.engagement.level != ENGAGED:
-            return "remain_silent", "engagement " + self.level(pid)
+        if p is None:
+            return "remain_silent", "engagement unknown"
+        if self.cfg.trigger == "moment":
+            if not p.faced:
+                return "remain_silent", "not facing yet"
+        elif p.engagement.level != ENGAGED:
+            return "remain_silent", "engagement " + p.engagement.level
         if not p.armed:
             return "remain_silent", "already greeted"
-        return "greet", "engaged, has not spoken"
+        return "greet", "faced the robot, has not spoken"
 
     def greeted(self, pid: Optional[int]) -> None:
         """Call when the greeting is said. The next one waits until the person disengages."""
         p = self.people.get(pid)
         if p is not None:
             p.armed = False
+            p.faced = False
 
     def snapshot(self, pid: Optional[int]) -> Dict[str, Any]:
         p = self.people.get(pid)
         return {"level": self.level(pid), "score": p.score if p else None,
-                "armed": p.armed if p else None}
+                "armed": p.armed if p else None, "faced": p.faced if p else None}

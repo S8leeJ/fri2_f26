@@ -127,8 +127,10 @@ class LevelsMatchRos4hri(unittest.TestCase):
 
 
 class Decisions(unittest.TestCase):
+    """trigger = "level": greet when the ROS4HRI level is engaged."""
+
     def setUp(self):
-        self.base = b.Baseline()
+        self.base = b.Baseline(b.BaselineConfig(trigger="level"))
         self.t = 0.0
 
     def feed(self, seconds, *people, fresh=True):
@@ -194,6 +196,44 @@ class Decisions(unittest.TestCase):
         self.feed(2.0, person())
         self.feed(6.0)
         self.assertEqual(self.base.level(1), b.UNKNOWN)
+
+
+class MomentTrigger(Decisions):
+    """trigger = "moment" (the default): greet at the first sample with S > 0.5."""
+
+    def setUp(self):
+        self.base = b.Baseline()
+        self.t = 0.0
+
+    def test_greets_after_one_facing_sample(self):
+        self.feed(0.1, person())
+        self.assertEqual(self.decide(), "greet")
+
+    def test_greets_once_then_again_only_after_disengaged_and_a_new_look(self):
+        self.feed(0.1, person())
+        self.assertEqual(self.decide(), "greet")
+        self.base.greeted(1)
+        self.feed(3.0, person())
+        self.assertEqual(self.decide(), "remain_silent")
+        self.feed(3.0, person(yaw=0.5))
+        self.assertEqual(self.base.level(1), b.DISENGAGED)
+        self.assertEqual(self.decide(), "remain_silent")
+        self.feed(0.1, person())
+        self.assertEqual(self.decide(), "greet")
+        self.base.greeted(1)
+        self.feed(1.0, person())
+        self.assertEqual(self.decide(), "remain_silent")
+
+    def test_one_glance_is_enough(self):
+        self.feed(0.1, person())
+        self.feed(2.0, person(yaw=0.6))
+        self.assertEqual(self.decide(), "greet")
+
+    def test_greets_once_when_a_person_looks_then_waits_until_they_look_away(self):
+        self.skipTest("covered by test_greets_once_then_again_only_after_disengaged_and_a_new_look")
+
+    def test_a_glance_while_walking_past_is_not_enough(self):
+        self.skipTest("with trigger = moment one glance is enough: see test_one_glance_is_enough")
 
 
 class Lines(unittest.TestCase):
