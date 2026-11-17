@@ -1,4 +1,5 @@
 import json
+import math
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -85,9 +86,42 @@ def median_distance_mm(depth_image: np.ndarray, box, center_fraction: float, min
     return float(np.median(valid))
 
 
-def classify_direction(delta_mm: float, threshold_mm: float) -> str:
-    if delta_mm < -threshold_mm:
+def sideways_mm(depth_mm: float, center_x: float, image_width: float, hfov_deg: float) -> float:
+    """How far left (negative) or right of the camera axis a point is, in mm."""
+    half = image_width / 2.0
+    return depth_mm * (center_x - half) / half * math.tan(math.radians(hfov_deg) / 2.0)
+
+
+def classify_motion(x_mm: float, z_mm: float, vx: float, vz: float,
+                    min_speed_mm_s: float, max_miss_mm: float, passing_speed_mm_s: float) -> str:
+    """Label a person from position and velocity on the floor, camera at the origin.
+
+    x is sideways and z is forward. A person who walks on a path that misses the
+    camera by more than max_miss_mm is passing.
+    """
+    speed = math.hypot(vx, vz)
+    distance = math.hypot(x_mm, z_mm)
+    if speed <= min_speed_mm_s or distance == 0:
+        return "stationary"
+    # A raised arm moves the box center sideways, but slower than a walk.
+    walking = speed > passing_speed_mm_s
+    miss = abs(x_mm * vz - z_mm * vx) / speed
+    if walking and miss > max_miss_mm:
+        return "passing"
+    closing = -(x_mm * vx + z_mm * vz) / distance
+    if closing > min_speed_mm_s:
         return "approaching"
-    if delta_mm > threshold_mm:
+    if closing < -min_speed_mm_s:
         return "receding"
-    return "stationary"
+    return "passing" if walking else "stationary"
+
+
+def motion_label(samples, min_speed_mm_s: float, max_miss_mm: float,
+                 passing_speed_mm_s: float) -> str:
+    """samples: (time_s, forward_mm, sideways_mm), oldest first. "unknown" under 0.3 s."""
+    vz = speed_mm_s([(t, z) for t, z, _ in samples])
+    vx = speed_mm_s([(t, x) for t, _, x in samples])
+    if vz is None or vx is None:
+        return "unknown"
+    _, z, x = samples[-1]
+    return classify_motion(x, z, vx, vz, min_speed_mm_s, max_miss_mm, passing_speed_mm_s)

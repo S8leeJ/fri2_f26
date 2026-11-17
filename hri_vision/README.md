@@ -186,6 +186,8 @@ Edit `config/vision.yaml`.
 Useful parameters:
 
 - `direction_speed_mm_s` (default 250, over `direction_window_s` = 1.0): increase if stationary people fluctuate between approaching/receding.
+- `passing_miss_mm` (default 750) and `passing_speed_mm_s` (default 400): a person who walks faster than the speed, on a path that misses the camera by more than the distance, is `passing`.
+- `horizontal_fov_deg` (default 90, the Azure Kinect color camera): set it for another camera.
 - `distance_window`: larger = smoother but slower response.
 - `center_crop_fraction`: smaller values reduce background depth leaking into boxes.
 - `max_rate_hz`: lower if CPU usage is high.
@@ -199,7 +201,7 @@ Useful parameters:
 - Persistent ByteTrack IDs
 - Per-person median aligned-depth distance
 - Smoothed distance
-- Approaching / stationary / receding
+- Approaching / stationary / receding / passing
 - Per-person dwell time
 - Track grace handling
 - Multi-person orientation crops
