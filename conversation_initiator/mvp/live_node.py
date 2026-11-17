@@ -64,7 +64,7 @@ dotenv.load_dotenv(HERE / ".env")
 from context import validate  # noqa: E402
 from fusion_adapter import Memory, apply_result, consume_pending, fusion_to_context  # noqa: E402
 from gate import GateState, decide_tick, note_asked  # noqa: E402
-from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers, use_rules  # noqa: E402
+from mvp import DEFAULT_MODEL, ENV_KEY, decide, is_timeout, make_client, reply_writers, warm_due, use_rules  # noqa: E402
 from postfilter import SPEAKS, enforce  # noqa: E402
 from turn_trace import Tracer  # noqa: E402
 
@@ -137,6 +137,7 @@ class LiveInitiator(Node):
         self.lock = threading.Lock()
         self.speak_lock = threading.Lock()
         self.busy = False
+        self.last_warm = time.time()
         self.latest = None
         self.bad_ctx_logged = 0.0
         # stt_done of the newest audio trace, and when this node first received it.
@@ -183,7 +184,7 @@ class LiveInitiator(Node):
 
     def _warm_up(self):
         """Make the clients and open their connections now, not during the first reply."""
-        start = time.time()
+        start = self.last_warm = time.time()
         clients = [self.client]
         if self.args.provider == "jev":
             clients += [client for _, client, _ in reply_writers()]
@@ -229,6 +230,9 @@ class LiveInitiator(Node):
                 self.get_logger().error(f"invalid context, skipped: {e}")
                 self.bad_ctx_logged = now
             return
+        if warm_due(now, self.last_warm, ctx.get("target") is not None):
+            self.last_warm = now
+            threading.Thread(target=self._warm_up, daemon=True).start()
         ok, reason = decide_tick(ctx, self.gate, self.gate_cfg)
         if not ok:
             return

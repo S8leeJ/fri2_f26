@@ -84,7 +84,9 @@ class AudioContextNode(Node):
         if msg.data == state.engaged():
             return
         state.set_engaged(msg.data)
-        if not msg.data:
+        if msg.data:
+            self.proc.stt.reconnect()
+        else:
             # Drop the old text, or it would linger into whatever
             # interaction comes next.
             self.proc.stt.clear()
