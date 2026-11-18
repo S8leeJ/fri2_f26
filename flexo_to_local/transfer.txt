@@ -1,0 +1,12 @@
+----- paste from here -----
+provider  model                       n  median     SD   mean    min    max  >2 s  failed
+jev       jev-latest                20     131     41    154    113    229     0       0
+groq      openai/gpt-oss-120b       19    1031    404   1127    860   2749     1       1
+(ms per decision call, warm connection, 20 scenes from vignettes)
+groq reasoning tokens before the answer, median per call: 168
+
+Paper: On the robot, with the same 20 test scenes, Jev took a median of 131 ms (SD 41 ms, n = 20); Groq (openai/gpt-oss-120b) took a median of 1031 ms (SD 404 ms, n = 19) per decision.
+Busy-server retries: 12 (waits not in the times).
+Saved /home/mayankk/fri2_f26/conversation_initiator/mvp/bench_results/decision_time_vignettes_2026-11-18_154910.json
+mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ ^C
+mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ 
