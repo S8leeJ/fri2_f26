@@ -437,6 +437,16 @@ scenes. Run it on flexo, so the times include the robot's network. It needs
 cd ~/fri2_f26/conversation_initiator/mvp && python3 bench_decide.py
 ```
 
+With `--live`, the scenes come from the robot's sensors. Start
+`fusion/fusion_publisher.py` first, and do not run `live_node.py`. A person
+stands 1 to 2 m in front of the camera, looks at the robot, looks away, and
+moves a little. The script uses only scenes with a person in view, at most one
+each second. It does not speak or move.
+
+```bash
+cd ~/fri2_f26/conversation_initiator/mvp && python3 bench_decide.py --live
+```
+
 Each call is the call `live_node.py` makes with no rules. Only the network call
 is timed. One call to each provider opens the connection first and is not
 counted. The calls alternate between Jev and Groq. The Groq model is the reply
@@ -450,7 +460,9 @@ paper. It saves each call in `bench_results/` (not in git).
 |---|---|---|
 | `--n` | 20 | Timed calls per provider. |
 | `--providers` | `jev,groq` | For example `--providers jev` for Jev only. |
-| `--scenes` | `vignettes` | `live`: the scenes with a person from the newest `live_logs/` file. |
+| `--live` | off | Scenes from `/social_context` now. Needs fusion and a person. |
+| `--every` | 1 | With `--live`: seconds between scenes, at least. |
+| `--scenes` | `vignettes` | Without `--live`. `logs`: the scenes with a person from the newest `live_logs/` file. |
 | `--timeout` | 10 | Seconds. Longer than live, so a slow call gets a time. |
 | `--pace` | 1 | Seconds between calls, to stay under rate limits. Waits for a busy server are not in the times. |
 

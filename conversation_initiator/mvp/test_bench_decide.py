@@ -107,8 +107,68 @@ class Scenes(unittest.TestCase):
                 json.dumps({"run": 1, "context": base_ctx(t=2.0)}),
                 json.dumps({"run": 1, "t": 3.0, "trace": {}}),
             ]) + "\n")
-            scenes = bench.load_scenes("live", logs)
+            scenes = bench.load_scenes("logs", logs)
         self.assertEqual([(name, ctx["t"]) for name, ctx in scenes], [("2026-11-17.jsonl:3", 2.0)])
+
+
+def fusion_msg(t, people):
+    return json.dumps({
+        "t": t, "audio": {"stamp": t, "noise_floor_db": -55, "noise_level": "quiet", "speech_now": False},
+        "audio_age_s": 0.1, "vision_age_s": 0.1,
+        "vision": {"people": people, "sensor_status": {"depth_fresh": True, "orientation_fresh": True}}})
+
+
+PERSON = {"id": 7, "distance_m": 1.4, "direction": "stationary", "dwell_time_s": 3.0, "image_x": 0.1,
+          "orientation": "facing_robot", "gaze": "toward_robot", "face_visible": True,
+          "head_yaw": 0.0, "head_pitch": 0.5}
+
+
+class Live(unittest.TestCase):
+    def test_a_scene_needs_a_person_and_a_recent_message(self):
+        src = bench.LiveScenes()
+        self.assertIsNone(src.take(100.0))
+        src.on_message(fusion_msg(100.0, []), 100.0)
+        self.assertIsNone(src.take(100.1))
+        src.on_message(fusion_msg(101.0, [PERSON]), 101.0)
+        name, ctx = src.take(101.1)
+        self.assertEqual((name, ctx["target"]["distance_m"], ctx["target"]["facing_robot"]),
+                         ("live:1", 1.4, True))
+        self.assertIsNone(src.take(104.0))
+        src.on_message("not json", 104.0)
+
+    def test_gaze_time_builds_up_as_in_live_node(self):
+        src = bench.LiveScenes()
+        for i in range(21):
+            src.on_message(fusion_msg(200.0 + i / 10, [PERSON]), 200.0 + i / 10)
+        self.assertEqual(src.take(202.0)[1]["target"]["gaze_at_robot_s"], 2.0)
+
+    def test_at_most_one_scene_each_every_seconds(self):
+        src = bench.LiveScenes()
+        clock = {"t": 300.0}
+        said = []
+
+        def sleep(s):
+            clock["t"] += s
+            src.on_message(fusion_msg(clock["t"], [PERSON] if clock["t"] >= 301.0 else []), clock["t"])
+
+        gen = bench.live_scenes(src, 1.0, clock=lambda: clock["t"], sleep=sleep, say=said.append)
+        times = []
+        for _ in range(3):
+            next(gen)
+            times.append(clock["t"])
+        self.assertEqual(len(said), 1)
+        self.assertGreaterEqual(times[0], 301.0)
+        self.assertTrue(all(b - a >= 1.0 - 1e-9 for a, b in zip(times, times[1:])))
+
+    def test_run_takes_scenes_from_a_generator_and_records_the_person(self):
+        src = bench.LiveScenes()
+        src.on_message(fusion_msg(400.0, [PERSON]), 400.0)
+        gen = iter([src.take(400.0), src.take(400.1), src.take(400.2)])
+        ask = fake_ask({"jev": [0, 1, 2], "groq": [0, 3, 4]})
+        rows = bench.run(["jev", "groq"], {"jev": None, "groq": None}, {"jev": "j", "groq": "g"},
+                         gen, 2, ask, show=False)
+        self.assertEqual([r["scene"] for r in rows], ["live:1", "live:1", "live:2", "live:2"])
+        self.assertEqual(rows[0]["person"]["distance_m"], 1.4)
 
 
 class Models(unittest.TestCase):
