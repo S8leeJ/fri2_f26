@@ -121,6 +121,10 @@ def report(summaries: List[dict], models: Dict[str, str], n_scenes: int, source:
             s["provider"], models[s["provider"]][:24], s["n"], _f(s["median_ms"]), _f(s["sd_ms"]),
             _f(s["mean_ms"]), _f(s["min_ms"]), _f(s["max_ms"]), s["over_2s"], s["failed"]))
     lines.append("(ms per decision call, warm connection, %d scenes from %s)" % (n_scenes, source))
+    for s in summaries:
+        if s["median_reasoning_tokens"] is not None:
+            lines.append("%s reasoning tokens before the answer, median per call: %.0f" % (
+                s["provider"], s["median_reasoning_tokens"]))
     parts = []
     for s in summaries:
         if s["median_ms"] is None:
