@@ -82,6 +82,7 @@ class LiveScenes:
         self.ctx: Optional[dict] = None
         self.count = 0
         self.lock = threading.Lock()
+        self.close: Callable[[], None] = lambda: None
 
     def on_message(self, data: str, now: float) -> None:
         try:
@@ -145,14 +146,28 @@ def ros_source() -> LiveScenes:
     node.create_subscription(String, "/social_context",
                              lambda m: source.on_message(m.data, time.time()), 10)
 
+    stop = threading.Event()
+
     def spin():
         try:
-            while rclpy.ok():
+            while not stop.is_set() and rclpy.ok():
                 rclpy.spin_once(node, timeout_sec=0.1)
         except Exception:  # noqa: BLE001 - the context closes when the script ends
             pass
 
-    threading.Thread(target=spin, daemon=True).start()
+    thread = threading.Thread(target=spin, daemon=True)
+    thread.start()
+
+    # Stop the spin thread before Python exits. Otherwise ROS aborts with
+    # "terminate called without an active exception".
+    def close():
+        stop.set()
+        thread.join(timeout=2.0)
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+    source.close = close
     return source
 
 
@@ -274,7 +289,8 @@ def main() -> None:
 
     source_name = "live" if args.live else args.scenes
     # ros_source() may start this script again with ROS loaded, so it comes first.
-    scenes = live_scenes(ros_source(), args.every) if args.live else load_scenes(args.scenes)
+    source = ros_source() if args.live else None
+    scenes = live_scenes(source, args.every) if source else load_scenes(args.scenes)
     mvp.use_rules(False)
     mvp.PACING.update(pace_s=args.pace, busy_retries=4)
     models = {p: model_for(p, args.groq_model) for p in providers}
@@ -285,7 +301,11 @@ def main() -> None:
         print("Stand 1 to 2 m in front of the camera. Look at the robot, look away, move a little.")
 
     started = time.time()
-    rows = run(providers, clients, models, scenes, args.n)
+    try:
+        rows = run(providers, clients, models, scenes, args.n)
+    finally:
+        if source is not None:
+            source.close()
     summaries = [summarize(rows, p) for p in providers]
     text = report(summaries, models, len({r["scene"] for r in rows}), source_name)
 
