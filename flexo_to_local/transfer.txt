@@ -10,3 +10,20 @@ Busy-server retries: 12 (waits not in the times).
 Saved /home/mayankk/fri2_f26/conversation_initiator/mvp/bench_results/decision_time_vignettes_2026-11-18_154910.json
 mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ ^C
 mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ 
+
+
+----- paste from here -----
+provider  model                       n  median     SD   mean    min    max  >2 s  failed
+jev       jev-latest                20     131     35    141    108    227     0       0
+groq      openai/gpt-oss-120b       20     966    387   1106    814   2355     1       0
+(ms per decision call, warm connection, 20 scenes from live)
+groq reasoning tokens before the answer, median per call: 154
+
+Paper: On the robot, with the same 20 live scenes from the robot's camera and microphone, Jev took a median of 131 ms (SD 35 ms, n = 20); Groq (openai/gpt-oss-120b) took a median of 966 ms (SD 387 ms, n = 20) per decision.
+Busy-server retries: 6 (waits not in the times).
+Saved /home/mayankk/fri2_f26/conversation_initiator/mvp/bench_results/decision_time_live_2026-11-18_155946.json
+terminate called without an active exception
+Aborted (core dumped)
+mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ ^C
+mayankk@flexo:~/fri2_f26/conversation_initiator/mvp$ 
+
