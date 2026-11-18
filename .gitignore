@@ -45,6 +45,7 @@ npm-debug.log*
 *.log
 live_logs/
 fusion/logs/
+conversation_initiator/mvp/bench_results/
 # Study ratings and results. Kept off git, like the logs.
 study/data/
 study/results/

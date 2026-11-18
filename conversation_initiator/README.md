@@ -427,6 +427,33 @@ Measure k on flexo, with `hri_vision/scripts/view.sh json`:
 `test_baseline.py` checks the score and the levels against a copy of the
 ROS4HRI math, for the same scenes.
 
+### Decision time: Jev against Groq
+
+`bench_decide.py` times the decision call of Jev and of Groq on the same
+scenes. Run it on flexo, so the times include the robot's network. It needs
+`TYPESAFE_API_KEY` and `GROQ_API_KEY` in `.env`. It takes about 2 minutes.
+
+```bash
+cd ~/fri2_f26/conversation_initiator/mvp && python3 bench_decide.py
+```
+
+Each call is the call `live_node.py` makes with no rules. Only the network call
+is timed. One call to each provider opens the connection first and is not
+counted. The calls alternate between Jev and Groq. The Groq model is the reply
+writer's model (`GROQ_MODEL` in `.env`, else `openai/gpt-oss-120b`).
+
+It prints the median, SD, mean, minimum and maximum for each provider, the calls
+over 2 s (`live_node.py` drops them), the failed calls, and a sentence for the
+paper. It saves each call in `bench_results/` (not in git).
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--n` | 20 | Timed calls per provider. |
+| `--providers` | `jev,groq` | For example `--providers jev` for Jev only. |
+| `--scenes` | `vignettes` | `live`: the scenes with a person from the newest `live_logs/` file. |
+| `--timeout` | 10 | Seconds. Longer than live, so a slow call gets a time. |
+| `--pace` | 1 | Seconds between calls, to stay under rate limits. Waits for a busy server are not in the times. |
+
 ### How the fusion message maps to the schema
 
 `fusion_adapter.py` does the mapping. The fusion message holds the raw
