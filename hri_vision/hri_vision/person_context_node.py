@@ -5,10 +5,11 @@ import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import String
 
 from .common import (
+    floor_position,
     image_x,
     median_distance_mm,
     motion_label,
@@ -17,12 +18,19 @@ from .common import (
     sideways_mm,
 )
 
+try:
+    from image_geometry import PinholeCameraModel
+except ImportError:  # side_deg and floor_distance_m then stay empty
+    PinholeCameraModel = None
+
 
 class PersonContextNode(Node):
     def __init__(self):
         super().__init__("person_context_node")
 
         self.declare_parameter("depth_topic", "/camera/aligned_depth_to_color/image_raw")
+        # The color camera's intrinsics, for side_deg and floor_distance_m.
+        self.declare_parameter("camera_info_topic", "/camera/color/camera_info")
         self.declare_parameter("detections_topic", "/hri/vision/detections")
         self.declare_parameter("output_topic", "/hri/vision/person_context")
         self.declare_parameter("center_crop_fraction", 0.60)
@@ -57,6 +65,20 @@ class PersonContextNode(Node):
             self._on_depth,
             10,
         )
+        self.camera_model = None
+        self.no_camera_logged = False
+        if PinholeCameraModel is None:
+            self.get_logger().error(
+                "image_geometry does not load: side_deg and floor_distance_m stay empty. "
+                "Install ros-humble-image-geometry."
+            )
+        else:
+            self.camera_info_sub = self.create_subscription(
+                CameraInfo,
+                str(self.get_parameter("camera_info_topic").value),
+                self._on_camera_info,
+                10,
+            )
         self.detection_sub = self.create_subscription(
             String,
             str(self.get_parameter("detections_topic").value),
@@ -86,6 +108,25 @@ class PersonContextNode(Node):
 
         self.latest_depth = np.asarray(depth)
         self.latest_depth_time = now_float(self)
+
+    def _on_camera_info(self, msg: CameraInfo):
+        if self.camera_model is None:
+            model = PinholeCameraModel()
+            model.fromCameraInfo(msg)
+            self.camera_model = model
+            self.get_logger().info(f"Camera intrinsics from {msg.header.frame_id}: "
+                                   f"fx {model.fx():.1f}, cx {model.cx():.1f}")
+
+    def _floor_position(self, bbox, depth_mm):
+        """(side_deg, floor_distance_m) of the box center, with the camera's own intrinsics."""
+        if self.camera_model is None:
+            if not self.no_camera_logged:
+                self.get_logger().warning("No camera_info yet: side_deg and floor_distance_m stay empty.")
+                self.no_camera_logged = True
+            return None
+        pixel = ((bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0)
+        ray = self.camera_model.projectPixelTo3dRay(self.camera_model.rectifyPoint(pixel))
+        return floor_position(ray, depth_mm / 1000.0)
 
     def _sideways(self, depth_mm, bbox, image_width) -> float:
         # Without the image width, treat the person as on the camera axis.
@@ -171,6 +212,7 @@ class PersonContextNode(Node):
                     float(self.get_parameter("passing_speed_mm_s").value),
                 )
 
+            floor = self._floor_position(bbox, smoothed_distance) if smoothed_distance is not None else None
             output_people.append(
                 {
                     "id": track_id,
@@ -184,6 +226,8 @@ class PersonContextNode(Node):
                     "direction": direction,
                     "dwell_time_s": round(current - self.first_seen[track_id], 2),
                     "image_x": image_x(bbox, image_width),
+                    "side_deg": round(floor[0], 1) if floor else None,
+                    "floor_distance_m": round(floor[1], 3) if floor else None,
                 }
             )
 

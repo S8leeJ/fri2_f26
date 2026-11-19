@@ -128,8 +128,7 @@ class LiveInitiator(Node):
             # (fusion_adapter: after the robot speaks, until the person leaves) is not used.
             args.engaged = True
             self.baseline = Baseline(BaselineConfig(
-                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
-                k_tilt=args.baseline_k_tilt, pitch_ahead=args.baseline_pitch_ahead,
+                window_s=args.baseline_window, rate_hz=args.rate,
                 cone_deg=args.baseline_cone, body_zone=not args.baseline_no_body_zone))
             self.model, self.client = "shi+ros4hri+hriscu", None
         else:
@@ -182,8 +181,7 @@ class LiveInitiator(Node):
             c = self.baseline.cfg
             self.get_logger().info(f"baseline: Shi zones (cone {c.cone_deg:g} deg, body zone "
                                    f"{'on' if c.body_zone else 'off'}) + ROS4HRI levels (window "
-                                   f"{c.window_s:g} s) + Hriscu rule, every message, k {c.k:g}, "
-                                   f"k tilt {c.k_tilt:g}, pitch ahead {c.pitch_ahead:g}; no gate, "
+                                   f"{c.window_s:g} s) + Hriscu rule, every message; no gate, "
                                    f"no post-filter, microphone always listening")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
@@ -505,12 +503,6 @@ def main():
     ap.add_argument("--baseline-window", type=float, default=2.0,
                     help="baseline: seconds of engagement samples (the ROS4HRI README says 2; "
                          "its code default is 10)")
-    ap.add_argument("--baseline-k", type=float, default=0.4,
-                    help="baseline: head_yaw / tan(head turn), measured on the robot")
-    ap.add_argument("--baseline-k-tilt", type=float, default=0.3,
-                    help="baseline: (head_pitch - pitch ahead) / tan(head tilt), measured on the robot")
-    ap.add_argument("--baseline-pitch-ahead", type=float, default=0.55,
-                    help="baseline: head_pitch when the person looks at the camera, measured on the robot")
     ap.add_argument("--baseline-cone", type=float, default=30.0,
                     help="baseline: Shi et al.'s gaze cone, degrees each side (Eq. 1 reads 30)")
     ap.add_argument("--baseline-no-body-zone", action="store_true",

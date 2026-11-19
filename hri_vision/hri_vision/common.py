@@ -101,9 +101,57 @@ def merge_orientation(person: Dict[str, Any], orientation: Optional[Dict[str, An
     merged["orientation"] = o.get("orientation", "unknown")
     merged["gaze"] = o.get("gaze", "unknown")
     merged["face_visible"] = o.get("face_visible")
-    merged["head_yaw"] = o.get("head_yaw")
-    merged["head_pitch"] = o.get("head_pitch")
+    for key in ("head_yaw", "head_pitch", "head_angle_deg", "body_angle_deg"):
+        merged[key] = o.get(key)
     return merged
+
+
+def face_to_camera_deg(matrix) -> Optional[float]:
+    """Angle between where the head points and the line from the face to the camera, in degrees.
+
+    matrix: the 4x4 facial transformation matrix from MediaPipe Face Landmarker. Its
+    space has the camera at the origin. The third column of the rotation is the face's
+    forward direction, and the translation is the face's position, so the line to the
+    camera is minus the translation. Front and back are not told apart, because the
+    model finds a face only from the front.
+    """
+    m = np.asarray(matrix, dtype=float).reshape(4, 4)
+    # Some MediaPipe versions give the matrix transposed: the translation in the last row.
+    if np.linalg.norm(m[:3, 3]) < 1e-9 and np.linalg.norm(m[3, :3]) > 1e-9:
+        m = m.T
+    forward, to_camera = m[:3, 2], -m[:3, 3]
+    n = np.linalg.norm(forward) * np.linalg.norm(to_camera)
+    if n < 1e-9:
+        return None
+    return math.degrees(math.acos(min(1.0, abs(float(forward @ to_camera)) / n)))
+
+
+def torso_to_camera_deg(left_shoulder, right_shoulder) -> Optional[float]:
+    """Angle between where the torso faces and the line to the camera, in degrees, 0 to 90.
+
+    left_shoulder, right_shoulder: (x, y, z) MediaPipe Pose world landmarks 11 and 12,
+    in metres, x across the image and z in depth. Shoulders across the image are 0
+    (facing the camera). Shoulders along the depth are 90 (side on). Front and back
+    are not told apart.
+    """
+    dx = float(left_shoulder[0]) - float(right_shoulder[0])
+    dz = float(left_shoulder[2]) - float(right_shoulder[2])
+    if math.hypot(dx, dz) < 1e-6:
+        return None
+    return math.degrees(math.atan2(abs(dz), abs(dx)))
+
+
+def floor_position(ray, depth_m: float) -> Optional[Tuple[float, float]]:
+    """(side angle in degrees, distance along the floor in metres) of a point.
+
+    ray: the camera ray through the pixel, x right, y down, z forward, for example from
+    image_geometry.PinholeCameraModel.projectPixelTo3dRay. depth_m: depth along the
+    camera axis. The side angle is negative to the left. Height is not used.
+    """
+    x, _, z = (float(v) for v in ray)
+    if z <= 0 or depth_m is None or depth_m <= 0:
+        return None
+    return math.degrees(math.atan2(x, z)), depth_m * math.hypot(x, z) / z
 
 
 def sideways_mm(depth_mm: float, center_x: float, image_width: float, hfov_deg: float) -> float:

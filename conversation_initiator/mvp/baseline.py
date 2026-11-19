@@ -12,7 +12,7 @@ Three published parts, in order:
 1. Is the person participating now? Shi et al., IJSR 2015, participation zones.
    Both must hold:
      - The robot is in the person's gaze zone (head angle < cone, d <= 2.5 m)
-       or in the person's front zone (body facing the robot, d <= 2.0 m).
+       or in the person's front zone (body angle <= 60 deg, d <= 2.0 m).
      - The person is in the robot's gaze zone (side angle < cone, d <= 2.5 m)
        or in the robot's front zone (side angle <= 60 deg, d <= 2.0 m).
    Participating: sample +1. Not participating: -1. No face: no sample.
@@ -27,19 +27,14 @@ Three published parts, in order:
     - Do not greet that person again until their level is disengaged.
     - Reply when the person speaks.
 
-Our vision data is 2D, and Shi et al. use motion capture. These conversions
-are needed to get their inputs. They add no rule:
-    tan(turn)         = head_yaw / k
-    tan(tilt)         = (head_pitch - pitch_ahead) / k_tilt
-    head angle        = atan(sqrt(tan(turn)^2 + tan(tilt)^2)), the angle between
-                        the head's forward line and the line to the camera.
-    side angle        = atan(image_x * tan(hfov / 2)), the person's angle from
-                        the robot's forward line.
-    d                 = distance_m * sqrt(1 + tan(side angle)^2), because
-                        distance_m is depth along the camera axis.
-    body facing       = the vision orientation label "facing_robot" (a visible
-                        face and shoulders that are not narrow).
-k, k_tilt and pitch_ahead are measured on the robot (README.md).
+Shi et al. measure with motion capture. The vision pipeline (hri_vision) gives
+the same four inputs from libraries, so this file adds no conversion of its own:
+    head_angle_deg     angle between where the head points and the line to the
+                       camera: MediaPipe Face Landmarker head pose.
+    body_angle_deg     the same for the torso: MediaPipe Pose 3D shoulder points.
+    side_deg           the person's angle from the robot's forward line, and
+    floor_distance_m   the distance along the floor: ROS image_geometry with the
+                       Kinect's own camera intrinsics, and the depth image.
 
 Choices where Shi et al. are not clear, set before the study:
     - cone_deg 30: Eq. 1 reads |angle| < 30 deg. --baseline-cone changes it.
@@ -50,7 +45,6 @@ Choices where Shi et al. are not clear, set before the study:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -72,32 +66,24 @@ class BaselineConfig:
     front_zone_deg: float = 60.0
     front_zone_m: float = 2.0
     body_zone: bool = True
-    # Not measured yet. See README.md, "Rule-based baseline".
-    k: float = 0.4
-    k_tilt: float = 0.3
-    pitch_ahead: float = 0.55
-    hfov_deg: float = 90.0
 
 
-def geometry(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[Tuple[float, float, float]]:
-    """(head angle deg, side angle deg, distance m) from one vision person. None: not measured."""
-    depth, image_x = person.get("distance_m"), person.get("image_x")
-    yaw, pitch = person.get("head_yaw"), person.get("head_pitch")
-    if None in (depth, image_x, yaw, pitch) or not person.get("face_visible"):
+def geometry(person: Dict[str, Any]) -> Optional[Tuple[float, float, float, Optional[float]]]:
+    """(head angle, side angle, floor distance, body angle or None) of one vision person.
+    None: not measured, so no sample."""
+    head, side, d = person.get("head_angle_deg"), person.get("side_deg"), person.get("floor_distance_m")
+    if None in (head, side, d) or not person.get("face_visible"):
         return None
-    tan_side = image_x * math.tan(math.radians(cfg.hfov_deg) / 2.0)
-    d = depth * math.sqrt(1.0 + tan_side ** 2)
-    tan_head = math.hypot(yaw / cfg.k, (pitch - cfg.pitch_ahead) / cfg.k_tilt)
-    return math.degrees(math.atan(tan_head)), math.degrees(math.atan(abs(tan_side))), d
+    return float(head), abs(float(side)), float(d), person.get("body_angle_deg")
 
 
 def participating(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[bool]:
     """Shi et al.: both the person and the robot are in each other's gaze or front zone."""
-    g = geometry(person, cfg)
+    g = geometry(person)
     if g is None:
         return None
-    head, side, d = g
-    body_facing = cfg.body_zone and person.get("orientation") == "facing_robot"
+    head, side, d, body = g
+    body_facing = cfg.body_zone and body is not None and body <= cfg.front_zone_deg
     robot_in_person_zone = ((head < cfg.cone_deg and d <= cfg.gaze_zone_m)
                             or (body_facing and d <= cfg.front_zone_m))
     person_in_robot_zone = ((side < cfg.cone_deg and d <= cfg.gaze_zone_m)
@@ -146,7 +132,7 @@ class Engagement:
 class _Person:
     engagement: Engagement
     participating: Optional[bool] = None
-    geometry: Optional[Tuple[float, float, float]] = None
+    geometry: Optional[Tuple[float, float, float, Optional[float]]] = None
     greeted: bool = False
 
 
@@ -174,7 +160,7 @@ class Baseline:
             if pid is None or now_in is None:
                 continue
             p = self.people.setdefault(pid, _Person(Engagement(size)))
-            p.participating, p.geometry = now_in, geometry(person, self.cfg)
+            p.participating, p.geometry = now_in, geometry(person)
             before = p.engagement.level
             level = p.engagement.add(1 if now_in else -1)
             if level == DISENGAGED:
@@ -216,5 +202,6 @@ class Baseline:
         p = self.people.get(pid)
         g = p.geometry if p else None
         return {"level": self.level(pid), "participating": p.participating if p else None,
-                "head_deg": round(g[0], 1) if g else None, "side_deg": round(g[1], 1) if g else None,
-                "distance_m": round(g[2], 2) if g else None, "greeted": p.greeted if p else None}
+                "head_deg": g[0] if g else None, "body_deg": g[3] if g else None,
+                "side_deg": g[1] if g else None, "distance_m": g[2] if g else None,
+                "greeted": p.greeted if p else None}

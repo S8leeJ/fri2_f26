@@ -41,13 +41,13 @@ cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provi
 
 Check that it prints `rules: off: scene only, the model decides, asked every 1 s`.
 
-For the rule-based baseline, use `--provider baseline` in place of `--provider jev`, with the measured k, pitch ahead and k tilt:
+For the rule-based baseline, use `--provider baseline` in place of `--provider jev`:
 
 ```bash
-cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider baseline --baseline-k K --baseline-pitch-ahead P --baseline-k-tilt T --turn-off
+cd ~/fri2_f26/conversation_initiator/mvp && python3 live_node.py --speak --provider baseline --turn-off
 ```
 
-Check that it prints `baseline: Shi zones (cone 30 deg, body zone on) + ROS4HRI levels (window 2 s) + Hriscu rule, every message, k K, k tilt T, pitch ahead P; no gate, no post-filter, microphone always listening`.
+Check that it prints `baseline: Shi zones (cone 30 deg, body zone on) + ROS4HRI levels (window 2 s) + Hriscu rule, every message; no gate, no post-filter, microphone always listening`.
 See "Rule-based baseline" in `conversation_initiator/README.md`.
 Fusion leaves the BWI base off unless you add `--base`, and `--turn-off` keeps the robot still. Turning is one more thing that can
 change how people react, so keep it off for every participant.

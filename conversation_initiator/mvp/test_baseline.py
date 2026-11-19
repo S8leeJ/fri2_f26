@@ -11,7 +11,6 @@ as Hriscu et al. describe.
 
 from __future__ import annotations
 
-import math
 import random
 import unittest
 from unittest import mock
@@ -58,19 +57,14 @@ def ros4hri_levels(samples, size):
     return out
 
 
-def yaw(deg):
-    return CFG.k * math.tan(math.radians(deg))
+SIDEWAYS = 90.0
 
 
-def person(d=1.5, side=0.0, head=0.0, pitch=None, face=True, pid=1, body="facing_robot"):
-    """d: straight-line distance (m). side: angle from the robot's forward line (deg).
-    head: head turn away from the camera (deg)."""
-    tan_side = math.tan(math.radians(side))
-    return {"id": pid, "distance_m": d / math.sqrt(1 + tan_side ** 2),
-            "image_x": tan_side / math.tan(math.radians(CFG.hfov_deg / 2)),
-            "face_visible": face, "orientation": body if face else "likely_facing_away",
-            "head_yaw": yaw(head) if face else None,
-            "head_pitch": (CFG.pitch_ahead if pitch is None else pitch) if face else None}
+def person(d=1.5, side=0.0, head=0.0, body=0.0, face=True, pid=1):
+    """The vision fields the baseline reads. d: floor distance (m). side: angle from the
+    robot's forward line. head, body: angle between where they point and the line to the camera."""
+    return {"id": pid, "floor_distance_m": d, "side_deg": side, "face_visible": face,
+            "head_angle_deg": head if face else None, "body_angle_deg": body}
 
 
 def vision(*people):
@@ -81,37 +75,34 @@ class ShiZones(unittest.TestCase):
     def part(self, cfg=CFG, **kw):
         return b.participating(person(**kw), cfg)
 
-    def test_conversions_give_back_the_angles_and_distance(self):
-        head, side, d = b.geometry(person(d=1.8, side=20, head=25), CFG)
-        self.assertAlmostEqual(head, 25, places=6)
-        self.assertAlmostEqual(side, 20, places=6)
-        self.assertAlmostEqual(d, 1.8, places=6)
-
     def test_head_cone_is_30_degrees(self):
-        self.assertTrue(self.part(head=25, body="sideways"))
-        self.assertFalse(self.part(head=35, body="sideways"))
+        self.assertTrue(self.part(head=25, body=SIDEWAYS))
+        self.assertFalse(self.part(head=35, body=SIDEWAYS))
 
-    def test_body_facing_counts_within_2_m_as_in_shi(self):
-        self.assertTrue(self.part(head=50, d=1.8))
-        self.assertFalse(self.part(head=50, d=2.2))
-        no_body = b.BaselineConfig(body_zone=False)
-        self.assertFalse(self.part(cfg=no_body, head=50, d=1.8))
+    def test_body_front_zone_is_60_degrees_within_2_m_as_in_shi(self):
+        self.assertTrue(self.part(head=50, body=55, d=1.8))
+        self.assertFalse(self.part(head=50, body=65, d=1.8))
+        self.assertFalse(self.part(head=50, body=0, d=2.2))
+        self.assertFalse(self.part(cfg=b.BaselineConfig(body_zone=False), head=50, body=0, d=1.8))
 
     def test_gaze_zones_reach_2_5_m_only_near_the_middle_of_the_view(self):
-        self.assertTrue(self.part(d=2.3, side=0, body="sideways"))
-        self.assertFalse(self.part(d=2.3, side=40, body="sideways"))
-        self.assertTrue(self.part(d=1.8, side=40, body="sideways"))
+        self.assertTrue(self.part(d=2.3, side=0, body=SIDEWAYS))
+        self.assertFalse(self.part(d=2.3, side=-40, body=SIDEWAYS))
+        self.assertTrue(self.part(d=1.8, side=-40, body=SIDEWAYS))
         self.assertFalse(self.part(d=2.6, side=0))
 
-    def test_head_tilt_counts_in_the_head_angle(self):
-        phone = CFG.pitch_ahead + CFG.k_tilt * math.tan(math.radians(50))
-        self.assertFalse(self.part(pitch=phone, body="sideways"))
-        self.assertTrue(self.part(pitch=phone))  # body faces the robot: Shi's front zone
-        self.assertFalse(self.part(cfg=b.BaselineConfig(body_zone=False), pitch=phone))
+    def test_head_down_at_a_phone_counts_only_through_the_body_zone(self):
+        self.assertFalse(self.part(head=50, body=SIDEWAYS))
+        self.assertTrue(self.part(head=50, body=10))
+        self.assertFalse(self.part(cfg=b.BaselineConfig(body_zone=False), head=50, body=10))
+
+    def test_no_body_angle_uses_the_head_only(self):
+        self.assertTrue(self.part(head=10, body=None))
+        self.assertFalse(self.part(head=50, body=None))
 
     def test_nothing_measured_is_no_sample(self):
-        for p in (person(face=False), {**person(), "head_yaw": None}, {**person(), "head_pitch": None},
-                  {**person(), "image_x": None}, {**person(), "distance_m": None}):
+        for p in (person(face=False), {**person(), "head_angle_deg": None},
+                  {**person(), "side_deg": None}, {**person(), "floor_distance_m": None}):
             self.assertIsNone(b.participating(p, CFG), p)
 
 
@@ -131,7 +122,7 @@ class LevelsMatchRos4hri(unittest.TestCase):
         self.assertEqual(levels[9:12], [b.DISENGAGED, b.ENGAGING, b.ENGAGED])
 
 
-AWAY = dict(head=50, body="sideways")
+AWAY = dict(head=50, body=SIDEWAYS)
 
 
 class Decisions(unittest.TestCase):

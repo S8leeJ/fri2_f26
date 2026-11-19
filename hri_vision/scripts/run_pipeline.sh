@@ -10,6 +10,7 @@
 
 PKG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(dirname "$PKG")"
+FACE_LANDMARKER_URL="https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 
 source /opt/ros/humble/setup.bash
 export ROS_LOCALHOST_ONLY=1
@@ -38,9 +39,19 @@ done
 }
 echo "✅ Kinect driver found"
 
+# The rule-based baseline needs MediaPipe's Face Landmarker model (about 4 MB).
+MODEL=~/.cache/hri_vision/face_landmarker.task
+if [ ! -f "$MODEL" ]; then
+    mkdir -p "$(dirname "$MODEL")"
+    curl -sfL -o "$MODEL" "$FACE_LANDMARKER_URL" \
+        && echo "✅ Face Landmarker model downloaded" \
+        || echo "⚠️  Face Landmarker model did not download: head_angle_deg stays empty"
+fi
+
 # YOLO looks for yolo11n.pt in the current folder. setup_flexo.sh downloads it here.
 cd "$PKG"
 exec ros2 launch hri_vision vision_pipeline.launch.py \
     camera_backend:=external \
     rgb_topic:=/rgb/image_raw \
-    depth_topic:=/depth_to_rgb/image_raw
+    depth_topic:=/depth_to_rgb/image_raw \
+    camera_info_topic:=/rgb/camera_info

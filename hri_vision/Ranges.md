@@ -55,6 +55,8 @@ Each field describes what the camera sees. No single field decides what the robo
 - `null` when no face is visible.
 - Not measured on the robot yet. See `CALIBRATION.md`.
 
+**`head_angle_deg`**, **`body_angle_deg`**, **`side_deg`**, **`floor_distance_m`**: inputs for the rule-based baseline. The decision node leaves them out of the LLM's scene. See `README.md`.
+
 **`sensor_status`**: which measurements in this message are current.
 - `depth_fresh: false`: `distance_m` and `direction` are not measured in this message.
 - `orientation_fresh: false`: `orientation`, `gaze`, `face_visible`, `head_yaw`, and `head_pitch` are not measured in this message.

@@ -1,14 +1,20 @@
 import json
+import os
 import time
 
 import cv2
+import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import clamp_box, gaze_label, head_turn, safe_json_loads
+from .common import (clamp_box, face_to_camera_deg, gaze_label, head_turn, safe_json_loads,
+                     torso_to_camera_deg)
+
+# scripts/setup_flexo.sh and scripts/run_pipeline.sh download it here.
+DEFAULT_FACE_LANDMARKER = "~/.cache/hri_vision/face_landmarker.task"
 
 
 class OrientationNode(Node):
@@ -22,6 +28,11 @@ class OrientationNode(Node):
 
     Gaze comes from the head, not the eyes: a visible face that is turned to the
     side or tilted down, for example at a phone, is "away".
+
+    For the rule-based baseline it also gives two angles from MediaPipe's 3D output:
+    head_angle_deg (Face Landmarker head pose) and body_angle_deg (Pose world
+    landmarks of the shoulders). Each is the angle between where the head or torso
+    points and the line to the camera.
     """
 
     def __init__(self):
@@ -41,6 +52,9 @@ class OrientationNode(Node):
         # Not measured on the robot yet: see CALIBRATION.md.
         self.declare_parameter("gaze_max_yaw_ratio", 0.25)
         self.declare_parameter("gaze_max_pitch_ratio", 0.70)
+        self.declare_parameter("face_landmarker_model", DEFAULT_FACE_LANDMARKER)
+        # The face crop for Face Landmarker is this many face-box sizes wide.
+        self.declare_parameter("face_crop_scale", 2.0)
 
         try:
             import mediapipe as mp
@@ -71,6 +85,8 @@ class OrientationNode(Node):
             ),
         )
 
+        self.face_landmarker = self._make_face_landmarker(mp)
+
         self.image_sub = self.create_subscription(
             Image, str(self.get_parameter("image_topic").value), self._on_image, 10
         )
@@ -87,6 +103,58 @@ class OrientationNode(Node):
         self.get_logger().info(
             "Orientation ready: MediaPipe Pose + Face Detection on tracked person crops"
         )
+
+    def _make_face_landmarker(self, mp):
+        path = os.path.expanduser(str(self.get_parameter("face_landmarker_model").value))
+        if not os.path.isfile(path):
+            self.get_logger().error(
+                f"No Face Landmarker model at {path}: head_angle_deg stays empty. "
+                "Run scripts/setup_flexo.sh or scripts/run_pipeline.sh, which download it."
+            )
+            return None
+        from mediapipe.tasks import python as mp_tasks
+        from mediapipe.tasks.python import vision as mp_vision
+
+        options = mp_vision.FaceLandmarkerOptions(
+            base_options=mp_tasks.BaseOptions(model_asset_path=path),
+            running_mode=mp_vision.RunningMode.IMAGE,
+            num_faces=1,
+            output_facial_transformation_matrixes=True,
+        )
+        return mp_vision.FaceLandmarker.create_from_options(options)
+
+    def _head_angle(self, detections, rgb):
+        """Face Landmarker on a crop centered on the face, so the crop looks along the
+        line to the face, and the head pose is measured from that line."""
+        if self.face_landmarker is None:
+            return None
+        box = max(detections, key=lambda d: d.score[0]).location_data.relative_bounding_box
+        h, w = rgb.shape[:2]
+        size = float(self.get_parameter("face_crop_scale").value) * max(box.width * w, box.height * h)
+        cx, cy = (box.xmin + box.width / 2.0) * w, (box.ymin + box.height / 2.0) * h
+        crop_box = clamp_box((cx - size / 2, cy - size / 2, cx + size / 2, cy + size / 2), w, h)
+        if crop_box is None:
+            return None
+        x1, y1, x2, y2 = crop_box
+        face = rgb[y1:y2, x1:x2]
+        if face.shape[0] < 256:
+            scale = 256.0 / face.shape[0]
+            face = cv2.resize(face, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
+        image = self.mp.Image(image_format=self.mp.ImageFormat.SRGB, data=np.ascontiguousarray(face))
+        result = self.face_landmarker.detect(image)
+        if not result.facial_transformation_matrixes:
+            return None
+        return face_to_camera_deg(result.facial_transformation_matrixes[0])
+
+    def _body_angle(self, pose_result):
+        world = pose_result.pose_world_landmarks
+        if not world:
+            return None
+        left, right = world.landmark[11], world.landmark[12]
+        min_vis = float(self.get_parameter("min_visibility").value)
+        if left.visibility < min_vis or right.visibility < min_vis:
+            return None
+        return torso_to_camera_deg((left.x, left.y, left.z), (right.x, right.y, right.z))
 
     def _on_image(self, msg: Image):
         try:
@@ -154,6 +222,8 @@ class OrientationNode(Node):
             face_result = self.face_detector.process(rgb)
             face_visible = bool(face_result.detections)
             turn = self._head_turn(face_result.detections, rgb) if face_visible else None
+            head_angle = self._head_angle(face_result.detections, rgb) if face_visible else None
+            body_angle = self._body_angle(pose_result)
 
             body_orientation = "unknown"
             shoulder_ratio = None
@@ -217,6 +287,8 @@ class OrientationNode(Node):
                     ),
                     "head_yaw": round(turn[0], 3) if turn else None,
                     "head_pitch": round(turn[1], 3) if turn else None,
+                    "head_angle_deg": round(head_angle, 1) if head_angle is not None else None,
+                    "body_angle_deg": round(body_angle, 1) if body_angle is not None else None,
                 }
             )
 
@@ -232,6 +304,8 @@ class OrientationNode(Node):
         try:
             self.pose.close()
             self.face_detector.close()
+            if self.face_landmarker is not None:
+                self.face_landmarker.close()
         except Exception:
             pass
         super().destroy_node()

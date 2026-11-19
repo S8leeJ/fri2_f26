@@ -3,6 +3,8 @@ import math
 import numpy as np
 
 from hri_vision.common import (
+    face_to_camera_deg,
+    floor_position,
     gaze_label,
     head_turn,
     image_x,
@@ -11,6 +13,7 @@ from hri_vision.common import (
     motion_label,
     sideways_mm,
     speed_mm_s,
+    torso_to_camera_deg,
 )
 
 HZ = 10.0
@@ -173,10 +176,66 @@ def test_merge_keeps_the_head_angles_and_drops_the_box():
                    "head_yaw": 0.31, "head_pitch": 0.5, "shoulder_ratio": 0.9}
     assert merge_orientation(person, orientation) == {
         "id": 3, "distance_m": 1.5, "image_x": 0.2, "orientation": "facing_robot", "gaze": "away",
-        "face_visible": True, "head_yaw": 0.31, "head_pitch": 0.5}
+        "face_visible": True, "head_yaw": 0.31, "head_pitch": 0.5,
+        "head_angle_deg": None, "body_angle_deg": None}
 
 
 def test_merge_without_orientation_is_unknown():
     merged = merge_orientation({"id": 3, "bbox": [1, 2, 3, 4]}, None)
     assert merged == {"id": 3, "orientation": "unknown", "gaze": "unknown", "face_visible": None,
-                      "head_yaw": None, "head_pitch": None}
+                      "head_yaw": None, "head_pitch": None, "head_angle_deg": None, "body_angle_deg": None}
+
+
+def test_merge_keeps_the_baseline_angles():
+    merged = merge_orientation({"id": 3, "side_deg": -12.0, "floor_distance_m": 1.4},
+                               {"head_angle_deg": 8.5, "body_angle_deg": 20.0})
+    assert (merged["side_deg"], merged["floor_distance_m"]) == (-12.0, 1.4)
+    assert (merged["head_angle_deg"], merged["body_angle_deg"]) == (8.5, 20.0)
+
+
+def pose_matrix(yaw_deg=0.0, pitch_deg=0.0, position=(0.0, 0.0, -0.6)):
+    """A MediaPipe facial transformation matrix: the head turned by yaw, tilted by pitch,
+    at a position in the camera space (camera at the origin, looking along -z)."""
+    y, p = math.radians(yaw_deg), math.radians(pitch_deg)
+    ry = np.array([[math.cos(y), 0, math.sin(y)], [0, 1, 0], [-math.sin(y), 0, math.cos(y)]])
+    rx = np.array([[1, 0, 0], [0, math.cos(p), -math.sin(p)], [0, math.sin(p), math.cos(p)]])
+    m = np.eye(4)
+    m[:3, :3] = ry @ rx
+    m[:3, 3] = position
+    return m
+
+
+def test_a_face_that_looks_at_the_camera_is_0_degrees():
+    assert face_to_camera_deg(pose_matrix()) < 1e-9
+
+
+def test_head_turn_and_tilt_combine_into_one_angle():
+    assert abs(face_to_camera_deg(pose_matrix(yaw_deg=30)) - 30) < 1e-6
+    assert abs(face_to_camera_deg(pose_matrix(pitch_deg=-40)) - 40) < 1e-6
+    both = math.degrees(math.acos(math.cos(math.radians(30)) * math.cos(math.radians(40))))
+    assert abs(face_to_camera_deg(pose_matrix(yaw_deg=30, pitch_deg=40)) - both) < 1e-6
+
+
+def test_the_angle_is_to_the_camera_not_to_the_image_center():
+    # A face 0.6 m to the side that turns 45 degrees to look at the camera.
+    assert face_to_camera_deg(pose_matrix(yaw_deg=-45, position=(0.6, 0.0, -0.6))) < 1e-6
+
+
+def test_a_transposed_matrix_gives_the_same_angle():
+    m = pose_matrix(yaw_deg=25)
+    assert abs(face_to_camera_deg(m.T) - face_to_camera_deg(m)) < 1e-9
+
+
+def test_torso_facing_the_camera_is_0_and_side_on_is_90():
+    assert torso_to_camera_deg((0.2, 0.0, 0.0), (-0.2, 0.0, 0.0)) < 1e-9
+    assert abs(torso_to_camera_deg((0.0, 0.0, 0.2), (0.0, 0.0, -0.2)) - 90) < 1e-9
+    assert abs(torso_to_camera_deg((0.2, 0.0, 0.2), (0.0, 0.0, 0.0)) - 45) < 1e-9
+    assert torso_to_camera_deg((0.1, 0.0, 0.1), (0.1, 0.3, 0.1)) is None
+
+
+def test_floor_position_from_a_camera_ray():
+    side, floor = floor_position((0.0, 0.2, 1.0), 2.0)
+    assert abs(side) < 1e-9 and abs(floor - 2.0) < 1e-9
+    side, floor = floor_position((-math.tan(math.radians(30)), 0.0, 1.0), 2.0)
+    assert abs(side + 30) < 1e-9 and abs(floor - 2.0 / math.cos(math.radians(30))) < 1e-9
+    assert floor_position((0.0, 0.0, 1.0), None) is None

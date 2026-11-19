@@ -58,18 +58,33 @@ step "5/9 Packages load, and the models are downloaded"
 # run_pipeline.sh starts the pipeline in this folder, so YOLO finds its
 # model file here and does not download it again.
 cd "$PKG"
+# The rule-based baseline uses MediaPipe Face Landmarker for the head angle.
+MODEL=~/.cache/hri_vision/face_landmarker.task
+if [ ! -f "$MODEL" ]; then
+    mkdir -p "$(dirname "$MODEL")"
+    curl -sfL -o "$MODEL" \
+        https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task \
+        || fail "the Face Landmarker model did not download."
+fi
 python3 -c "
+import os
 import numpy, cv2, cv_bridge, matplotlib.pyplot, lap
 import mediapipe as mp
+from mediapipe.tasks import python as mp_tasks
+from mediapipe.tasks.python import vision as mp_vision
+from image_geometry import PinholeCameraModel
 from ultralytics import YOLO
 assert numpy.__version__.startswith('1.'), 'numpy ' + numpy.__version__ + ' must be below 2'
 assert hasattr(mp, 'solutions'), 'mediapipe ' + mp.__version__ + ' has no mp.solutions. Use 0.10.14.'
 YOLO('yolo11n.pt')
 mp.solutions.pose.Pose(model_complexity=0).close()
 mp.solutions.face_detection.FaceDetection(model_selection=0).close()
+mp_vision.FaceLandmarker.create_from_options(mp_vision.FaceLandmarkerOptions(
+    base_options=mp_tasks.BaseOptions(model_asset_path=os.path.expanduser('$MODEL')),
+    output_facial_transformation_matrixes=True)).close()
 print('numpy', numpy.__version__, '| cv2', cv2.__version__, '| mediapipe', mp.__version__)
 " || fail "a package or a model does not load. Find the error above in Part D of RUN_ON_FLEXO.md."
-ok "packages load, YOLO and MediaPipe models ready"
+ok "packages load, YOLO and MediaPipe models ready, image_geometry loads"
 
 step "6/9 Build the ROS package"
 cd "$REPO"

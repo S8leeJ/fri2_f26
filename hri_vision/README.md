@@ -21,7 +21,11 @@ Ready-to-launch vision pipeline for the BWI/HRI robot project.
       "gaze": "toward_robot",
       "face_visible": true,
       "head_yaw": 0.04,
-      "head_pitch": 0.52
+      "head_pitch": 0.52,
+      "side_deg": -11.8,
+      "floor_distance_m": 1.86,
+      "head_angle_deg": 6.5,
+      "body_angle_deg": 14.0
     }
   ],
   "sensor_status": {
@@ -37,6 +41,19 @@ Pipeline:
 2. Aligned depth + boxes -> distance, movement direction, dwell time
 3. RGB + boxes -> MediaPipe Pose/Face Detection -> coarse orientation/gaze proxy
 4. Context builder -> compact JSON for the LLM
+
+For the rule-based baseline only, four more fields come from libraries:
+
+- `head_angle_deg`: MediaPipe Face Landmarker head pose, on a crop centered on the face.
+  The angle between where the head points and the line to the camera.
+- `body_angle_deg`: MediaPipe Pose world landmarks of the two shoulders. The same angle for the torso, 0 to 90.
+- `side_deg` and `floor_distance_m`: ROS `image_geometry` with the Kinect's `/rgb/camera_info`,
+  and the depth. The person's angle from the camera's forward line (negative is left) and the
+  distance along the floor.
+
+The Face Landmarker model (`face_landmarker.task`, about 4 MB) goes in
+`~/.cache/hri_vision/`. `scripts/setup_flexo.sh` and `scripts/run_pipeline.sh` download it.
+Without it, or without `camera_info`, those fields are `null`, and the baseline gets no sample.
 
 ## Important assumptions
 

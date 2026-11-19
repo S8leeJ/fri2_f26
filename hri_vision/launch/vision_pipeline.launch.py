@@ -15,6 +15,7 @@ def generate_launch_description():
     camera_backend = LaunchConfiguration("camera_backend")
     rgb_topic = LaunchConfiguration("rgb_topic")
     depth_topic = LaunchConfiguration("depth_topic")
+    camera_info_topic = LaunchConfiguration("camera_info_topic")
 
     return LaunchDescription(
         [
@@ -32,6 +33,11 @@ def generate_launch_description():
                 "depth_topic",
                 default_value="/camera/aligned_depth_to_color/image_raw",
                 description="Aligned uint16 depth-in-mm topic consumed by the pipeline",
+            ),
+            DeclareLaunchArgument(
+                "camera_info_topic",
+                default_value="/camera/color/camera_info",
+                description="Intrinsics of the RGB camera, for side_deg and floor_distance_m",
             ),
 
             # Optional camera sources. In normal robot operation use
@@ -77,7 +83,8 @@ def generate_launch_description():
                 name="person_context_node",
                 output="screen",
                 emulate_tty=True,
-                parameters=[config, {"depth_topic": depth_topic}],
+                parameters=[config, {"depth_topic": depth_topic,
+                                     "camera_info_topic": camera_info_topic}],
             ),
             Node(
                 package="hri_vision",
