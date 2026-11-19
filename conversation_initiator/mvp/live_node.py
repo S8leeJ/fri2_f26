@@ -124,6 +124,9 @@ class LiveInitiator(Node):
         use_rules(self.rules)
         self.baseline = None
         if args.provider == "baseline":
+            # The microphone always listens. Our pipeline's rule for when to listen
+            # (fusion_adapter: after the robot speaks, until the person leaves) is not used.
+            args.engaged = True
             self.baseline = Baseline(BaselineConfig(
                 window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
                 k_tilt=args.baseline_k_tilt, pitch_ahead=args.baseline_pitch_ahead))
@@ -178,7 +181,8 @@ class LiveInitiator(Node):
             c = self.baseline.cfg
             self.get_logger().info(f"baseline: ROS4HRI engagement + Hriscu rule, every message, "
                                    f"window {c.window_s:g} s, k {c.k:g}, k tilt {c.k_tilt:g}, "
-                                   f"pitch ahead {c.pitch_ahead:g}; no gate, no post-filter")
+                                   f"pitch ahead {c.pitch_ahead:g}; no gate, no post-filter, "
+                                   f"microphone always listening")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
                                    else "rules: off: scene only, the model decides, "
@@ -431,7 +435,7 @@ class LiveInitiator(Node):
             run = 1
         mark = {"run_start": datetime.datetime.now().isoformat(timespec="seconds"), "run": run,
                 "provider": self.args.provider, "model": self.model, "speak": self.args.speak,
-                "rules": self.rules}
+                "rules": self.rules, "always_listening": self.args.engaged}
         if self.baseline is not None:
             mark["baseline"] = dataclasses.asdict(self.baseline.cfg)
         with open(self.log_path, "a") as f:

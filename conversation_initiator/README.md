@@ -412,6 +412,10 @@ gets from 3D poses: the head turn from `head_yaw`, the head tilt from
 `head_pitch`, and the person's angle from `image_x`. As in ROS4HRI, the head
 angle combines the turn and the tilt. `baseline.py` lists the conversions.
 
+The microphone always listens with the baseline (`/engaged` stays true), so it
+replies to any sentence it hears, also between two other people. Our rule for
+when to listen (after the robot speaks, until the person leaves) is not used.
+
 These stay the same as with Jev: the fixed greeting, the reply writers, and the
 voice. They come after the decision. The baseline needs no model key, but it
 needs a Groq, Anthropic or Gemini key for replies. Each `run_start` line in
