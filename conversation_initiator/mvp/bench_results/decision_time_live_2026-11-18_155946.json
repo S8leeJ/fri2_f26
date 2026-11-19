@@ -1,0 +1,601 @@
+{
+ "started": "2026-11-18T15:57:00",
+ "seconds": 166.0,
+ "args": {
+  "providers": "jev,groq",
+  "n": 20,
+  "live": true,
+  "every": 1.0,
+  "scenes": "vignettes",
+  "timeout": 10.0,
+  "pace": 1.0,
+  "groq_model": null
+ },
+ "models": {
+  "jev": "jev-latest",
+  "groq": "openai/gpt-oss-120b"
+ },
+ "busy_retries_used": 6,
+ "summary": [
+  {
+   "provider": "jev",
+   "n": 20,
+   "failed": 0,
+   "over_2s": 0,
+   "median_ms": 131.0,
+   "sd_ms": 35.34003954068023,
+   "mean_ms": 140.855,
+   "min_ms": 108.0,
+   "max_ms": 227.1,
+   "median_reasoning_tokens": null
+  },
+  {
+   "provider": "groq",
+   "n": 20,
+   "failed": 0,
+   "over_2s": 1,
+   "median_ms": 966.3,
+   "sd_ms": 387.10976493142505,
+   "mean_ms": 1106.22,
+   "min_ms": 813.9,
+   "max_ms": 2354.9,
+   "median_reasoning_tokens": 154.0
+  }
+ ],
+ "calls": [
+  {
+   "call": 1,
+   "provider": "jev",
+   "scene": "live:1",
+   "person": {
+    "distance_m": 0.493,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 145.2,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 1,
+   "provider": "groq",
+   "scene": "live:1",
+   "person": {
+    "distance_m": 0.493,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 1053.7,
+   "action": "remain_silent",
+   "reasoning_tokens": 182
+  },
+  {
+   "call": 2,
+   "provider": "groq",
+   "scene": "live:2",
+   "person": {
+    "distance_m": 0.923,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.1,
+    "motion": "stationary"
+   },
+   "ms": 2354.9,
+   "action": "greet",
+   "reasoning_tokens": 155
+  },
+  {
+   "call": 2,
+   "provider": "jev",
+   "scene": "live:2",
+   "person": {
+    "distance_m": 0.923,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.1,
+    "motion": "stationary"
+   },
+   "ms": 205.1,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 3,
+   "provider": "jev",
+   "scene": "live:3",
+   "person": {
+    "distance_m": 0.893,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.7,
+    "motion": "stationary"
+   },
+   "ms": 110.4,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 3,
+   "provider": "groq",
+   "scene": "live:3",
+   "person": {
+    "distance_m": 0.893,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.7,
+    "motion": "stationary"
+   },
+   "ms": 967.1,
+   "action": "greet",
+   "reasoning_tokens": 138
+  },
+  {
+   "call": 4,
+   "provider": "groq",
+   "scene": "live:4",
+   "person": {
+    "distance_m": 0.889,
+    "facing_robot": true,
+    "gaze_at_robot_s": 8.4,
+    "motion": "stationary"
+   },
+   "ms": 821.3,
+   "action": "greet",
+   "reasoning_tokens": 139
+  },
+  {
+   "call": 4,
+   "provider": "jev",
+   "scene": "live:4",
+   "person": {
+    "distance_m": 0.889,
+    "facing_robot": true,
+    "gaze_at_robot_s": 8.4,
+    "motion": "stationary"
+   },
+   "ms": 113.1,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 5,
+   "provider": "jev",
+   "scene": "live:5",
+   "person": {
+    "distance_m": 0.897,
+    "facing_robot": true,
+    "gaze_at_robot_s": 24.7,
+    "motion": "stationary"
+   },
+   "ms": 151.2,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 5,
+   "provider": "groq",
+   "scene": "live:5",
+   "person": {
+    "distance_m": 0.897,
+    "facing_robot": true,
+    "gaze_at_robot_s": 24.7,
+    "motion": "stationary"
+   },
+   "ms": 1058.4,
+   "action": "greet",
+   "reasoning_tokens": 148
+  },
+  {
+   "call": 6,
+   "provider": "groq",
+   "scene": "live:6",
+   "person": {
+    "distance_m": 0.318,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 920.7,
+   "action": "remain_silent",
+   "reasoning_tokens": 156
+  },
+  {
+   "call": 6,
+   "provider": "jev",
+   "scene": "live:6",
+   "person": {
+    "distance_m": 0.318,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 137.4,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 7,
+   "provider": "jev",
+   "scene": "live:7",
+   "person": {
+    "distance_m": 0.595,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.4,
+    "motion": "stationary"
+   },
+   "ms": 134.2,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 7,
+   "provider": "groq",
+   "scene": "live:7",
+   "person": {
+    "distance_m": 0.595,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.4,
+    "motion": "stationary"
+   },
+   "ms": 944.7,
+   "action": "greet",
+   "reasoning_tokens": 129
+  },
+  {
+   "call": 8,
+   "provider": "groq",
+   "scene": "live:8",
+   "person": {
+    "distance_m": 0.572,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 882.5,
+   "action": "remain_silent",
+   "reasoning_tokens": 167
+  },
+  {
+   "call": 8,
+   "provider": "jev",
+   "scene": "live:8",
+   "person": {
+    "distance_m": 0.572,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0
+   },
+   "ms": 189.3,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 9,
+   "provider": "jev",
+   "scene": "live:9",
+   "person": {
+    "distance_m": 0.677,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "leaving"
+   },
+   "ms": 117.2,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 9,
+   "provider": "groq",
+   "scene": "live:9",
+   "person": {
+    "distance_m": 0.677,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "leaving"
+   },
+   "ms": 1098.6,
+   "action": "remain_silent",
+   "reasoning_tokens": 139
+  },
+  {
+   "call": 10,
+   "provider": "groq",
+   "scene": "live:10",
+   "person": {
+    "distance_m": 0.822,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.2,
+    "motion": "stationary"
+   },
+   "ms": 813.9,
+   "action": "greet",
+   "reasoning_tokens": 122
+  },
+  {
+   "call": 10,
+   "provider": "jev",
+   "scene": "live:10",
+   "person": {
+    "distance_m": 0.822,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.2,
+    "motion": "stationary"
+   },
+   "ms": 115.0,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 11,
+   "provider": "jev",
+   "scene": "live:11",
+   "person": {
+    "distance_m": 0.811,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 108.0,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 11,
+   "provider": "groq",
+   "scene": "live:11",
+   "person": {
+    "distance_m": 0.811,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 1184.9,
+   "action": "remain_silent",
+   "reasoning_tokens": 213
+  },
+  {
+   "call": 12,
+   "provider": "groq",
+   "scene": "live:12",
+   "person": {
+    "distance_m": 0.815,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 1129.1,
+   "action": "remain_silent",
+   "reasoning_tokens": 216
+  },
+  {
+   "call": 12,
+   "provider": "jev",
+   "scene": "live:12",
+   "person": {
+    "distance_m": 0.815,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 115.6,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 13,
+   "provider": "jev",
+   "scene": "live:13",
+   "person": {
+    "distance_m": 0.826,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.9,
+    "motion": "stationary"
+   },
+   "ms": 227.1,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 13,
+   "provider": "groq",
+   "scene": "live:13",
+   "person": {
+    "distance_m": 0.826,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.9,
+    "motion": "stationary"
+   },
+   "ms": 862.9,
+   "action": "greet",
+   "reasoning_tokens": 154
+  },
+  {
+   "call": 14,
+   "provider": "groq",
+   "scene": "live:14",
+   "person": {
+    "distance_m": 0.829,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.6,
+    "motion": "stationary"
+   },
+   "ms": 1942.5,
+   "action": "greet",
+   "reasoning_tokens": 154
+  },
+  {
+   "call": 14,
+   "provider": "jev",
+   "scene": "live:14",
+   "person": {
+    "distance_m": 0.829,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.6,
+    "motion": "stationary"
+   },
+   "ms": 127.8,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 15,
+   "provider": "jev",
+   "scene": "live:15",
+   "person": {
+    "distance_m": 0.766,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.7,
+    "motion": "stationary"
+   },
+   "ms": 138.1,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 15,
+   "provider": "groq",
+   "scene": "live:15",
+   "person": {
+    "distance_m": 0.766,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.7,
+    "motion": "stationary"
+   },
+   "ms": 1005.6,
+   "action": "greet",
+   "reasoning_tokens": 176
+  },
+  {
+   "call": 16,
+   "provider": "groq",
+   "scene": "live:16",
+   "person": {
+    "distance_m": 0.775,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.6,
+    "motion": "stationary"
+   },
+   "ms": 947.8,
+   "action": "greet",
+   "reasoning_tokens": 150
+  },
+  {
+   "call": 16,
+   "provider": "jev",
+   "scene": "live:16",
+   "person": {
+    "distance_m": 0.775,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.6,
+    "motion": "stationary"
+   },
+   "ms": 122.9,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 17,
+   "provider": "jev",
+   "scene": "live:17",
+   "person": {
+    "distance_m": 0.75,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.1,
+    "motion": "stationary"
+   },
+   "ms": 114.2,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 17,
+   "provider": "groq",
+   "scene": "live:17",
+   "person": {
+    "distance_m": 0.75,
+    "facing_robot": true,
+    "gaze_at_robot_s": 5.1,
+    "motion": "stationary"
+   },
+   "ms": 965.5,
+   "action": "greet",
+   "reasoning_tokens": 156
+  },
+  {
+   "call": 18,
+   "provider": "groq",
+   "scene": "live:18",
+   "person": {
+    "distance_m": 0.747,
+    "facing_robot": true,
+    "gaze_at_robot_s": 8.0,
+    "motion": "stationary"
+   },
+   "ms": 1381.3,
+   "action": "greet",
+   "reasoning_tokens": 138
+  },
+  {
+   "call": 18,
+   "provider": "jev",
+   "scene": "live:18",
+   "person": {
+    "distance_m": 0.747,
+    "facing_robot": true,
+    "gaze_at_robot_s": 8.0,
+    "motion": "stationary"
+   },
+   "ms": 194.8,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 19,
+   "provider": "jev",
+   "scene": "live:19",
+   "person": {
+    "distance_m": 0.8,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.5,
+    "motion": "stationary"
+   },
+   "ms": 139.1,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 19,
+   "provider": "groq",
+   "scene": "live:19",
+   "person": {
+    "distance_m": 0.8,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.5,
+    "motion": "stationary"
+   },
+   "ms": 913.9,
+   "action": "greet",
+   "reasoning_tokens": 142
+  },
+  {
+   "call": 20,
+   "provider": "groq",
+   "scene": "live:20",
+   "person": {
+    "distance_m": 0.793,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.4,
+    "motion": "stationary"
+   },
+   "ms": 875.1,
+   "action": "greet",
+   "reasoning_tokens": 162
+  },
+  {
+   "call": 20,
+   "provider": "jev",
+   "scene": "live:20",
+   "person": {
+    "distance_m": 0.793,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.4,
+    "motion": "stationary"
+   },
+   "ms": 111.4,
+   "action": "greet",
+   "reasoning_tokens": null
+  }
+ ]
+}

@@ -1,0 +1,606 @@
+{
+ "started": "2026-11-18T15:45:08",
+ "seconds": 242.1,
+ "args": {
+  "providers": "jev,groq",
+  "n": 20,
+  "live": false,
+  "every": 1.0,
+  "scenes": "vignettes",
+  "timeout": 10.0,
+  "pace": 1.0,
+  "groq_model": null
+ },
+ "models": {
+  "jev": "jev-latest",
+  "groq": "openai/gpt-oss-120b"
+ },
+ "busy_retries_used": 12,
+ "summary": [
+  {
+   "provider": "jev",
+   "n": 20,
+   "failed": 0,
+   "over_2s": 0,
+   "median_ms": 131.2,
+   "sd_ms": 41.05010385267971,
+   "mean_ms": 153.745,
+   "min_ms": 113.0,
+   "max_ms": 228.7,
+   "median_reasoning_tokens": null
+  },
+  {
+   "provider": "groq",
+   "n": 19,
+   "failed": 1,
+   "over_2s": 1,
+   "median_ms": 1030.8,
+   "sd_ms": 403.5276408135938,
+   "mean_ms": 1126.8368421052633,
+   "min_ms": 860.4,
+   "max_ms": 2748.6,
+   "median_reasoning_tokens": 168
+  }
+ ],
+ "calls": [
+  {
+   "call": 1,
+   "provider": "jev",
+   "scene": "001_quiet_person_facing_stopped",
+   "person": {
+    "distance_m": 2.1,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.4,
+    "motion": "stationary"
+   },
+   "ms": 204.9,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 1,
+   "provider": "groq",
+   "scene": "001_quiet_person_facing_stopped",
+   "person": {
+    "distance_m": 2.1,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.4,
+    "motion": "stationary"
+   },
+   "ms": 1046.2,
+   "action": "greet",
+   "reasoning_tokens": 152
+  },
+  {
+   "call": 2,
+   "provider": "groq",
+   "scene": "002_two_people_talking",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 1024.5,
+   "action": "remain_silent",
+   "reasoning_tokens": 155
+  },
+  {
+   "call": 2,
+   "provider": "jev",
+   "scene": "002_two_people_talking",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 116.2,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 3,
+   "provider": "jev",
+   "scene": "003_loud_room_person_far",
+   "person": {
+    "distance_m": 5.6,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.9,
+    "motion": "approaching"
+   },
+   "ms": 124.7,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 3,
+   "provider": "groq",
+   "scene": "003_loud_room_person_far",
+   "person": {
+    "distance_m": 5.6,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.9,
+    "motion": "approaching"
+   },
+   "ms": 967.1,
+   "action": "wait",
+   "reasoning_tokens": 170
+  },
+  {
+   "call": 4,
+   "provider": "groq",
+   "scene": "004_walking_past_not_facing",
+   "person": {
+    "distance_m": 1.2,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "passing"
+   },
+   "ms": 860.4,
+   "action": "remain_silent",
+   "reasoning_tokens": 140
+  },
+  {
+   "call": 4,
+   "provider": "jev",
+   "scene": "004_walking_past_not_facing",
+   "person": {
+    "distance_m": 1.2,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "passing"
+   },
+   "ms": 167.5,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 5,
+   "provider": "jev",
+   "scene": "005_already_greeted_ignored",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.1,
+    "motion": "stationary"
+   },
+   "ms": 188.7,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 5,
+   "provider": "groq",
+   "scene": "005_already_greeted_ignored",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.1,
+    "motion": "stationary"
+   },
+   "ms": 1236.9,
+   "action": "wait",
+   "reasoning_tokens": 255
+  },
+  {
+   "call": 6,
+   "provider": "groq",
+   "scene": "006_approaching_robot_directly",
+   "person": {
+    "distance_m": 1.5,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.2,
+    "motion": "approaching"
+   },
+   "ms": 1089.7,
+   "action": "greet",
+   "reasoning_tokens": 127
+  },
+  {
+   "call": 6,
+   "provider": "jev",
+   "scene": "006_approaching_robot_directly",
+   "person": {
+    "distance_m": 1.5,
+    "facing_robot": true,
+    "gaze_at_robot_s": 3.2,
+    "motion": "approaching"
+   },
+   "ms": 162.3,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 7,
+   "provider": "jev",
+   "scene": "007_sitting_working_absorbed",
+   "person": {
+    "distance_m": 2.4,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 115.4,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 7,
+   "provider": "groq",
+   "scene": "007_sitting_working_absorbed",
+   "person": {
+    "distance_m": 2.4,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 956.9,
+   "action": "remain_silent",
+   "reasoning_tokens": 149
+  },
+  {
+   "call": 8,
+   "provider": "groq",
+   "scene": "008_facing_but_in_conversation",
+   "person": {
+    "distance_m": 1.9,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.8,
+    "motion": "stationary"
+   },
+   "ms": 1041.8,
+   "action": "remain_silent",
+   "reasoning_tokens": 163
+  },
+  {
+   "call": 8,
+   "provider": "jev",
+   "scene": "008_facing_but_in_conversation",
+   "person": {
+    "distance_m": 1.9,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.8,
+    "motion": "stationary"
+   },
+   "ms": 205.4,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 9,
+   "provider": "jev",
+   "scene": "009_robot_mid_utterance",
+   "person": {
+    "distance_m": 2.1,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.4,
+    "motion": "stationary"
+   },
+   "ms": 227.3,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 9,
+   "provider": "groq",
+   "scene": "009_robot_mid_utterance",
+   "person": {
+    "distance_m": 2.1,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.4,
+    "motion": "stationary"
+   },
+   "ms": 1195.3,
+   "action": "remain_silent",
+   "reasoning_tokens": 259
+  },
+  {
+   "call": 10,
+   "provider": "groq",
+   "scene": "010_glance_and_keep_walking",
+   "person": {
+    "distance_m": 2.4,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.6,
+    "motion": "passing"
+   },
+   "ms": 1068.1,
+   "action": "remain_silent",
+   "reasoning_tokens": 185
+  },
+  {
+   "call": 10,
+   "provider": "jev",
+   "scene": "010_glance_and_keep_walking",
+   "person": {
+    "distance_m": 2.4,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.6,
+    "motion": "passing"
+   },
+   "ms": 204.4,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 11,
+   "provider": "jev",
+   "scene": "011_laptop_glance_up",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.8,
+    "motion": "stationary"
+   },
+   "ms": 228.7,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 11,
+   "provider": "groq",
+   "scene": "011_laptop_glance_up",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": true,
+    "gaze_at_robot_s": 0.8,
+    "motion": "stationary"
+   },
+   "ms": 1056.3,
+   "action": "greet",
+   "reasoning_tokens": 158
+  },
+  {
+   "call": 12,
+   "provider": "groq",
+   "scene": "012_lingering_near_group",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 1186.8,
+   "action": "remain_silent",
+   "reasoning_tokens": 200
+  },
+  {
+   "call": 12,
+   "provider": "jev",
+   "scene": "012_lingering_near_group",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 124.2,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 13,
+   "provider": "jev",
+   "scene": "013_ignored_once_still_facing",
+   "person": {
+    "distance_m": 1.6,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.0,
+    "motion": "stationary"
+   },
+   "ms": 137.7,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 13,
+   "provider": "groq",
+   "scene": "013_ignored_once_still_facing",
+   "person": {
+    "distance_m": 1.6,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.0,
+    "motion": "stationary"
+   },
+   "ms": 1022.4,
+   "action": "greet",
+   "reasoning_tokens": 126
+  },
+  {
+   "call": 14,
+   "provider": "groq",
+   "scene": "014_spoke_35s_ago_facing",
+   "person": {
+    "distance_m": 1.7,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.5,
+    "motion": "stationary"
+   },
+   "ms": null,
+   "error": "ApiError: 400 {\"error\":{\"message\":\"Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\""
+  },
+  {
+   "call": 14,
+   "provider": "jev",
+   "scene": "014_spoke_35s_ago_facing",
+   "person": {
+    "distance_m": 1.7,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.5,
+    "motion": "stationary"
+   },
+   "ms": 113.0,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 15,
+   "provider": "jev",
+   "scene": "015_approaching_not_looking",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "approaching"
+   },
+   "ms": 124.6,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 15,
+   "provider": "groq",
+   "scene": "015_approaching_not_looking",
+   "person": {
+    "distance_m": 2.0,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "approaching"
+   },
+   "ms": 1030.8,
+   "action": "remain_silent",
+   "reasoning_tokens": 178
+  },
+  {
+   "call": 16,
+   "provider": "groq",
+   "scene": "016_far_sustained_gaze",
+   "person": {
+    "distance_m": 4.5,
+    "facing_robot": true,
+    "gaze_at_robot_s": 4.0,
+    "motion": "stationary"
+   },
+   "ms": 992.4,
+   "action": "greet",
+   "reasoning_tokens": 200
+  },
+  {
+   "call": 16,
+   "provider": "jev",
+   "scene": "016_far_sustained_gaze",
+   "person": {
+    "distance_m": 4.5,
+    "facing_robot": true,
+    "gaze_at_robot_s": 4.0,
+    "motion": "stationary"
+   },
+   "ms": 123.0,
+   "action": "greet",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 17,
+   "provider": "jev",
+   "scene": "017_phone_call_alone",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 124.3,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 17,
+   "provider": "groq",
+   "scene": "017_phone_call_alone",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": false,
+    "gaze_at_robot_s": 0.0,
+    "motion": "stationary"
+   },
+   "ms": 960.2,
+   "action": "remain_silent",
+   "reasoning_tokens": 169
+  },
+  {
+   "call": 18,
+   "provider": "groq",
+   "scene": "018_looked_then_leaving",
+   "person": {
+    "distance_m": 2.2,
+    "facing_robot": false,
+    "gaze_at_robot_s": 1.5,
+    "motion": "leaving"
+   },
+   "ms": 937.3,
+   "action": "remain_silent",
+   "reasoning_tokens": 178
+  },
+  {
+   "call": 18,
+   "provider": "jev",
+   "scene": "018_looked_then_leaving",
+   "person": {
+    "distance_m": 2.2,
+    "facing_robot": false,
+    "gaze_at_robot_s": 1.5,
+    "motion": "leaving"
+   },
+   "ms": 143.4,
+   "action": "remain_silent",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 19,
+   "provider": "jev",
+   "scene": "019_loud_room_close_facing",
+   "person": {
+    "distance_m": 1.2,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.5,
+    "motion": "stationary"
+   },
+   "ms": 124.0,
+   "action": "wait",
+   "reasoning_tokens": null
+  },
+  {
+   "call": 19,
+   "provider": "groq",
+   "scene": "019_loud_room_close_facing",
+   "person": {
+    "distance_m": 1.2,
+    "facing_robot": true,
+    "gaze_at_robot_s": 2.5,
+    "motion": "stationary"
+   },
+   "ms": 2748.6,
+   "action": "remain_silent",
+   "reasoning_tokens": 159
+  },
+  {
+   "call": 20,
+   "provider": "groq",
+   "scene": "020_conversation_just_ended",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.2,
+    "motion": "stationary"
+   },
+   "ms": 988.2,
+   "action": "greet",
+   "reasoning_tokens": 168
+  },
+  {
+   "call": 20,
+   "provider": "jev",
+   "scene": "020_conversation_just_ended",
+   "person": {
+    "distance_m": 1.8,
+    "facing_robot": true,
+    "gaze_at_robot_s": 1.2,
+    "motion": "stationary"
+   },
+   "ms": 115.2,
+   "action": "wait",
+   "reasoning_tokens": null
+  }
+ ]
+}
