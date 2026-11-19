@@ -469,7 +469,7 @@ of the ROS4HRI code, and checks when the baseline greets and replies.
 | Schema | From |
 |---|---|
 | `ambient.*` | The audio fields with the same names (`context.AMBIENT_FIELDS`). Empty if audio is more than 3 s old. |
-| `target` | The nearest person with a distance. The current target stays unless someone is 0.5 m nearer. `null` if vision is more than 2 s old. |
+| `target` | The nearest person who looks at the robot (`gaze == "toward_robot"`), or the nearest person if nobody looks, so either of two people can be the target. The current target stays unless the new choice is 0.5 m nearer, and always stays during a conversation (`engaged`). `null` if vision is more than 2 s old. |
 | `target.facing_robot` | `orientation == "facing_robot"` |
 | `target.gaze_at_robot_s` | Seconds of continuous `gaze == "toward_robot"`. Left out if orientation is stale. |
 | `target.motion` | `direction`: `approaching`, `receding` to `leaving`, `passing`, `stationary`. Left out if `unknown`. |

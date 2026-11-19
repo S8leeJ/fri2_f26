@@ -60,12 +60,37 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(ctx["bystanders"], [])
         self.assertEqual(ctx["ambient"]["noise_level"], "moderate")
 
-    def test_nearest_is_target_rest_are_bystanders(self):
-        ctx, mem = self.build(wrapper([person(1, 3.0), person(2, 1.2, "sideways")]))
+    def test_nearest_is_target_when_nobody_looks_rest_are_bystanders(self):
+        ctx, mem = self.build(wrapper([person(1, 3.0, "sideways"), person(2, 1.2, "sideways")]))
         self.assertEqual(ctx["target"]["distance_m"], 1.2)
         self.assertFalse(ctx["target"]["facing_robot"])
         self.assertEqual(mem.target_id, 2)
-        self.assertEqual(ctx["bystanders"], [{"distance_m": 3.0, "facing_robot": True}])
+        self.assertEqual(ctx["bystanders"], [{"distance_m": 3.0, "facing_robot": False}])
+
+    def test_the_person_who_looks_is_target_even_if_farther(self):
+        ctx, mem = self.build(wrapper([person(1, 3.0), person(2, 1.2, "sideways")]))
+        self.assertEqual((mem.target_id, ctx["target"]["distance_m"]), (1, 3.0))
+        self.assertEqual(ctx["bystanders"], [{"distance_m": 1.2, "facing_robot": False}])
+
+    def test_gaze_time_counts_from_when_they_started_looking(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.2, "sideways"), person(2, 2.0)]), mem)
+        ctx, _ = self.build(wrapper([person(1, 1.2, "sideways"), person(2, 2.0)]), mem, T0 + 1.5)
+        self.assertEqual((mem.target_id, ctx["target"]["gaze_at_robot_s"]), (2, 1.5))
+
+    def test_target_moves_to_whoever_looks_before_a_conversation(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.2), person(2, 2.0, "sideways")]), mem)
+        self.assertEqual(mem.target_id, 1)
+        self.build(wrapper([person(1, 1.2, "sideways"), person(2, 2.0)]), mem, T0 + 1)
+        self.assertEqual(mem.target_id, 2)
+
+    def test_target_stays_during_a_conversation(self):
+        mem = Memory()
+        self.build(wrapper([person(1, 1.2), person(2, 2.0, "sideways")]), mem)
+        apply_result(mem, "greet", "test", "Hi there!", T0 + 0.5)
+        self.build(wrapper([person(1, 1.2, "sideways"), person(2, 2.0)]), mem, T0 + 1)
+        self.assertEqual(mem.target_id, 1)
 
     def test_people_without_distance_are_skipped(self):
         ctx, _ = self.build(wrapper([person(1, None)]))

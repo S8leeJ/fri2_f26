@@ -38,7 +38,7 @@ PENDING_MAX_S = 15.0
 NO_REPLY_S = 8.0
 # Out of view this long ends the conversation (engaged false) and the visit.
 LOST_TARGET_S = 5.0
-# The current target stays the target unless someone else is this much nearer.
+# The current target stays the target unless the new choice is this much nearer.
 TARGET_STICKY_M = 0.5
 MAX_IGNORED = 2
 # A face missed for this long or less still counts as looking. The face detector
@@ -101,13 +101,24 @@ def _fresh(msg: Dict[str, Any], name: str, limit: float) -> Optional[Dict[str, A
     return data
 
 
-def _pick_target(people: List[Dict[str, Any]], current: Optional[int]) -> Optional[Dict[str, Any]]:
+def _pick_target(people: List[Dict[str, Any]], current: Optional[int], looking: set,
+                 engaged: bool) -> Optional[Dict[str, Any]]:
+    """The person the scene describes in full.
+
+    In a conversation (engaged), the current target stays while in view. Otherwise it
+    is the nearest person who looks at the robot, or the nearest person if nobody
+    looks, so either of two people can be the one who looks. The current target stays
+    unless the new choice is TARGET_STICKY_M nearer.
+    """
     if not people:
         return None
-    nearest = min(people, key=lambda p: p["distance_m"])
-    for p in people:
-        if p.get("id") == current and p["distance_m"] <= nearest["distance_m"] + TARGET_STICKY_M:
-            return p
+    current_p = next((p for p in people if p.get("id") == current), None)
+    if engaged and current_p is not None:
+        return current_p
+    pool = [p for p in people if p.get("id") in looking] or people
+    nearest = min(pool, key=lambda p: p["distance_m"])
+    if current_p in pool and current_p["distance_m"] <= nearest["distance_m"] + TARGET_STICKY_M:
+        return current_p
     return nearest
 
 
@@ -129,12 +140,11 @@ def _gaze_s(person: Dict[str, Any], mem: Memory, now: float, orientation_fresh: 
     return round(now - since, 1)
 
 
-def _vision_target(person: Dict[str, Any], mem: Memory, now: float, orientation_fresh: bool) -> Dict[str, Any]:
+def _vision_target(person: Dict[str, Any], gaze: Optional[float]) -> Dict[str, Any]:
     target: Dict[str, Any] = {
         "distance_m": float(person["distance_m"]),
         "facing_robot": person.get("orientation") == "facing_robot",
     }
-    gaze = _gaze_s(person, mem, now, orientation_fresh)
     if gaze is not None:
         target["gaze_at_robot_s"] = gaze
     motion = MOTION.get(person.get("direction"))
@@ -184,8 +194,16 @@ def fusion_to_context(msg: Dict[str, Any], mem: Memory, now: float) -> Dict[str,
 
     people = [p for p in (vision or {}).get("people", [])
               if isinstance(p, dict) and p.get("distance_m") is not None]
-    chosen = _pick_target(people, mem.target_id)
     orientation_fresh = bool(((vision or {}).get("sensor_status") or {}).get("orientation_fresh"))
+    # Gaze time for everyone in view, so a person who looks has their full time when
+    # they become the target.
+    gaze = {p.get("id"): _gaze_s(p, mem, now, orientation_fresh) for p in people}
+    in_view = set(gaze)
+    for pid in [pid for pid in mem.gaze_since if pid not in in_view
+                and now - mem.gaze_last.get(pid, now) > GAZE_GRACE_S]:
+        mem.gaze_since.pop(pid, None)
+    looking = {pid for pid in in_view if pid in mem.gaze_since}
+    chosen = _pick_target(people, mem.target_id, looking, mem.engaged)
 
     if chosen is not None:
         if mem.target_id is not None and chosen.get("id") != mem.target_id:
@@ -209,7 +227,7 @@ def fusion_to_context(msg: Dict[str, Any], mem: Memory, now: float) -> Dict[str,
 
     target = None
     if chosen is not None:
-        target = _vision_target(chosen, mem, now, orientation_fresh)
+        target = _vision_target(chosen, gaze.get(chosen.get("id")))
         if mem.pending is not None:
             target["speech"] = {
                 "detected": True,
