@@ -125,7 +125,8 @@ class LiveInitiator(Node):
         self.baseline = None
         if args.provider == "baseline":
             self.baseline = Baseline(BaselineConfig(
-                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k))
+                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
+                k_tilt=args.baseline_k_tilt, pitch_ahead=args.baseline_pitch_ahead))
             self.model, self.client = "hriscu+ros4hri", None
         else:
             self.model = args.model or DEFAULT_MODEL[args.provider]
@@ -176,7 +177,8 @@ class LiveInitiator(Node):
         if self.baseline:
             c = self.baseline.cfg
             self.get_logger().info(f"baseline: ROS4HRI engagement + Hriscu rule, every message, "
-                                   f"window {c.window_s:g} s, k {c.k:g}; no gate, no post-filter")
+                                   f"window {c.window_s:g} s, k {c.k:g}, k tilt {c.k_tilt:g}, "
+                                   f"pitch ahead {c.pitch_ahead:g}; no gate, no post-filter")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
                                    else "rules: off: scene only, the model decides, "
@@ -498,7 +500,11 @@ def main():
                     help="baseline: seconds of engagement samples (the ROS4HRI README says 2; "
                          "its code default is 10)")
     ap.add_argument("--baseline-k", type=float, default=0.4,
-                    help="baseline: head_yaw / tan(head angle), measured on the robot")
+                    help="baseline: head_yaw / tan(head turn), measured on the robot")
+    ap.add_argument("--baseline-k-tilt", type=float, default=0.3,
+                    help="baseline: (head_pitch - pitch ahead) / tan(head tilt), measured on the robot")
+    ap.add_argument("--baseline-pitch-ahead", type=float, default=0.55,
+                    help="baseline: head_pitch when the person looks at the camera, measured on the robot")
     args = ap.parse_args()
     if args.provider == "baseline":
         if args.rules:

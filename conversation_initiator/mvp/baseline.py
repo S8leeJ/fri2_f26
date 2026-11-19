@@ -27,12 +27,18 @@ When to speak: Hriscu et al., RO-MAN 2026, System 2.
 
 Our vision data is 2D, and ROS4HRI uses 3D head and body poses. These
 conversions are needed to get its inputs. They add no rule:
-    tan(head angle)   = head_yaw / k. k is measured on the robot (README.md).
+    tan(turn)         = head_yaw / k
+    tan(tilt)         = (head_pitch - pitch_ahead) / k_tilt
+    tan(head angle)   = sqrt(tan(turn)^2 + tan(tilt)^2), as in ROS4HRI, which
+                        uses the sideways and the vertical offset of the robot
+                        from the head's forward line.
     tan(person angle) = image_x * tan(hfov / 2).
     d                 = distance_m * sqrt(1 + tan(person angle)^2), because
                         distance_m is depth along the camera axis.
-    Head tilt and the height of the face are not measured as angles, so they
-    are not used.
+k, k_tilt and pitch_ahead are measured on the robot (README.md). head_yaw and
+head_pitch are measured from the camera's view, so the turn and the tilt are
+from the line to the camera, which is what gaze_AB needs. The height of the
+face in the image is not published, so gaze_BA uses the sideways angle only.
 
 Window: the ROS4HRI README says 2 s. Its config and code default is 10 s.
 --baseline-window sets it.
@@ -58,6 +64,8 @@ class BaselineConfig:
     rate_hz: float = 10.0
     # Not measured yet. See README.md, "Rule-based baseline".
     k: float = 0.4
+    k_tilt: float = 0.3
+    pitch_ahead: float = 0.55
     hfov_deg: float = 90.0
     field_of_view_deg: float = 60.0
     max_distance_m: float = 4.0
@@ -74,14 +82,16 @@ def distance_factor(d: float, max_distance_m: float) -> float:
 
 def engagement_score(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[float]:
     """S for one vision person. None means no sample."""
-    depth, image_x, yaw = person.get("distance_m"), person.get("image_x"), person.get("head_yaw")
-    if depth is None or image_x is None or yaw is None or not person.get("face_visible"):
+    depth, image_x = person.get("distance_m"), person.get("image_x")
+    yaw, pitch = person.get("head_yaw"), person.get("head_pitch")
+    if None in (depth, image_x, yaw, pitch) or not person.get("face_visible"):
         return None
     tan_side = image_x * math.tan(math.radians(cfg.hfov_deg) / 2.0)
     d = depth * math.sqrt(1.0 + tan_side ** 2)
     if d > cfg.max_distance_m:
         return 0.0
-    gaze_ab = gaze_score(yaw / cfg.k, cfg.field_of_view_deg)
+    tan_head = math.hypot(yaw / cfg.k, (pitch - cfg.pitch_ahead) / cfg.k_tilt)
+    gaze_ab = gaze_score(tan_head, cfg.field_of_view_deg)
     gaze_ba = gaze_score(tan_side, cfg.field_of_view_deg)
     return min(1.0, gaze_ab * gaze_ba * distance_factor(d, cfg.max_distance_m))
 

@@ -79,7 +79,7 @@ def ros4hri_levels(samples, size):
     return out
 
 
-def person(d=1.5, x=0.0, yaw=0.0, pitch=0.5, face=True, pid=1):
+def person(d=1.5, x=0.0, yaw=0.0, pitch=CFG.pitch_ahead, face=True, pid=1):
     return {"id": pid, "distance_m": d, "image_x": x, "face_visible": face,
             "head_yaw": yaw if face else None, "head_pitch": pitch if face else None}
 
@@ -101,6 +101,18 @@ class ScoreMatchesRos4hri(unittest.TestCase):
                         person(d=d * math.cos(p), x=math.tan(p), yaw=CFG.k * math.tan(t)), CFG)
                     self.assertAlmostEqual(ours, want, places=9, msg=(d, phi, theta))
 
+    def test_same_score_with_the_head_turned_and_tilted(self):
+        for d in (1.0, 2.0, 3.0):
+            for turn in (0, 10, 25):
+                for tilt in (-20, -5, 0, 10, 20, 35):   # positive: down, as at a phone
+                    t1, t2 = math.tan(math.radians(turn)), math.tan(math.radians(tilt))
+                    n = math.sqrt(1 + t1 ** 2 + t2 ** 2)
+                    # The robot in the head's optical frame: x right, y down, z forward.
+                    want = ros4hri_score((d * t1 / n, d * t2 / n, d / n), (d, 0.0, 0.0))
+                    ours = b.engagement_score(
+                        person(d=d, yaw=CFG.k * t1, pitch=CFG.pitch_ahead + CFG.k_tilt * t2), CFG)
+                    self.assertAlmostEqual(ours, want, places=9, msg=(d, turn, tilt))
+
     def test_farther_than_max_distance_is_a_minus_one_sample(self):
         self.assertIsNone(ros4hri_score((0, 0, 4.2), (4.2, 0, 0)))
         self.assertEqual(b.engagement_score(person(d=4.2), CFG), 0.0)
@@ -110,12 +122,16 @@ class ScoreMatchesRos4hri(unittest.TestCase):
         self.assertLess(b.engagement_score(person(d=2.8), CFG), 0.5)
 
     def test_no_face_or_no_head_or_no_position_is_no_sample(self):
-        for p in (person(face=False), {**person(), "head_yaw": None},
+        for p in (person(face=False), {**person(), "head_yaw": None}, {**person(), "head_pitch": None},
                   {**person(), "image_x": None}, {**person(), "distance_m": None}):
             self.assertIsNone(b.engagement_score(p, CFG), p)
 
-    def test_head_tilt_is_not_used(self):
-        self.assertEqual(b.engagement_score(person(pitch=0.95), CFG), b.engagement_score(person(), CFG))
+    def test_tilting_the_head_up_or_down_lowers_the_score_the_same(self):
+        ahead = b.engagement_score(person(), CFG)
+        down = b.engagement_score(person(pitch=CFG.pitch_ahead + 0.1), CFG)
+        up = b.engagement_score(person(pitch=CFG.pitch_ahead - 0.1), CFG)
+        self.assertLess(down, ahead)
+        self.assertAlmostEqual(down, up)
 
 
 class LevelsMatchRos4hri(unittest.TestCase):
@@ -166,8 +182,8 @@ class Decisions(unittest.TestCase):
             self.setUp()
             self.assertEqual(self.feed(5.0, p), [], p)
 
-    def test_head_tilted_down_while_facing_is_greeted(self):
-        self.assertEqual([a for _, a, _ in self.feed(2.0, person(pitch=0.95))], ["greet"])
+    def test_head_tilted_down_at_a_phone_is_not_greeted(self):
+        self.assertEqual(self.feed(5.0, person(pitch=0.95)), [])
 
     def test_a_short_glance_while_walking_past_is_not_enough(self):
         self.feed(1.0, person(yaw=0.6))

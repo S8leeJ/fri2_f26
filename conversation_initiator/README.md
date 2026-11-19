@@ -406,9 +406,11 @@ It uses only the published rules, and none of our system:
 It reads each `/social_context` message as fusion publishes it (the vision and
 audio messages) and decides at once, 10 times a second. It does not use the
 scene JSON, the gate, the post-filter, the target choice, the gaze time, the
-motion labels, or the head tilt. Those are part of our system. The only
+motion labels, or the gaze label. Those are part of our system. The only
 additions convert our 2D vision data to the angles and distance that ROS4HRI
-gets from 3D poses. `baseline.py` lists them.
+gets from 3D poses: the head turn from `head_yaw`, the head tilt from
+`head_pitch`, and the person's angle from `image_x`. As in ROS4HRI, the head
+angle combines the turn and the tilt. `baseline.py` lists the conversions.
 
 These stay the same as with Jev: the fixed greeting, the reply writers, and the
 voice. They come after the decision. The baseline needs no model key, but it
@@ -424,15 +426,19 @@ the next greeting.
 | Flag | Default | Meaning |
 |---|---|---|
 | `--baseline-window` | 2 | Seconds of samples for the engagement level. The ROS4HRI README says 2 s. Its code default is 10 s. |
-| `--baseline-k` | 0.4 | `head_yaw` divided by tan(head angle). 0.4 is not measured. Measure it before the study (below). |
+| `--baseline-k` | 0.4 | `head_yaw` divided by tan(head turn). Not measured. Measure it before the study (below). |
+| `--baseline-pitch-ahead` | 0.55 | `head_pitch` when the person looks at the camera. Not measured. |
+| `--baseline-k-tilt` | 0.3 | (`head_pitch` − pitch ahead) divided by tan(head tilt). Not measured. |
 
-Measure k on flexo, with `hri_vision/scripts/view.sh json`:
+Measure the three numbers on flexo, with `hri_vision/scripts/view.sh json`.
+For each position, the person points the head, not only the eyes, at the mark
+for about 5 s. Write down the median value.
 
 1. A person stands 1.5 m in front of the robot, near the middle of the image (`image_x` near 0).
-2. Put marks 0.55 m (20°) and 1.26 m (40°) to each side of the robot.
-3. The person turns the head, not only the eyes, to each mark for about 5 s. Write down the median `head_yaw`.
-4. k = `head_yaw` / tan(angle). tan 20° = 0.36, tan 40° = 0.84.
-5. Do it again at 1 m, with marks at 0.36 m and 0.84 m. If k is about the same for all, use the mean.
+2. Pitch ahead: the person looks at the camera. Pitch ahead = the median `head_pitch`.
+3. k: put marks 0.55 m (20°) and 1.26 m (40°) to each side of the camera. k = `head_yaw` / tan(angle). tan 20° = 0.36, tan 40° = 0.84.
+4. k tilt: put marks 0.55 m (20°) directly above and below the camera. k tilt = |`head_pitch` − pitch ahead| / 0.36.
+5. Do it again at 1 m, with marks at 0.36 m and 0.84 m. If the values are about the same, use the mean. Do it with two or three people, because faces differ.
 
 `test_baseline.py` checks the score and the levels against a copy of the
 ROS4HRI math, for the same scenes, and checks when the baseline greets and
