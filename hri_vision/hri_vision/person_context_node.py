@@ -125,8 +125,14 @@ class PersonContextNode(Node):
                 self.no_camera_logged = True
             return None
         pixel = ((bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0)
-        ray = self.camera_model.projectPixelTo3dRay(self.camera_model.rectifyPoint(pixel))
-        return floor_position(ray, depth_mm / 1000.0)
+        try:
+            ray = self.camera_model.projectPixelTo3dRay(self.camera_model.rectifyPoint(pixel))
+            return floor_position(ray, depth_mm / 1000.0)
+        except Exception as exc:  # noqa: BLE001 - the other fields must keep working
+            if not self.no_camera_logged:
+                self.get_logger().error(f"side_deg and floor_distance_m failed, left empty: {exc}")
+                self.no_camera_logged = True
+            return None
 
     def _sideways(self, depth_mm, bbox, image_width) -> float:
         # Without the image width, treat the person as on the camera axis.

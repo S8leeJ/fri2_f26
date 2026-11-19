@@ -85,7 +85,12 @@ class OrientationNode(Node):
             ),
         )
 
-        self.face_landmarker = self._make_face_landmarker(mp)
+        try:
+            self.face_landmarker = self._make_face_landmarker(mp)
+        except Exception as exc:  # noqa: BLE001 - the other fields must keep working
+            self.get_logger().error(f"Face Landmarker did not start, head_angle_deg stays empty: {exc}")
+            self.face_landmarker = None
+        self.angle_error_logged = False
 
         self.image_sub = self.create_subscription(
             Image, str(self.get_parameter("image_topic").value), self._on_image, 10
@@ -156,6 +161,18 @@ class OrientationNode(Node):
             return None
         return torso_to_camera_deg((left.x, left.y, left.z), (right.x, right.y, right.z))
 
+    def _baseline_angles(self, face_result, pose_result, rgb, face_visible):
+        """(head_angle_deg, body_angle_deg) for the baseline. A failure here leaves them
+        empty and never stops the fields that Jev uses."""
+        try:
+            head = self._head_angle(face_result.detections, rgb) if face_visible else None
+            return head, self._body_angle(pose_result)
+        except Exception as exc:  # noqa: BLE001
+            if not self.angle_error_logged:
+                self.get_logger().error(f"Baseline angles failed, left empty: {exc}")
+                self.angle_error_logged = True
+            return None, None
+
     def _on_image(self, msg: Image):
         try:
             self.latest_bgr = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
@@ -222,8 +239,7 @@ class OrientationNode(Node):
             face_result = self.face_detector.process(rgb)
             face_visible = bool(face_result.detections)
             turn = self._head_turn(face_result.detections, rgb) if face_visible else None
-            head_angle = self._head_angle(face_result.detections, rgb) if face_visible else None
-            body_angle = self._body_angle(pose_result)
+            head_angle, body_angle = self._baseline_angles(face_result, pose_result, rgb, face_visible)
 
             body_orientation = "unknown"
             shoulder_ratio = None
