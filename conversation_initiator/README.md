@@ -395,22 +395,31 @@ goes up after 8 s.
 ### Rule-based baseline
 
 `live_node.py --provider baseline` uses `mvp/baseline.py` in place of the LLM.
-It uses only the published rules, and none of our system:
+It uses only published rules, and none of our system. Three parts, in order:
 
-- Engagement: the score from Webb, Giuliani and Lemaignan (RO-MAN 2022), with
-  the samples, window and levels of the ROS4HRI `hri_engagement` code.
-- When to speak (Hriscu et al., RO-MAN 2026): greet a person once when their
-  level becomes engaged, and again only after it is disengaged. Reply when the
-  person speaks.
+1. Is the person participating now? (Shi et al., IJSR 2015.) The robot is in
+   the person's gaze zone (head angle under 30°, up to 2.5 m) or front zone
+   (body facing the robot, up to 2.0 m), and the person is in the robot's gaze
+   zone (under 30° from the robot's forward line, up to 2.5 m) or front zone
+   (up to 60°, up to 2.0 m). Each message gives a sample: +1 if participating,
+   −1 if not, none if no face is visible.
+2. Engaged long enough? (ROS4HRI `hri_engagement`, the open implementation of
+   Webb et al., RO-MAN 2022.) The mean of the last 2 s of samples sets the
+   level, with the ROS4HRI thresholds. Webb's score itself is not used.
+3. When to speak (Hriscu et al., RO-MAN 2026): greet a person once when their
+   level becomes engaged, and again only after it is disengaged. Reply when the
+   person speaks.
 
 It reads each `/social_context` message as fusion publishes it (the vision and
 audio messages) and decides at once, 10 times a second. It does not use the
 scene JSON, the gate, the post-filter, the target choice, the gaze time, the
-motion labels, or the gaze label. Those are part of our system. The only
-additions convert our 2D vision data to the angles and distance that ROS4HRI
-gets from 3D poses: the head turn from `head_yaw`, the head tilt from
-`head_pitch`, and the person's angle from `image_x`. As in ROS4HRI, the head
-angle combines the turn and the tilt. `baseline.py` lists the conversions.
+motion labels, or the gaze label. Those are part of our system. Shi et al. use
+motion capture, so the only additions convert our 2D vision data to their
+angles and distance: the head angle from `head_yaw` and `head_pitch`, the
+person's angle from `image_x`, and the straight-line distance from the depth.
+"Body facing" is the vision label `orientation == "facing_robot"`.
+`baseline.py` lists the conversions and the choices where Shi et al. are not
+clear.
 
 The microphone always listens with the baseline (`/engaged` stays true), so it
 replies to any sentence it hears, also between two other people. Our rule for
@@ -420,12 +429,14 @@ These stay the same as with Jev: the fixed greeting, the reply writers, and the
 voice. They come after the decision. The baseline needs no model key, but it
 needs a Groq, Anthropic or Gemini key for replies. Each `run_start` line in
 `live_logs/` records the baseline settings. Each decision records the person,
-the engagement level and the score. A change of level is logged as
-`remain_silent`.
+the engagement level, whether they were participating, and their head angle,
+side angle and distance. A change of level is logged as `remain_silent`.
 
-With a 2 s window, a person who looks at the robot is greeted after about
-1.2 s. After the greeting, the person must look away for about 1.6 s before
-the next greeting.
+With a 2 s window, a person who takes part is greeted after about 1.2 s. After
+the greeting, the person must stop taking part for about 1.6 s before the next
+greeting. A person whose body faces the robot within 2 m takes part even when
+the head looks away, for example at a phone, as Shi et al. count the front
+zone. `--baseline-no-body-zone` uses the head only.
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -433,6 +444,8 @@ the next greeting.
 | `--baseline-k` | 0.4 | `head_yaw` divided by tan(head turn). Not measured. Measure it before the study (below). |
 | `--baseline-pitch-ahead` | 0.55 | `head_pitch` when the person looks at the camera. Not measured. |
 | `--baseline-k-tilt` | 0.3 | (`head_pitch` − pitch ahead) divided by tan(head tilt). Not measured. |
+| `--baseline-cone` | 30 | Shi et al.'s gaze cone, degrees each side. Their Eq. 1 reads \|angle\| < 30°. |
+| `--baseline-no-body-zone` | off | Use Shi et al.'s gaze zones only, not the body front zone. |
 
 Measure the three numbers on flexo, with `hri_vision/scripts/view.sh json`.
 For each position, the person points the head, not only the eyes, at the mark
@@ -444,9 +457,8 @@ for about 5 s. Write down the median value.
 4. k tilt: put marks 0.55 m (20°) directly above and below the camera. k tilt = |`head_pitch` − pitch ahead| / 0.36.
 5. Do it again at 1 m, with marks at 0.36 m and 0.84 m. If the values are about the same, use the mean. Do it with two or three people, because faces differ.
 
-`test_baseline.py` checks the score and the levels against a copy of the
-ROS4HRI math, for the same scenes, and checks when the baseline greets and
-replies.
+`test_baseline.py` checks Shi et al.'s zones, checks the levels against a copy
+of the ROS4HRI code, and checks when the baseline greets and replies.
 
 ### How the fusion message maps to the schema
 

@@ -129,8 +129,9 @@ class LiveInitiator(Node):
             args.engaged = True
             self.baseline = Baseline(BaselineConfig(
                 window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
-                k_tilt=args.baseline_k_tilt, pitch_ahead=args.baseline_pitch_ahead))
-            self.model, self.client = "hriscu+ros4hri", None
+                k_tilt=args.baseline_k_tilt, pitch_ahead=args.baseline_pitch_ahead,
+                cone_deg=args.baseline_cone, body_zone=not args.baseline_no_body_zone))
+            self.model, self.client = "shi+ros4hri+hriscu", None
         else:
             self.model = args.model or DEFAULT_MODEL[args.provider]
             self.client = make_client(args.provider, args.timeout)
@@ -179,10 +180,11 @@ class LiveInitiator(Node):
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
         if self.baseline:
             c = self.baseline.cfg
-            self.get_logger().info(f"baseline: ROS4HRI engagement + Hriscu rule, every message, "
-                                   f"window {c.window_s:g} s, k {c.k:g}, k tilt {c.k_tilt:g}, "
-                                   f"pitch ahead {c.pitch_ahead:g}; no gate, no post-filter, "
-                                   f"microphone always listening")
+            self.get_logger().info(f"baseline: Shi zones (cone {c.cone_deg:g} deg, body zone "
+                                   f"{'on' if c.body_zone else 'off'}) + ROS4HRI levels (window "
+                                   f"{c.window_s:g} s) + Hriscu rule, every message, k {c.k:g}, "
+                                   f"k tilt {c.k_tilt:g}, pitch ahead {c.pitch_ahead:g}; no gate, "
+                                   f"no post-filter, microphone always listening")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
                                    else "rules: off: scene only, the model decides, "
@@ -509,6 +511,10 @@ def main():
                     help="baseline: (head_pitch - pitch ahead) / tan(head tilt), measured on the robot")
     ap.add_argument("--baseline-pitch-ahead", type=float, default=0.55,
                     help="baseline: head_pitch when the person looks at the camera, measured on the robot")
+    ap.add_argument("--baseline-cone", type=float, default=30.0,
+                    help="baseline: Shi et al.'s gaze cone, degrees each side (Eq. 1 reads 30)")
+    ap.add_argument("--baseline-no-body-zone", action="store_true",
+                    help="baseline: use Shi et al.'s gaze zones only, not the body front zone")
     args = ap.parse_args()
     if args.provider == "baseline":
         if args.rules:

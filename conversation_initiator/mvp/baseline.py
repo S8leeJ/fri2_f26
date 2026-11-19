@@ -4,44 +4,48 @@ live_node.py --provider baseline uses it in place of Jev. It reads each
 /social_context message as fusion publishes it (the vision and audio messages,
 unchanged) and decides at once, 10 times a second. It does not use the scene
 JSON from fusion_adapter.py, the gate, the post-filter, the target choice, the
-gaze time, or the motion labels. Those are part of our system, which the study
-compares against these rules.
+gaze time, the gaze label, or the motion labels. Those are part of our system,
+which the study compares against these rules.
 
-Engagement: Webb, Giuliani and Lemaignan, RO-MAN 2022, as the ROS4HRI code
-computes it (github.com/ros4hri/hri_engagement, engagement_node.py, Apache-2.0):
+Three published parts, in order:
 
-    gaze_AB = max(0, 1 - tan(head angle) / tan(60 deg))      robot in the person's view
-    gaze_BA = max(0, 1 - tan(person angle) / tan(60 deg))    person in the camera's view
-    f(d)    = ln(max_d + 1 - d) / ln(max_d + 1)              1 at 0 m, 0 at max_d
-    S       = min(1, gaze_AB * gaze_BA * f(d))
-    sample  = +1 if S > 0.5, else -1. Farther than max_d is -1.
-    No face, or no head or body position: no sample.
-    level   = from the mean of the samples in the window, with the ROS4HRI
-              thresholds (Engagement.add).
+1. Is the person participating now? Shi et al., IJSR 2015, participation zones.
+   Both must hold:
+     - The robot is in the person's gaze zone (head angle < cone, d <= 2.5 m)
+       or in the person's front zone (body facing the robot, d <= 2.0 m).
+     - The person is in the robot's gaze zone (side angle < cone, d <= 2.5 m)
+       or in the robot's front zone (side angle <= 60 deg, d <= 2.0 m).
+   Participating: sample +1. Not participating: -1. No face: no sample.
 
-When to speak: Hriscu et al., RO-MAN 2026, System 2.
-    - Greet a person once when they become engaged. ROS4HRI publishes its
-      ENGAGE_WITH intent at that moment.
+2. Engaged long enough? ROS4HRI hri_engagement (engagement_node.py, Apache-2.0),
+   the open implementation of Webb et al., RO-MAN 2022. The level comes from the
+   mean of the samples in the window, with the ROS4HRI thresholds
+   (Engagement.add). Webb's score itself is not used.
+
+3. When to speak: Hriscu et al., RO-MAN 2026, System 2.
+    - Greet a person once when their level becomes engaged.
     - Do not greet that person again until their level is disengaged.
     - Reply when the person speaks.
 
-Our vision data is 2D, and ROS4HRI uses 3D head and body poses. These
-conversions are needed to get its inputs. They add no rule:
+Our vision data is 2D, and Shi et al. use motion capture. These conversions
+are needed to get their inputs. They add no rule:
     tan(turn)         = head_yaw / k
     tan(tilt)         = (head_pitch - pitch_ahead) / k_tilt
-    tan(head angle)   = sqrt(tan(turn)^2 + tan(tilt)^2), as in ROS4HRI, which
-                        uses the sideways and the vertical offset of the robot
-                        from the head's forward line.
-    tan(person angle) = image_x * tan(hfov / 2).
-    d                 = distance_m * sqrt(1 + tan(person angle)^2), because
+    head angle        = atan(sqrt(tan(turn)^2 + tan(tilt)^2)), the angle between
+                        the head's forward line and the line to the camera.
+    side angle        = atan(image_x * tan(hfov / 2)), the person's angle from
+                        the robot's forward line.
+    d                 = distance_m * sqrt(1 + tan(side angle)^2), because
                         distance_m is depth along the camera axis.
-k, k_tilt and pitch_ahead are measured on the robot (README.md). head_yaw and
-head_pitch are measured from the camera's view, so the turn and the tilt are
-from the line to the camera, which is what gaze_AB needs. The height of the
-face in the image is not published, so gaze_BA uses the sideways angle only.
+    body facing       = the vision orientation label "facing_robot" (a visible
+                        face and shoulders that are not narrow).
+k, k_tilt and pitch_ahead are measured on the robot (README.md).
 
-Window: the ROS4HRI README says 2 s. Its config and code default is 10 s.
---baseline-window sets it.
+Choices where Shi et al. are not clear, set before the study:
+    - cone_deg 30: Eq. 1 reads |angle| < 30 deg. --baseline-cone changes it.
+    - body_zone on: Shi et al. count the front zone. --baseline-no-body-zone
+      uses the gaze zones only.
+    - window_s 2: the ROS4HRI README says 2 s. Its config and code default is 10 s.
 """
 
 from __future__ import annotations
@@ -62,38 +66,43 @@ TRANSCRIPT_FRESH_S = 6.0
 class BaselineConfig:
     window_s: float = 2.0
     rate_hz: float = 10.0
+    # Shi et al., Eqs. 1-3.
+    cone_deg: float = 30.0
+    gaze_zone_m: float = 2.5
+    front_zone_deg: float = 60.0
+    front_zone_m: float = 2.0
+    body_zone: bool = True
     # Not measured yet. See README.md, "Rule-based baseline".
     k: float = 0.4
     k_tilt: float = 0.3
     pitch_ahead: float = 0.55
     hfov_deg: float = 90.0
-    field_of_view_deg: float = 60.0
-    max_distance_m: float = 4.0
-    threshold: float = 0.5
 
 
-def gaze_score(tan_angle: float, field_of_view_deg: float) -> float:
-    return max(0.0, 1.0 - abs(tan_angle) / math.tan(math.radians(field_of_view_deg)))
-
-
-def distance_factor(d: float, max_distance_m: float) -> float:
-    return math.log(-d + max_distance_m + 1) / math.log(max_distance_m + 1)
-
-
-def engagement_score(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[float]:
-    """S for one vision person. None means no sample."""
+def geometry(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[Tuple[float, float, float]]:
+    """(head angle deg, side angle deg, distance m) from one vision person. None: not measured."""
     depth, image_x = person.get("distance_m"), person.get("image_x")
     yaw, pitch = person.get("head_yaw"), person.get("head_pitch")
     if None in (depth, image_x, yaw, pitch) or not person.get("face_visible"):
         return None
     tan_side = image_x * math.tan(math.radians(cfg.hfov_deg) / 2.0)
     d = depth * math.sqrt(1.0 + tan_side ** 2)
-    if d > cfg.max_distance_m:
-        return 0.0
     tan_head = math.hypot(yaw / cfg.k, (pitch - cfg.pitch_ahead) / cfg.k_tilt)
-    gaze_ab = gaze_score(tan_head, cfg.field_of_view_deg)
-    gaze_ba = gaze_score(tan_side, cfg.field_of_view_deg)
-    return min(1.0, gaze_ab * gaze_ba * distance_factor(d, cfg.max_distance_m))
+    return math.degrees(math.atan(tan_head)), math.degrees(math.atan(abs(tan_side))), d
+
+
+def participating(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[bool]:
+    """Shi et al.: both the person and the robot are in each other's gaze or front zone."""
+    g = geometry(person, cfg)
+    if g is None:
+        return None
+    head, side, d = g
+    body_facing = cfg.body_zone and person.get("orientation") == "facing_robot"
+    robot_in_person_zone = ((head < cfg.cone_deg and d <= cfg.gaze_zone_m)
+                            or (body_facing and d <= cfg.front_zone_m))
+    person_in_robot_zone = ((side < cfg.cone_deg and d <= cfg.gaze_zone_m)
+                            or (side <= cfg.front_zone_deg and d <= cfg.front_zone_m))
+    return robot_in_person_zone and person_in_robot_zone
 
 
 class Engagement:
@@ -136,7 +145,8 @@ class Engagement:
 @dataclass
 class _Person:
     engagement: Engagement
-    score: Optional[float] = None
+    participating: Optional[bool] = None
+    geometry: Optional[Tuple[float, float, float]] = None
     greeted: bool = False
 
 
@@ -160,13 +170,13 @@ class Baseline:
         size = int(round(self.cfg.window_s * self.cfg.rate_hz))
         for person in (vision or {}).get("people", []):
             pid = person.get("id")
-            score = engagement_score(person, self.cfg)
-            if pid is None or score is None:
+            now_in = participating(person, self.cfg)
+            if pid is None or now_in is None:
                 continue
             p = self.people.setdefault(pid, _Person(Engagement(size)))
-            p.score = round(score, 3)
+            p.participating, p.geometry = now_in, geometry(person, self.cfg)
             before = p.engagement.level
-            level = p.engagement.add(1 if score > self.cfg.threshold else -1)
+            level = p.engagement.add(1 if now_in else -1)
             if level == DISENGAGED:
                 p.greeted = False
             if level == ENGAGED and not p.greeted:
@@ -174,8 +184,7 @@ class Baseline:
                 out.append(("greet", pid, "engaged"))
             elif level != before:
                 out.append(("remain_silent", pid, "engagement " + level))
-        text = self._new_transcript(audio)
-        if text:
+        if self._new_transcript(audio):
             out.append(("respond", None, "person spoke"))
         return out
 
@@ -205,5 +214,7 @@ class Baseline:
 
     def snapshot(self, pid: Optional[int]) -> Dict[str, Any]:
         p = self.people.get(pid)
-        return {"level": self.level(pid), "score": p.score if p else None,
-                "greeted": p.greeted if p else None}
+        g = p.geometry if p else None
+        return {"level": self.level(pid), "participating": p.participating if p else None,
+                "head_deg": round(g[0], 1) if g else None, "side_deg": round(g[1], 1) if g else None,
+                "distance_m": round(g[2], 2) if g else None, "greeted": p.greeted if p else None}

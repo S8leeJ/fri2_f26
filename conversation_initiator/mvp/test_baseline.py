@@ -3,10 +3,10 @@
 
     python test_baseline.py
 
-The ros4hri_* functions copy the math in ROS4HRI hri_engagement,
-engagement_node.py (Apache-2.0), with 3D positions in place of ROS transforms.
-The tests check that baseline.py gives the same scores and levels from our
-vision fields, and that it greets and replies as Hriscu et al. describe.
+ros4hri_levels copies compute_engagement in ROS4HRI hri_engagement,
+engagement_node.py (Apache-2.0). The tests check Shi et al.'s participation
+zones, that the levels match ROS4HRI, and that the baseline greets and replies
+as Hriscu et al. describe.
 """
 
 from __future__ import annotations
@@ -21,27 +21,6 @@ import mvp
 from test_gate import base_ctx
 
 CFG = b.BaselineConfig()
-
-
-def ros4hri_score(robot_in_person, person_in_robot, fov_deg=60.0, max_distance=4.0):
-    """assess_engagement. robot_in_person: optical frame (+z forward).
-    person_in_robot: robot frame (+x forward). None is a -1 sample for distance."""
-    fov = math.radians(fov_deg)
-    tx, ty, tz = robot_in_person
-    d_ab = math.sqrt(tx ** 2 + ty ** 2 + tz ** 2)
-    if d_ab > max_distance:
-        return None
-    xb, yb, zb = tz, tx, ty
-    gaze_ab = 0.0
-    if xb > 0:
-        gaze_ab = max(0, 1 - (math.sqrt(yb ** 2 + zb ** 2) / (math.tan(fov) * xb)))
-    xa, ya, za = person_in_robot
-    gaze_ba = 0.0
-    log_d_ab = 0.0
-    if xa > 0:
-        gaze_ba = max(0, 1 - (math.sqrt(ya ** 2 + za ** 2) / (math.tan(fov) * xa)))
-        log_d_ab = math.log(-d_ab + max_distance + 1) / math.log(max_distance + 1)
-    return min(1, gaze_ab * gaze_ba * log_d_ab)
 
 
 def ros4hri_levels(samples, size):
@@ -79,59 +58,61 @@ def ros4hri_levels(samples, size):
     return out
 
 
-def person(d=1.5, x=0.0, yaw=0.0, pitch=CFG.pitch_ahead, face=True, pid=1):
-    return {"id": pid, "distance_m": d, "image_x": x, "face_visible": face,
-            "head_yaw": yaw if face else None, "head_pitch": pitch if face else None}
+def yaw(deg):
+    return CFG.k * math.tan(math.radians(deg))
+
+
+def person(d=1.5, side=0.0, head=0.0, pitch=None, face=True, pid=1, body="facing_robot"):
+    """d: straight-line distance (m). side: angle from the robot's forward line (deg).
+    head: head turn away from the camera (deg)."""
+    tan_side = math.tan(math.radians(side))
+    return {"id": pid, "distance_m": d / math.sqrt(1 + tan_side ** 2),
+            "image_x": tan_side / math.tan(math.radians(CFG.hfov_deg / 2)),
+            "face_visible": face, "orientation": body if face else "likely_facing_away",
+            "head_yaw": yaw(head) if face else None,
+            "head_pitch": (CFG.pitch_ahead if pitch is None else pitch) if face else None}
 
 
 def vision(*people):
     return {"people": list(people), "sensor_status": {"orientation_fresh": True}}
 
 
-class ScoreMatchesRos4hri(unittest.TestCase):
-    def test_same_score_over_a_grid_of_scenes(self):
-        for d in (0.6, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 3.9):
-            for phi in (0, 10, 25, 40):        # person's angle from the camera axis
-                for theta in (0, 10, 20, 35, 55, 70):  # head angle away from the robot
-                    p, t = math.radians(phi), math.radians(theta)
-                    want = ros4hri_score((d * math.sin(t), 0.0, d * math.cos(t)),
-                                         (d * math.cos(p), d * math.sin(p), 0.0))
-                    # Vision gives depth along the camera axis, not the straight-line distance.
-                    ours = b.engagement_score(
-                        person(d=d * math.cos(p), x=math.tan(p), yaw=CFG.k * math.tan(t)), CFG)
-                    self.assertAlmostEqual(ours, want, places=9, msg=(d, phi, theta))
+class ShiZones(unittest.TestCase):
+    def part(self, cfg=CFG, **kw):
+        return b.participating(person(**kw), cfg)
 
-    def test_same_score_with_the_head_turned_and_tilted(self):
-        for d in (1.0, 2.0, 3.0):
-            for turn in (0, 10, 25):
-                for tilt in (-20, -5, 0, 10, 20, 35):   # positive: down, as at a phone
-                    t1, t2 = math.tan(math.radians(turn)), math.tan(math.radians(tilt))
-                    n = math.sqrt(1 + t1 ** 2 + t2 ** 2)
-                    # The robot in the head's optical frame: x right, y down, z forward.
-                    want = ros4hri_score((d * t1 / n, d * t2 / n, d / n), (d, 0.0, 0.0))
-                    ours = b.engagement_score(
-                        person(d=d, yaw=CFG.k * t1, pitch=CFG.pitch_ahead + CFG.k_tilt * t2), CFG)
-                    self.assertAlmostEqual(ours, want, places=9, msg=(d, turn, tilt))
+    def test_conversions_give_back_the_angles_and_distance(self):
+        head, side, d = b.geometry(person(d=1.8, side=20, head=25), CFG)
+        self.assertAlmostEqual(head, 25, places=6)
+        self.assertAlmostEqual(side, 20, places=6)
+        self.assertAlmostEqual(d, 1.8, places=6)
 
-    def test_farther_than_max_distance_is_a_minus_one_sample(self):
-        self.assertIsNone(ros4hri_score((0, 0, 4.2), (4.2, 0, 0)))
-        self.assertEqual(b.engagement_score(person(d=4.2), CFG), 0.0)
+    def test_head_cone_is_30_degrees(self):
+        self.assertTrue(self.part(head=25, body="sideways"))
+        self.assertFalse(self.part(head=35, body="sideways"))
 
-    def test_perfect_gaze_is_engaged_only_inside_about_2_76_m(self):
-        self.assertGreater(b.engagement_score(person(d=2.7), CFG), 0.5)
-        self.assertLess(b.engagement_score(person(d=2.8), CFG), 0.5)
+    def test_body_facing_counts_within_2_m_as_in_shi(self):
+        self.assertTrue(self.part(head=50, d=1.8))
+        self.assertFalse(self.part(head=50, d=2.2))
+        no_body = b.BaselineConfig(body_zone=False)
+        self.assertFalse(self.part(cfg=no_body, head=50, d=1.8))
 
-    def test_no_face_or_no_head_or_no_position_is_no_sample(self):
+    def test_gaze_zones_reach_2_5_m_only_near_the_middle_of_the_view(self):
+        self.assertTrue(self.part(d=2.3, side=0, body="sideways"))
+        self.assertFalse(self.part(d=2.3, side=40, body="sideways"))
+        self.assertTrue(self.part(d=1.8, side=40, body="sideways"))
+        self.assertFalse(self.part(d=2.6, side=0))
+
+    def test_head_tilt_counts_in_the_head_angle(self):
+        phone = CFG.pitch_ahead + CFG.k_tilt * math.tan(math.radians(50))
+        self.assertFalse(self.part(pitch=phone, body="sideways"))
+        self.assertTrue(self.part(pitch=phone))  # body faces the robot: Shi's front zone
+        self.assertFalse(self.part(cfg=b.BaselineConfig(body_zone=False), pitch=phone))
+
+    def test_nothing_measured_is_no_sample(self):
         for p in (person(face=False), {**person(), "head_yaw": None}, {**person(), "head_pitch": None},
                   {**person(), "image_x": None}, {**person(), "distance_m": None}):
-            self.assertIsNone(b.engagement_score(p, CFG), p)
-
-    def test_tilting_the_head_up_or_down_lowers_the_score_the_same(self):
-        ahead = b.engagement_score(person(), CFG)
-        down = b.engagement_score(person(pitch=CFG.pitch_ahead + 0.1), CFG)
-        up = b.engagement_score(person(pitch=CFG.pitch_ahead - 0.1), CFG)
-        self.assertLess(down, ahead)
-        self.assertAlmostEqual(down, up)
+            self.assertIsNone(b.participating(p, CFG), p)
 
 
 class LevelsMatchRos4hri(unittest.TestCase):
@@ -148,6 +129,9 @@ class LevelsMatchRos4hri(unittest.TestCase):
         e = b.Engagement(20)
         levels = [e.add(1) for _ in range(12)]
         self.assertEqual(levels[9:12], [b.DISENGAGED, b.ENGAGING, b.ENGAGED])
+
+
+AWAY = dict(head=50, body="sideways")
 
 
 class Decisions(unittest.TestCase):
@@ -170,28 +154,24 @@ class Decisions(unittest.TestCase):
 
     def test_greets_again_only_after_disengaged(self):
         self.feed(3.0, person())
-        self.assertEqual(self.feed(1.5, person(yaw=0.5)), [])  # head turned about 51 degrees
+        self.assertEqual(self.feed(1.5, person(**AWAY)), [])
         self.assertEqual(self.base.level(1), b.DISENGAGING)
-        self.feed(0.1, person(yaw=0.5))
+        self.feed(0.1, person(**AWAY))
         self.assertEqual(self.base.level(1), b.DISENGAGED)
-        greets = self.feed(3.0, person())
-        self.assertEqual([a for _, a, _ in greets], ["greet"])
+        self.assertEqual([a for _, a, _ in self.feed(3.0, person())], ["greet"])
 
-    def test_silent_for_someone_who_does_not_look(self):
-        for p in (person(yaw=0.5), person(face=False), person(d=3.2)):
+    def test_silent_for_someone_who_does_not_take_part(self):
+        for p in (person(**AWAY), person(face=False), person(d=2.8)):
             self.setUp()
             self.assertEqual(self.feed(5.0, p), [], p)
 
-    def test_head_tilted_down_at_a_phone_is_not_greeted(self):
-        self.assertEqual(self.feed(5.0, person(pitch=0.95)), [])
-
     def test_a_short_glance_while_walking_past_is_not_enough(self):
-        self.feed(1.0, person(yaw=0.6))
+        self.feed(1.0, person(**AWAY))
         self.feed(0.4, person())
-        self.assertEqual(self.feed(1.0, person(yaw=0.6)), [])
+        self.assertEqual(self.feed(1.0, person(**AWAY)), [])
 
     def test_each_person_is_greeted_on_their_own(self):
-        greets = self.feed(2.0, person(pid=1), person(pid=2, x=0.2))
+        greets = self.feed(2.0, person(pid=1), person(pid=2, side=15))
         self.assertEqual(sorted(pid for _, _, pid in greets), [1, 2])
 
     def test_old_vision_adds_no_sample(self):
@@ -219,6 +199,8 @@ class Decisions(unittest.TestCase):
     def test_level_changes_are_logged_as_silent(self):
         actions = [a for _ in range(12) for a, _, _ in self.base.step(vision(person()), None)]
         self.assertEqual(actions, ["remain_silent", "remain_silent", "greet"])
+        snap = self.base.snapshot(1)
+        self.assertEqual((snap["level"], snap["participating"], snap["greeted"]), (b.ENGAGED, True, True))
 
 
 class Lines(unittest.TestCase):
