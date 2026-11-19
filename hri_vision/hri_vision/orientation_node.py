@@ -10,7 +10,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import (clamp_box, face_to_camera_deg, gaze_label, head_turn, safe_json_loads,
+from .common import (clamp_box, face_to_camera_deg, gaze_label, head_turn, safe_json_loads, square_crop,
                      torso_to_camera_deg)
 
 # scripts/setup_flexo.sh and scripts/run_pipeline.sh download it here.
@@ -128,20 +128,25 @@ class OrientationNode(Node):
         )
         return mp_vision.FaceLandmarker.create_from_options(options)
 
-    def _head_angle(self, detections, rgb):
-        """Face Landmarker on a crop centered on the face, so the crop looks along the
-        line to the face, and the head pose is measured from that line."""
+    def _head_angle(self, detections, frame_bgr, person_box):
+        """Face Landmarker on a square crop centered on the face, so the crop looks along
+        the line to the face, and the head pose is measured from that line.
+
+        The face box is relative to the person crop. The face crop is cut from the whole
+        frame, so a narrow person box (a person side on) does not cut it short.
+        """
         if self.face_landmarker is None:
             return None
         box = max(detections, key=lambda d: d.score[0]).location_data.relative_bounding_box
-        h, w = rgb.shape[:2]
-        size = float(self.get_parameter("face_crop_scale").value) * max(box.width * w, box.height * h)
-        cx, cy = (box.xmin + box.width / 2.0) * w, (box.ymin + box.height / 2.0) * h
-        crop_box = clamp_box((cx - size / 2, cy - size / 2, cx + size / 2, cy + size / 2), w, h)
-        if crop_box is None:
+        x1, y1, x2, y2 = person_box
+        pw, ph = x2 - x1, y2 - y1
+        cx = x1 + (box.xmin + box.width / 2.0) * pw
+        cy = y1 + (box.ymin + box.height / 2.0) * ph
+        half = float(self.get_parameter("face_crop_scale").value) * max(box.width * pw, box.height * ph) / 2.0
+        face = square_crop(frame_bgr, cx, cy, half)
+        if face is None:
             return None
-        x1, y1, x2, y2 = crop_box
-        face = rgb[y1:y2, x1:x2]
+        face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
         if face.shape[0] < 256:
             scale = 256.0 / face.shape[0]
             face = cv2.resize(face, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
@@ -161,11 +166,12 @@ class OrientationNode(Node):
             return None
         return torso_to_camera_deg((left.x, left.y, left.z), (right.x, right.y, right.z))
 
-    def _baseline_angles(self, face_result, pose_result, rgb, face_visible):
+    def _baseline_angles(self, face_result, pose_result, frame_bgr, person_box, face_visible):
         """(head_angle_deg, body_angle_deg) for the baseline. A failure here leaves them
         empty and never stops the fields that Jev uses."""
         try:
-            head = self._head_angle(face_result.detections, rgb) if face_visible else None
+            head = (self._head_angle(face_result.detections, frame_bgr, person_box)
+                    if face_visible else None)
             return head, self._body_angle(pose_result)
         except Exception as exc:  # noqa: BLE001
             if not self.angle_error_logged:
@@ -239,7 +245,8 @@ class OrientationNode(Node):
             face_result = self.face_detector.process(rgb)
             face_visible = bool(face_result.detections)
             turn = self._head_turn(face_result.detections, rgb) if face_visible else None
-            head_angle, body_angle = self._baseline_angles(face_result, pose_result, rgb, face_visible)
+            head_angle, body_angle = self._baseline_angles(face_result, pose_result, self.latest_bgr,
+                                                           box, face_visible)
 
             body_orientation = "unknown"
             shoulder_ratio = None

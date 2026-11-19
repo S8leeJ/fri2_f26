@@ -4,6 +4,7 @@ import numpy as np
 
 from hri_vision.common import (
     face_to_camera_deg,
+    square_crop,
     floor_position,
     gaze_label,
     head_turn,
@@ -239,3 +240,12 @@ def test_floor_position_from_a_camera_ray():
     side, floor = floor_position((-math.tan(math.radians(30)), 0.0, 1.0), 2.0)
     assert abs(side + 30) < 1e-9 and abs(floor - 2.0 / math.cos(math.radians(30))) < 1e-9
     assert floor_position((0.0, 0.0, 1.0), None) is None
+
+
+def test_square_crop_keeps_the_face_centered_at_the_image_edge():
+    image = np.arange(10 * 10 * 3, dtype=np.uint8).reshape(10, 10, 3)
+    crop = square_crop(image, 1.0, 5.0, 3.0)
+    assert crop.shape == (6, 6, 3)
+    assert (crop[:, :2] == 0).all()  # outside the image is black
+    assert (crop[1:5, 2:6] == image[3:7, 0:4]).all()
+    assert square_crop(image, 50.0, 50.0, 3.0) is None

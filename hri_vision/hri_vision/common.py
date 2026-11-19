@@ -106,6 +106,20 @@ def merge_orientation(person: Dict[str, Any], orientation: Optional[Dict[str, An
     return merged
 
 
+def square_crop(image: np.ndarray, cx: float, cy: float, half: float) -> Optional[np.ndarray]:
+    """A square crop of side 2 * half, centered on (cx, cy). Parts outside the image are
+    black, so the center stays at the center of the crop."""
+    h, w = image.shape[:2]
+    x1, y1 = int(round(cx - half)), int(round(cy - half))
+    x2, y2 = int(round(cx + half)), int(round(cy + half))
+    if x2 - x1 < 2 or x2 <= 0 or y2 <= 0 or x1 >= w or y1 >= h:
+        return None
+    out = np.zeros((y2 - y1, x2 - x1) + image.shape[2:], dtype=image.dtype)
+    sx1, sy1, sx2, sy2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
+    out[sy1 - y1:sy2 - y1, sx1 - x1:sx2 - x1] = image[sy1:sy2, sx1:sx2]
+    return out
+
+
 def face_to_camera_deg(matrix) -> Optional[float]:
     """Angle between where the head points and the line from the face to the camera, in degrees.
 
