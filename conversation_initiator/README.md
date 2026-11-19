@@ -395,26 +395,36 @@ goes up after 8 s.
 ### Rule-based baseline
 
 `live_node.py --provider baseline` uses `mvp/baseline.py` in place of the LLM.
-The robot greets once when a person turns to face it and has not spoken
-(Hriscu et al., RO-MAN 2026). It does not greet again until the person
-disengages. When the person speaks, it replies. "Faces" uses the score from
-Webb, Giuliani and Lemaignan (RO-MAN 2022), as the ROS4HRI `hri_engagement`
-code computes it. By default, the first sample with a score above 0.5 is
-enough, because Hriscu et al. give no time. `baseline.py` has the formulas and
-our changes to them.
+It uses only the published rules, and none of our system:
 
-These stay the same as with Jev: the scene, the gate clock (`--every`), the
-fixed greeting, the reply writers, the voice, and the post-filter. The baseline
-needs no model key, but it needs a Groq, Anthropic or Gemini key for replies.
-Each `run_start` line in `live_logs/` records the baseline settings. Each
-decision records the engagement level and score.
+- Engagement: the score from Webb, Giuliani and Lemaignan (RO-MAN 2022), with
+  the samples, window and levels of the ROS4HRI `hri_engagement` code.
+- When to speak (Hriscu et al., RO-MAN 2026): greet a person once when their
+  level becomes engaged, and again only after it is disengaged. Reply when the
+  person speaks.
+
+It reads each `/social_context` message as fusion publishes it (the vision and
+audio messages) and decides at once, 10 times a second. It does not use the
+scene JSON, the gate, the post-filter, the target choice, the gaze time, the
+motion labels, or the head tilt. Those are part of our system. The only
+additions convert our 2D vision data to the angles and distance that ROS4HRI
+gets from 3D poses. `baseline.py` lists them.
+
+These stay the same as with Jev: the fixed greeting, the reply writers, and the
+voice. They come after the decision. The baseline needs no model key, but it
+needs a Groq, Anthropic or Gemini key for replies. Each `run_start` line in
+`live_logs/` records the baseline settings. Each decision records the person,
+the engagement level and the score. A change of level is logged as
+`remain_silent`.
+
+With a 2 s window, a person who looks at the robot is greeted after about
+1.2 s. After the greeting, the person must look away for about 1.6 s before
+the next greeting.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--baseline-trigger` | `moment` | `moment`: greet at the first sample with a score above 0.5. `level`: greet only when the ROS4HRI level is engaged (about 1.2 s of looking with a 2 s window). |
-| `--baseline-window` | 2 | Seconds of samples for the engagement level. ROS4HRI uses 10. With `moment`, it only sets when the person has disengaged. |
+| `--baseline-window` | 2 | Seconds of samples for the engagement level. The ROS4HRI README says 2 s. Its code default is 10 s. |
 | `--baseline-k` | 0.4 | `head_yaw` divided by tan(head angle). 0.4 is not measured. Measure it before the study (below). |
-| `--baseline-no-face` | `skip` | `skip`: a person with no visible face adds no sample, as in ROS4HRI. `away`: it counts as not looking. |
 
 Measure k on flexo, with `hri_vision/scripts/view.sh json`:
 
@@ -425,7 +435,8 @@ Measure k on flexo, with `hri_vision/scripts/view.sh json`:
 5. Do it again at 1 m, with marks at 0.36 m and 0.84 m. If k is about the same for all, use the mean.
 
 `test_baseline.py` checks the score and the levels against a copy of the
-ROS4HRI math, for the same scenes.
+ROS4HRI math, for the same scenes, and checks when the baseline greets and
+replies.
 
 ### How the fusion message maps to the schema
 

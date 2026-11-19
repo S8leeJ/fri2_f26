@@ -688,13 +688,13 @@ def decide(provider, client, model, ctx, rubric, early_reply=False) -> Result:
 
 def baseline_result(ctx, action: str, decision: dict, ms: float) -> Result:
     """A Result for the rule-based baseline (baseline.py). The lines come as for Jev:
-    the fixed greeting, and replies from reply_writers()."""
+    the fixed greeting, and replies from reply_writers(). No post-filter: the
+    baseline's decision is final."""
     speech = ms2 = error = None
-    if action in SPEAKS and blocking_rule(ctx, action, {"social_rules": False}) is None:
-        if action == "greet":
-            speech = fixed_greeting(ctx)
-        else:
-            speech, ms2, error = _write_line(reply_writers(), ctx, {"action": "respond"})
+    if action == "greet":
+        speech = fixed_greeting(ctx)
+    elif action == "respond":
+        speech, ms2, error = _write_line(reply_writers(), ctx, {"action": "respond"})
     return Result(action, [], ms, ms2, None, speech, error, decision)
 
 

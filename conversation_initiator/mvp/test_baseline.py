@@ -6,7 +6,7 @@
 The ros4hri_* functions copy the math in ROS4HRI hri_engagement,
 engagement_node.py (Apache-2.0), with 3D positions in place of ROS transforms.
 The tests check that baseline.py gives the same scores and levels from our
-vision fields.
+vision fields, and that it greets and replies as Hriscu et al. describe.
 """
 
 from __future__ import annotations
@@ -84,8 +84,8 @@ def person(d=1.5, x=0.0, yaw=0.0, pitch=0.5, face=True, pid=1):
             "head_yaw": yaw if face else None, "head_pitch": pitch if face else None}
 
 
-def vision(*people, fresh=True):
-    return {"people": list(people), "sensor_status": {"orientation_fresh": fresh}}
+def vision(*people):
+    return {"people": list(people), "sensor_status": {"orientation_fresh": True}}
 
 
 class ScoreMatchesRos4hri(unittest.TestCase):
@@ -109,6 +109,14 @@ class ScoreMatchesRos4hri(unittest.TestCase):
         self.assertGreater(b.engagement_score(person(d=2.7), CFG), 0.5)
         self.assertLess(b.engagement_score(person(d=2.8), CFG), 0.5)
 
+    def test_no_face_or_no_head_or_no_position_is_no_sample(self):
+        for p in (person(face=False), {**person(), "head_yaw": None},
+                  {**person(), "image_x": None}, {**person(), "distance_m": None}):
+            self.assertIsNone(b.engagement_score(p, CFG), p)
+
+    def test_head_tilt_is_not_used(self):
+        self.assertEqual(b.engagement_score(person(pitch=0.95), CFG), b.engagement_score(person(), CFG))
+
 
 class LevelsMatchRos4hri(unittest.TestCase):
     def test_same_levels_for_random_samples(self):
@@ -127,113 +135,74 @@ class LevelsMatchRos4hri(unittest.TestCase):
 
 
 class Decisions(unittest.TestCase):
-    """trigger = "level": greet when the ROS4HRI level is engaged."""
-
     def setUp(self):
-        self.base = b.Baseline(b.BaselineConfig(trigger="level"))
-        self.t = 0.0
+        self.base = b.Baseline()
 
-    def feed(self, seconds, *people, fresh=True):
-        for _ in range(int(seconds * 10)):
-            self.t += 0.1
-            self.base.update(vision(*people, fresh=fresh), self.t)
+    def feed(self, seconds, *people, audio=None):
+        """Messages at 10 Hz. Returns the speaking decisions, with the message number."""
+        out = []
+        for i in range(int(round(seconds * 10))):
+            for action, pid, _ in self.base.step(vision(*people), audio):
+                if action != "remain_silent":
+                    out.append((i, action, pid))
+        return out
 
-    def decide(self, **overrides):
-        return self.base.decide(base_ctx(t=self.t, **overrides), 1)[0]
+    def test_greets_once_when_the_level_becomes_engaged(self):
+        self.assertEqual(self.feed(1.1, person()), [])
+        self.assertEqual(self.feed(0.1, person()), [(0, "greet", 1)])
+        self.assertEqual(self.feed(5.0, person()), [])
 
-    def test_greets_once_when_a_person_looks_then_waits_until_they_look_away(self):
-        self.feed(1.5, person())
-        self.assertEqual(self.decide(), "greet")
-        self.base.greeted(1)
+    def test_greets_again_only_after_disengaged(self):
         self.feed(3.0, person())
-        self.assertEqual(self.decide(), "remain_silent")
-        self.feed(3.0, person(yaw=0.5))  # head turned about 51 degrees
+        self.assertEqual(self.feed(1.5, person(yaw=0.5)), [])  # head turned about 51 degrees
+        self.assertEqual(self.base.level(1), b.DISENGAGING)
+        self.feed(0.1, person(yaw=0.5))
         self.assertEqual(self.base.level(1), b.DISENGAGED)
-        # Old -1 samples are still in the 2 s window, so it takes 1.6 s, not 1.2 s.
-        self.feed(1.5, person())
-        self.assertEqual(self.decide(), "remain_silent")
-        self.feed(0.1, person())
-        self.assertEqual(self.decide(), "greet")
+        greets = self.feed(3.0, person())
+        self.assertEqual([a for _, a, _ in greets], ["greet"])
 
     def test_silent_for_someone_who_does_not_look(self):
-        for p in (person(yaw=0.5), person(pitch=0.9), person(face=False), person(d=3.2)):
+        for p in (person(yaw=0.5), person(face=False), person(d=3.2)):
             self.setUp()
-            self.feed(3.0, p)
-            self.assertEqual(self.decide(), "remain_silent", p)
+            self.assertEqual(self.feed(5.0, p), [], p)
 
-    def test_a_glance_while_walking_past_is_not_enough(self):
+    def test_head_tilted_down_while_facing_is_greeted(self):
+        self.assertEqual([a for _, a, _ in self.feed(2.0, person(pitch=0.95))], ["greet"])
+
+    def test_a_short_glance_while_walking_past_is_not_enough(self):
         self.feed(1.0, person(yaw=0.6))
         self.feed(0.4, person())
-        self.feed(1.0, person(yaw=0.6))
-        self.assertNotEqual(self.base.level(1), b.ENGAGED)
-        self.assertEqual(self.decide(), "remain_silent")
+        self.assertEqual(self.feed(1.0, person(yaw=0.6)), [])
 
-    def test_replies_when_the_person_speaks_and_never_greets_in_a_conversation(self):
-        self.feed(2.0, person())
-        speech = {"detected": True, "partial_transcript": "where is the lab", "syntactically_complete": True}
-        self.assertEqual(self.decide(target={"speech": speech}), "respond")
-        self.assertEqual(self.decide(conversation=[{"speaker": "person", "text": "hi"}]), "remain_silent")
+    def test_each_person_is_greeted_on_their_own(self):
+        greets = self.feed(2.0, person(pid=1), person(pid=2, x=0.2))
+        self.assertEqual(sorted(pid for _, _, pid in greets), [1, 2])
 
-    def test_no_person_is_silent(self):
-        self.assertEqual(self.base.decide({"target": None}, None)[0], "remain_silent")
-
-    def test_stale_orientation_adds_no_sample(self):
-        self.feed(2.0, person(), fresh=False)
+    def test_old_vision_adds_no_sample(self):
+        for _ in range(30):
+            self.base.step(None, None)
         self.assertEqual(self.base.level(1), b.UNKNOWN)
 
-    def test_by_default_the_level_stays_when_the_face_goes_as_in_ros4hri(self):
+    def test_no_face_keeps_the_level_as_in_ros4hri(self):
         self.feed(2.0, person())
         self.feed(3.0, person(face=False))
         self.assertEqual(self.base.level(1), b.ENGAGED)
 
-    def test_away_mode_counts_no_face_as_not_looking(self):
-        self.base = b.Baseline(b.BaselineConfig(no_face="away"))
-        self.feed(2.0, person())
-        self.feed(3.0, person(face=False))
-        self.assertEqual(self.base.level(1), b.DISENGAGED)
+    def test_replies_once_to_each_new_sentence(self):
+        said = {"stamp": 100.0, "transcript": "where is the lab", "transcript_age_s": 0.2}
+        self.assertEqual(self.base.step(None, said), [("respond", None, "person spoke")])
+        again = {**said, "stamp": 101.0, "transcript_age_s": 1.2}
+        self.assertEqual(self.base.step(None, again), [])
+        new = {"stamp": 105.0, "transcript": "thanks", "transcript_age_s": 0.3}
+        self.assertEqual([a for a, _, _ in self.base.step(None, new)], ["respond"])
 
-    def test_a_person_out_of_view_is_forgotten(self):
-        self.feed(2.0, person())
-        self.feed(6.0)
-        self.assertEqual(self.base.level(1), b.UNKNOWN)
+    def test_a_sentence_from_before_the_start_gets_no_reply(self):
+        old = {"stamp": 100.0, "transcript": "hello", "transcript_age_s": 20.0}
+        self.assertEqual(self.base.step(None, old), [])
 
-
-class MomentTrigger(Decisions):
-    """trigger = "moment" (the default): greet at the first sample with S > 0.5."""
-
-    def setUp(self):
-        self.base = b.Baseline()
-        self.t = 0.0
-
-    def test_greets_after_one_facing_sample(self):
-        self.feed(0.1, person())
-        self.assertEqual(self.decide(), "greet")
-
-    def test_greets_once_then_again_only_after_disengaged_and_a_new_look(self):
-        self.feed(0.1, person())
-        self.assertEqual(self.decide(), "greet")
-        self.base.greeted(1)
-        self.feed(3.0, person())
-        self.assertEqual(self.decide(), "remain_silent")
-        self.feed(3.0, person(yaw=0.5))
-        self.assertEqual(self.base.level(1), b.DISENGAGED)
-        self.assertEqual(self.decide(), "remain_silent")
-        self.feed(0.1, person())
-        self.assertEqual(self.decide(), "greet")
-        self.base.greeted(1)
-        self.feed(1.0, person())
-        self.assertEqual(self.decide(), "remain_silent")
-
-    def test_one_glance_is_enough(self):
-        self.feed(0.1, person())
-        self.feed(2.0, person(yaw=0.6))
-        self.assertEqual(self.decide(), "greet")
-
-    def test_greets_once_when_a_person_looks_then_waits_until_they_look_away(self):
-        self.skipTest("covered by test_greets_once_then_again_only_after_disengaged_and_a_new_look")
-
-    def test_a_glance_while_walking_past_is_not_enough(self):
-        self.skipTest("with trigger = moment one glance is enough: see test_one_glance_is_enough")
+    def test_level_changes_are_logged_as_silent(self):
+        actions = [a for _ in range(12) for a, _, _ in self.base.step(vision(person()), None)]
+        self.assertEqual(actions, ["remain_silent", "remain_silent", "greet"])
 
 
 class Lines(unittest.TestCase):
@@ -248,9 +217,10 @@ class Lines(unittest.TestCase):
         write.assert_called_once_with(["w"], ctx, {"action": "respond"})
         self.assertEqual((r.speech, r.ms2), ("line", 5.0))
 
-    def test_no_line_when_the_robot_is_talking(self):
+    def test_no_post_filter_the_decision_is_final(self):
         r = mvp.baseline_result(base_ctx(robot={"is_speaking": True}), "greet", {}, 0.1)
-        self.assertIsNone(r.speech)
+        self.assertIsNotNone(r.speech)
+        self.assertIsNone(mvp.baseline_result(base_ctx(), "remain_silent", {}, 0.1).speech)
 
 
 if __name__ == "__main__":

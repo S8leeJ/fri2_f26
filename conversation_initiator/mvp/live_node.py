@@ -125,9 +125,8 @@ class LiveInitiator(Node):
         self.baseline = None
         if args.provider == "baseline":
             self.baseline = Baseline(BaselineConfig(
-                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k,
-                no_face=args.baseline_no_face, trigger=args.baseline_trigger))
-            self.model, self.client = "hriscu+webb", None
+                window_s=args.baseline_window, rate_hz=args.rate, k=args.baseline_k))
+            self.model, self.client = "hriscu+ros4hri", None
         else:
             self.model = args.model or DEFAULT_MODEL[args.provider]
             self.client = make_client(args.provider, args.timeout)
@@ -147,6 +146,7 @@ class LiveInitiator(Node):
                          "fixed_interval_s": 0.0 if self.rules else getattr(args, "every", 1.0)}
         self.lock = threading.Lock()
         self.speak_lock = threading.Lock()
+        self.log_lock = threading.Lock()
         self.busy = False
         self.last_warm = time.time()
         self.latest = None
@@ -175,9 +175,8 @@ class LiveInitiator(Node):
                                f"run {self.run} of {self.log_path.name}, logs {RUN_LOGS}")
         if self.baseline:
             c = self.baseline.cfg
-            self.get_logger().info(f"baseline: greet once (Hriscu + Webb), trigger {c.trigger}, "
-                                   f"window {c.window_s:g} s, k {c.k:g}, no face = {c.no_face}, "
-                                   f"checked every {self.gate_cfg['fixed_interval_s']:g} s")
+            self.get_logger().info(f"baseline: ROS4HRI engagement + Hriscu rule, every message, "
+                                   f"window {c.window_s:g} s, k {c.k:g}; no gate, no post-filter")
         else:
             self.get_logger().info("rules: on (--rules): R1 to R6, settle check, social post-filter" if self.rules
                                    else "rules: off: scene only, the model decides, "
@@ -222,16 +221,51 @@ class LiveInitiator(Node):
             self.latest = json.loads(msg.data)
         except json.JSONDecodeError:
             return
-        if self.baseline is not None:
-            age = self.latest.get("vision_age_s")
-            vision = self.latest.get("vision") if age is not None and age <= VISION_STALE_S else None
-            with self.lock:
-                self.baseline.update(vision if isinstance(vision, dict) else None, time.time())
         done = ((self.latest.get("audio") or {}).get("trace") or {}).get("stt_done")
-        if done is not None and done != self.trace_arrived[0]:
+        new_trace = done is not None and done != self.trace_arrived[0]
+        if new_trace:
             self.trace_arrived = (done, time.time())
+        if self.baseline is not None:
+            self._baseline_step()
+        elif new_trace:
             # A new transcript: check the gate now, not on the next tick.
             self._tick()
+
+    def _baseline_step(self):
+        """The baseline decides on every message, from the raw vision and audio in it."""
+        msg = self.latest
+        age = msg.get("vision_age_s")
+        vision = msg.get("vision") if age is not None and age <= VISION_STALE_S else None
+        audio = msg.get("audio")
+        with self.lock:
+            start = time.perf_counter()
+            decisions = self.baseline.step(vision if isinstance(vision, dict) else None,
+                                           audio if isinstance(audio, dict) else None)
+            ms = (time.perf_counter() - start) * 1000
+            snapshots = [self.baseline.snapshot(pid) for _, pid, _ in decisions]
+        for (action, pid, reason), snap in zip(decisions, snapshots):
+            decision = {"action": action, "rule_fired": reason, "person_id": pid, "engagement": snap}
+            threading.Thread(target=self._baseline_act, args=(action, decision, ms, audio),
+                             daemon=True).start()
+
+    def _baseline_act(self, action, decision, ms, audio):
+        """Publish and say one baseline decision. The scene JSON is used only for the line and the log."""
+        now = time.time()
+        with self.lock:
+            ctx = fusion_to_context(self.latest, self.mem, now)
+            heard_at = None
+            if action == "respond":
+                pending, end = self.mem.pending, self.mem.last_utterance_end
+                heard_at = self._marks(pending, end, now) if pending and end else None
+                consume_pending(self.mem)
+        if action == "respond" and not ((ctx.get("target") or {}).get("speech") or {}).get("partial_transcript"):
+            # Nobody is in view, so the scene has no sentence. The line writer still needs it.
+            speech = {"detected": True, "partial_transcript": (audio or {}).get("transcript"),
+                      "syntactically_complete": (audio or {}).get("syntactically_complete")}
+            ctx = {**ctx, "target": {**(ctx.get("target") or {}), "speech": speech}}
+        out = {"t": now, "provider": "baseline", "model": self.model, "rules": False}
+        r = baseline_result(ctx, action, decision, ms)
+        self._finish(ctx, out, r, action, None, heard_at)
 
     def _publish_engaged(self):
         self.pub_engaged.publish(Bool(data=self.args.engaged or self.mem.engaged))
@@ -255,6 +289,10 @@ class LiveInitiator(Node):
         if warm_due(now, self.last_warm, ctx.get("target") is not None):
             self.last_warm = now
             threading.Thread(target=self._warm_up, daemon=True).start()
+        if self.baseline is not None:
+            # The baseline decides in _baseline_step. Here the memory is only kept up
+            # to date for the reply writer and for when a visit ends.
+            return
         ok, reason = decide_tick(ctx, self.gate, self.gate_cfg)
         if not ok:
             return
@@ -286,28 +324,20 @@ class LiveInitiator(Node):
 
     def _decide_once(self, ctx, heard_at=None):
         out = {"t": ctx["t"], "provider": self.args.provider, "model": self.model, "rules": self.rules}
-        pid = None
         try:
-            if self.baseline is not None:
-                with self.lock:
-                    pid = self.mem.target_id
-                    start = time.perf_counter()
-                    action, reason = self.baseline.decide(ctx, pid)
-                    ms = (time.perf_counter() - start) * 1000
-                    decision = {"action": action, "rule_fired": reason,
-                                "engagement": self.baseline.snapshot(pid)}
-                r = baseline_result(ctx, action, decision, ms)
-            else:
-                r = decide(self.args.provider, self.client, self.model, ctx, 6,
-                           early_reply=not self.args.serial_reply)
+            r = decide(self.args.provider, self.client, self.model, ctx, 6,
+                       early_reply=not self.args.serial_reply)
         except Exception as e:  # noqa: BLE001 - any failure means silence
             error = "TIMEOUT" if is_timeout(e) else str(e)[:300] or type(e).__name__
             out.update(action_final="remain_silent", error=error)
             self.get_logger().warning(f"LLM call failed, staying silent: {error}")
             self._publish(ctx, out)
             return
-
         final, blocked_by = enforce(ctx, r.action, self.gate_cfg)
+        self._finish(ctx, out, r, final, blocked_by, heard_at)
+
+    def _finish(self, ctx, out, r, final, blocked_by, heard_at):
+        """Publish, log, and say one decision, then record it in the memory."""
         speech = r.speech if (r.speech and final in SPEAKS) else None
         reason = blocked_by or (r.decision or {}).get("rule_fired")
         out.update(action_raw=r.action, action_final=final, blocked_by=blocked_by,
@@ -334,8 +364,6 @@ class LiveInitiator(Node):
             self._trace(r, heard_at, None)
         with self.lock:
             apply_result(self.mem, final, reason, line, time.time())
-            if self.baseline is not None and line and final == "greet":
-                self.baseline.greeted(pid)
 
     def _say_in_background(self, speech, r, heard_at):
         """Without --rules: talk in another thread, so the LLM is still asked while the robot talks.
@@ -387,10 +415,12 @@ class LiveInitiator(Node):
         return getattr(self, "_tee", None) or super().get_logger()
 
     def _publish(self, ctx, out):
-        self.pub_decision.publish(String(data=json.dumps(out)))
-        self.run_jsonl.write(json.dumps({"context": ctx, "result": out}) + chr(10))
-        with open(self.log_path, "a") as f:
-            f.write(json.dumps({"run": self.run, "context": ctx, "result": out}) + chr(10))
+        # The baseline can publish from more than one thread at once.
+        with self.log_lock:
+            self.pub_decision.publish(String(data=json.dumps(out)))
+            self.run_jsonl.write(json.dumps({"context": ctx, "result": out}) + chr(10))
+            with open(self.log_path, "a") as f:
+                f.write(json.dumps({"run": self.run, "context": ctx, "result": out}) + chr(10))
 
     def _mark_run_start(self) -> int:
         try:
@@ -465,15 +495,10 @@ def main():
                          "a person; a new sentence asks at once, and so does a person who "
                          "appears, turns to face the robot, or stops walking")
     ap.add_argument("--baseline-window", type=float, default=2.0,
-                    help="baseline: seconds of engagement samples (ROS4HRI uses 10)")
+                    help="baseline: seconds of engagement samples (the ROS4HRI README says 2; "
+                         "its code default is 10)")
     ap.add_argument("--baseline-k", type=float, default=0.4,
                     help="baseline: head_yaw / tan(head angle), measured on the robot")
-    ap.add_argument("--baseline-trigger", choices=("moment", "level"), default="moment",
-                    help="baseline: greet at the first moment the person faces the robot "
-                         "(moment, Hriscu gives no time), or when the ROS4HRI level is engaged (level)")
-    ap.add_argument("--baseline-no-face", choices=("away", "skip"), default="skip",
-                    help="baseline: a person with no visible face adds no sample (skip, as "
-                         "ROS4HRI does), or counts as not looking (away)")
     args = ap.parse_args()
     if args.provider == "baseline":
         if args.rules:
