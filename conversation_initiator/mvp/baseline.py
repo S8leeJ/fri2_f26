@@ -15,7 +15,9 @@ Three published parts, in order:
        or in the person's front zone (body angle <= 60 deg, d <= 2.0 m).
      - The person is in the robot's gaze zone (side angle < cone, d <= 2.5 m)
        or in the robot's front zone (side angle <= 60 deg, d <= 2.0 m).
-   Participating: sample +1. Not participating: -1. No face: no sample.
+   Participating: sample +1. Not participating: -1. A person seen with no face
+   (for example, with the back to the robot) is not participating: -1. When the
+   head angle or the orientation is not measured, there is no sample.
 
 2. Engaged long enough? ROS4HRI hri_engagement (engagement_node.py, Apache-2.0),
    the open implementation of Webb et al., RO-MAN 2022. The level comes from the
@@ -79,6 +81,12 @@ def geometry(person: Dict[str, Any]) -> Optional[Tuple[float, float, float, Opti
 
 def participating(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[bool]:
     """Shi et al.: both the person and the robot are in each other's gaze or front zone."""
+    # face_visible is False when the face was looked for and not found, and None
+    # when the orientation was not measured. With no face toward the camera, the
+    # robot is in neither the person's gaze zone nor their front zone.
+    if (person.get("face_visible") is False and person.get("side_deg") is not None
+            and person.get("floor_distance_m") is not None):
+        return False
     g = geometry(person)
     if g is None:
         return None

@@ -101,9 +101,12 @@ class ShiZones(unittest.TestCase):
         self.assertFalse(self.part(head=50, body=None))
 
     def test_nothing_measured_is_no_sample(self):
-        for p in (person(face=False), {**person(), "head_angle_deg": None},
+        for p in ({**person(), "face_visible": None}, {**person(), "head_angle_deg": None},
                   {**person(), "side_deg": None}, {**person(), "floor_distance_m": None}):
             self.assertIsNone(b.participating(p, CFG), p)
+
+    def test_no_face_seen_is_not_participating(self):
+        self.assertFalse(b.participating(person(face=False), CFG))
 
 
 class LevelsMatchRos4hri(unittest.TestCase):
@@ -170,9 +173,15 @@ class Decisions(unittest.TestCase):
             self.base.step(None, None)
         self.assertEqual(self.base.level(1), b.UNKNOWN)
 
-    def test_no_face_keeps_the_level_as_in_ros4hri(self):
+    def test_turning_the_back_then_around_greets_again(self):
+        self.assertEqual([a for _, a, _ in self.feed(2.0, person())], ["greet"])
+        self.assertEqual(self.feed(5.0, person(face=False)), [])
+        self.assertEqual(self.base.level(1), b.DISENGAGED)
+        self.assertEqual([a for _, a, _ in self.feed(2.0, person())], ["greet"])
+
+    def test_orientation_not_measured_keeps_the_level(self):
         self.feed(2.0, person())
-        self.feed(3.0, person(face=False))
+        self.feed(3.0, {**person(), "face_visible": None, "head_angle_deg": None})
         self.assertEqual(self.base.level(1), b.ENGAGED)
 
     def test_replies_once_to_each_new_sentence(self):

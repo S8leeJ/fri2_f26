@@ -402,7 +402,8 @@ It uses only published rules, and none of our system. Three parts, in order:
    (body angle up to 60°, up to 2.0 m), and the person is in the robot's gaze
    zone (under 30° from the robot's forward line, up to 2.5 m) or front zone
    (up to 60°, up to 2.0 m). Each message gives a sample: +1 if participating,
-   −1 if not, none if no face is visible.
+   −1 if not. A person seen with no face (back to the robot) counts as −1;
+   when the orientation is not measured, there is no sample.
 2. Engaged long enough? (ROS4HRI `hri_engagement`, the open implementation of
    Webb et al., RO-MAN 2022.) The mean of the last 2 s of samples sets the
    level, with the ROS4HRI thresholds. Webb's score itself is not used.
