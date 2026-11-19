@@ -187,6 +187,11 @@ class Decisions(unittest.TestCase):
         old = {"stamp": 100.0, "transcript": "hello", "transcript_age_s": 20.0}
         self.assertEqual(self.base.step(None, old), [])
 
+    def test_a_transcript_with_no_words_is_not_speech(self):
+        for text in (".", "...", " ", "?!"):
+            noise = {"stamp": 100.0, "transcript": text, "transcript_age_s": 0.2}
+            self.assertEqual(b.Baseline().step(None, noise), [], text)
+
     def test_level_changes_are_logged_as_silent(self):
         actions = [a for _ in range(12) for a, _, _ in self.base.step(vision(person()), None)]
         self.assertEqual(actions, ["remain_silent", "remain_silent", "greet"])

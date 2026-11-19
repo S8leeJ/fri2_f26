@@ -176,7 +176,8 @@ class Baseline:
 
     def _new_transcript(self, audio: Optional[Dict[str, Any]]) -> Optional[str]:
         text = (audio or {}).get("transcript")
-        if not text:
+        # Speech to text can turn a short noise into "." or "...". That is not speech.
+        if not text or not any(c.isalnum() for c in text):
             return None
         # The audio node sends the last transcript again each second, with a growing age.
         # The same end of speech, within 0.5 s, is the same sentence (as fusion_adapter).
