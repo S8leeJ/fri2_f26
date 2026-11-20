@@ -248,3 +248,16 @@ def gaze_label(face_visible: bool, turn: Optional[Tuple[float, float]],
     if (max_yaw > 0 and yaw > max_yaw) or (max_pitch > 0 and pitch > max_pitch):
         return "away"
     return "toward_robot"
+
+
+def gaze_from_head_angle(face_visible: bool, head_angle_deg: Optional[float], max_deg: float) -> str:
+    """toward_robot, away, or unknown, from the Face Landmarker head angle.
+
+    A visible face with no head angle is away: Face Landmarker finds a frontal face
+    but not a face in profile.
+    """
+    if not face_visible:
+        return "unknown"
+    if head_angle_deg is None or head_angle_deg > max_deg:
+        return "away"
+    return "toward_robot"

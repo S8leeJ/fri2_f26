@@ -35,6 +35,7 @@ orientation_node:
     min_visibility: 0.45
     gaze_max_yaw_ratio: 0.25
     gaze_max_pitch_ratio: 0.70
+    gaze_max_head_angle_deg: 25.0
 
 context_builder_node:
   ros__parameters:

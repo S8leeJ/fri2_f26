@@ -4,6 +4,7 @@ import numpy as np
 
 from hri_vision.common import (
     face_to_camera_deg,
+    gaze_from_head_angle,
     square_crop,
     floor_position,
     gaze_label,
@@ -249,3 +250,10 @@ def test_square_crop_keeps_the_face_centered_at_the_image_edge():
     assert (crop[:, :2] == 0).all()  # outside the image is black
     assert (crop[1:5, 2:6] == image[3:7, 0:4]).all()
     assert square_crop(image, 50.0, 50.0, 3.0) is None
+
+
+def test_gaze_from_the_head_angle():
+    assert gaze_from_head_angle(True, 5.0, 25.0) == "toward_robot"
+    assert gaze_from_head_angle(True, 38.0, 25.0) == "away"  # looking down at a watch
+    assert gaze_from_head_angle(True, None, 25.0) == "away"  # profile: no head angle
+    assert gaze_from_head_angle(False, None, 25.0) == "unknown"

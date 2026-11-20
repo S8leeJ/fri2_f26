@@ -39,6 +39,7 @@ All are in `config/vision.yaml`.
 | orientation | `face_model_selection` | 0 | MediaPipe's short-range face model, for faces within about 2 m. 1 selects the full-range model, up to about 5 m. |
 | orientation | `gaze_max_yaw_ratio` | 0.25 | `head_yaw` is the sideways offset of the nose from the middle of the eyes, divided by the eye distance. Above this value, a visible face gives `gaze: away`. 0 turns the check off. Not measured on the robot. |
 | orientation | `gaze_max_pitch_ratio` | 0.70 | `head_pitch` is the drop from the eyes to the nose, divided by the drop from the eyes to the mouth. It grows when the head tilts down, for example at a phone. Above this value, a visible face gives `gaze: away`. 0 turns the check off. Not measured on the robot. |
+| orientation | `gaze_max_head_angle_deg` | 25 | Used in place of the two ratio limits when the Face Landmarker model loads. `head_angle_deg` at or below this gives `gaze: toward_robot`. Measured on flexo on Nov 20, 2026, at 1.35 m: looking at the camera 1–8°, looking down at a watch 34–43°. |
 | context builder | `orientation_max_age_s` | 1.0 | Orientation older than this gives `orientation_fresh: false`. |
 
 ## Observed on flexo

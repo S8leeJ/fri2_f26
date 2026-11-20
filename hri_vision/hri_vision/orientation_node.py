@@ -10,7 +10,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .common import (clamp_box, face_to_camera_deg, gaze_label, head_turn, safe_json_loads, square_crop,
+from .common import (clamp_box, face_to_camera_deg, gaze_from_head_angle, gaze_label, head_turn,
+                     safe_json_loads, square_crop,
                      torso_to_camera_deg)
 
 # scripts/setup_flexo.sh and scripts/run_pipeline.sh download it here.
@@ -52,6 +53,10 @@ class OrientationNode(Node):
         # Not measured on the robot yet: see CALIBRATION.md.
         self.declare_parameter("gaze_max_yaw_ratio", 0.25)
         self.declare_parameter("gaze_max_pitch_ratio", 0.70)
+        # Gaze from the Face Landmarker head angle, used when the model loads. On flexo
+        # (Nov 20, 2026, 1.35 m): looking at the camera 1-8 deg, looking down at a
+        # watch 34-43 deg. The ratio limits above could not tell these two apart.
+        self.declare_parameter("gaze_max_head_angle_deg", 25.0)
         self.declare_parameter("face_landmarker_model", DEFAULT_FACE_LANDMARKER)
         # The face crop for Face Landmarker is this many face-box sizes wide.
         self.declare_parameter("face_crop_scale", 2.0)
@@ -165,6 +170,16 @@ class OrientationNode(Node):
         if left.visibility < min_vis or right.visibility < min_vis:
             return None
         return torso_to_camera_deg((left.x, left.y, left.z), (right.x, right.y, right.z))
+
+    def _gaze(self, face_visible, turn, head_angle):
+        """Gaze for Jev's scene: from the Face Landmarker head angle when the model
+        is loaded, else from the face-point ratios."""
+        if self.face_landmarker is not None:
+            return gaze_from_head_angle(
+                face_visible, head_angle, float(self.get_parameter("gaze_max_head_angle_deg").value))
+        return gaze_label(face_visible, turn,
+                          float(self.get_parameter("gaze_max_yaw_ratio").value),
+                          float(self.get_parameter("gaze_max_pitch_ratio").value))
 
     def _baseline_angles(self, face_result, pose_result, frame_bgr, person_box, face_visible):
         """(head_angle_deg, body_angle_deg) for the baseline. A failure here leaves them
@@ -302,12 +317,7 @@ class OrientationNode(Node):
                         if shoulder_ratio is not None
                         else None
                     ),
-                    "gaze": gaze_label(
-                        face_visible,
-                        turn,
-                        float(self.get_parameter("gaze_max_yaw_ratio").value),
-                        float(self.get_parameter("gaze_max_pitch_ratio").value),
-                    ),
+                    "gaze": self._gaze(face_visible, turn, head_angle),
                     "head_yaw": round(turn[0], 3) if turn else None,
                     "head_pitch": round(turn[1], 3) if turn else None,
                     "head_angle_deg": round(head_angle, 1) if head_angle is not None else None,

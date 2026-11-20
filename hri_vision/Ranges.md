@@ -48,8 +48,9 @@ Each field describes what the camera sees. No single field decides what the robo
 - `away`: a face is visible, but the head is turned to the side or tilted down, for example at a phone.
 - `unknown`: no face is visible.
 - It comes from the head, not the eyes. A person who looks down with the eyes only reads `toward_robot`.
+- It uses `head_angle_deg` (MediaPipe Face Landmarker): `toward_robot` within 25° of the line to the camera. A face in profile has no head angle and reads `away`. Measured on flexo at 1.35 m: looking at the camera 1–8°, looking down at a watch 34–43°.
 
-**`head_yaw`** and **`head_pitch`**: the numbers that `gaze` comes from, as ratios of face points.
+**`head_yaw`** and **`head_pitch`**: ratios of face points. `gaze` uses them only when the Face Landmarker model is missing.
 - `head_yaw`: 0 when the face points at the camera. It increases as the head turns to either side.
 - `head_pitch`: it increases as the head tilts down.
 - `null` when no face is visible.
