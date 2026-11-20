@@ -242,6 +242,66 @@ class Decisions(unittest.TestCase):
         self.assertEqual((snap["level"], snap["participating"], snap["greeted"]), (b.ENGAGED, True, True))
 
 
+def lab(pid=339, head=5.8, body=4.6, side=13.8, d=1.013):
+    """Run 48 on flexo (Nov 20, 2026): the numbers logged at the greeting."""
+    return {"id": pid, "floor_distance_m": d, "side_deg": side, "face_visible": True,
+            "head_angle_deg": head, "body_angle_deg": body}
+
+
+def aside(pid=339, body=SIDEWAYS, **kw):
+    """Same place, face in profile (Face Landmarker gives no head angle)."""
+    return lab(pid=pid, head=None, body=body, **kw)
+
+
+# A second person: run 48's numbers at the "engaging" line, on the other side.
+P2 = dict(pid=2, side=-21.3, d=1.376)
+P2_LOOKS = dict(P2, head=6.1, body=5.8)
+
+
+class LabNumbers(unittest.TestCase):
+    setUp, feed = Decisions.setUp, Decisions.feed
+
+    def acts(self, seconds, *people):
+        return [(a, pid) for _, a, pid in self.feed(seconds, *people)]
+
+    def test_engage_disengage_engage(self):
+        self.assertEqual(self.acts(2.0, lab()), [("greet", 339)])
+        self.assertEqual(self.acts(2.0, aside()), [])
+        self.assertEqual(self.base.level(339), b.DISENGAGED)
+        self.assertEqual(self.acts(2.0, lab()), [("greet", 339)])
+
+    def test_head_turned_but_body_still_facing_stays_engaged(self):
+        # Shi's front zone: body <= 60 deg within 2.0 m is participating.
+        self.acts(2.0, lab())
+        self.assertEqual(self.acts(5.0, aside(body=4.6)), [])
+        self.assertEqual(self.base.level(339), b.ENGAGED)
+
+    def test_head_turn_alone_disengages_without_the_body_zone(self):
+        self.base = b.Baseline(b.BaselineConfig(body_zone=False))
+        self.assertEqual(self.acts(2.0, lab()), [("greet", 339)])
+        self.acts(2.0, aside(body=4.6))
+        self.assertEqual(self.base.level(339), b.DISENGAGED)
+        self.assertEqual(self.acts(2.0, lab()), [("greet", 339)])
+
+    def test_two_people_each_engage_disengage_engage(self):
+        self.assertEqual(sorted(self.acts(2.0, lab(), lab(**P2_LOOKS))), [("greet", 2), ("greet", 339)])
+        # 339 looks aside, 2 keeps looking: only 339 disengages.
+        self.assertEqual(self.acts(2.0, aside(), lab(**P2_LOOKS)), [])
+        self.assertEqual((self.base.level(339), self.base.level(2)), (b.DISENGAGED, b.ENGAGED))
+        self.assertEqual(self.acts(2.0, lab(), lab(**P2_LOOKS)), [("greet", 339)])
+        # Both look aside, then both look back: both are greeted again.
+        self.acts(2.0, aside(), aside(**P2))
+        self.assertEqual((self.base.level(339), self.base.level(2)), (b.DISENGAGED, b.DISENGAGED))
+        self.assertEqual(sorted(self.acts(2.0, lab(), lab(**P2_LOOKS))), [("greet", 2), ("greet", 339)])
+
+    def test_two_people_looking_aside_get_no_reply(self):
+        self.acts(2.0, lab(), lab(**P2_LOOKS))
+        both_aside = (aside(), aside(**P2))
+        self.acts(2.0, *both_aside)
+        said = {"stamp": 100.0, "transcript": "did you see that", "transcript_age_s": 0.2}
+        self.assertEqual([a for a, _, _ in self.base.step(vision(*both_aside), said)], ["remain_silent"])
+
+
 class Lines(unittest.TestCase):
     def test_greeting_is_the_fixed_line_and_reply_uses_the_writers(self):
         r = mvp.baseline_result(base_ctx(), "greet", {}, 0.1)
