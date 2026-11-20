@@ -101,9 +101,24 @@ class ShiZones(unittest.TestCase):
         self.assertFalse(self.part(head=50, body=None))
 
     def test_nothing_measured_is_no_sample(self):
-        for p in ({**person(), "face_visible": None}, {**person(), "head_angle_deg": None},
+        for p in ({**person(), "face_visible": None},
                   {**person(), "side_deg": None}, {**person(), "floor_distance_m": None}):
             self.assertIsNone(b.participating(p, CFG), p)
+
+    def test_a_face_in_profile_is_not_in_the_gaze_cone(self):
+        profile = {**person(body=SIDEWAYS), "head_angle_deg": None}
+        self.assertFalse(b.participating(profile, CFG))
+        facing_body = {**person(body=10.0), "head_angle_deg": None}
+        self.assertTrue(b.participating(facing_body, CFG))  # Shi's body front zone
+
+    def test_looking_aside_in_profile_disengages_then_looking_back_greets_again(self):
+        base = b.Baseline()
+        profile = {**person(body=SIDEWAYS), "head_angle_deg": None}
+        acts = []
+        for p, seconds in ((person(), 2.0), (profile, 3.0), (person(), 2.0)):
+            for _ in range(int(seconds * 10)):
+                acts += [a for a, _, _ in base.step(vision(p), None) if a != "remain_silent"]
+        self.assertEqual(acts, ["greet", "greet"])
 
     def test_no_face_seen_is_not_participating(self):
         self.assertFalse(b.participating(person(face=False), CFG))

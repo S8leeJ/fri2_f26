@@ -74,13 +74,17 @@ class BaselineConfig:
     body_zone: bool = True
 
 
-def geometry(person: Dict[str, Any]) -> Optional[Tuple[float, float, float, Optional[float]]]:
-    """(head angle, side angle, floor distance, body angle or None) of one vision person.
-    None: not measured, so no sample."""
+def geometry(person: Dict[str, Any]) -> Optional[Tuple[Optional[float], float, float, Optional[float]]]:
+    """(head angle or None, side angle, floor distance, body angle or None) of one
+    vision person with a visible face. None: not measured, so no sample.
+
+    Face Landmarker gives a head angle for a face toward the camera, and none for a
+    face in profile, so a visible face with no head angle is not looking at the robot.
+    """
     head, side, d = person.get("head_angle_deg"), person.get("side_deg"), person.get("floor_distance_m")
-    if None in (head, side, d) or not person.get("face_visible"):
+    if side is None or d is None or not person.get("face_visible"):
         return None
-    return float(head), abs(float(side)), float(d), person.get("body_angle_deg")
+    return (None if head is None else float(head)), abs(float(side)), float(d), person.get("body_angle_deg")
 
 
 def participating(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[bool]:
@@ -96,7 +100,8 @@ def participating(person: Dict[str, Any], cfg: BaselineConfig) -> Optional[bool]
         return None
     head, side, d, body = g
     body_facing = cfg.body_zone and body is not None and body <= cfg.front_zone_deg
-    robot_in_person_zone = ((head < cfg.cone_deg and d <= cfg.gaze_zone_m)
+    head_toward = head is not None and head < cfg.cone_deg
+    robot_in_person_zone = ((head_toward and d <= cfg.gaze_zone_m)
                             or (body_facing and d <= cfg.front_zone_m))
     person_in_robot_zone = ((side < cfg.cone_deg and d <= cfg.gaze_zone_m)
                             or (side <= cfg.front_zone_deg and d <= cfg.front_zone_m))
