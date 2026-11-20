@@ -27,7 +27,11 @@ Three published parts, in order:
 3. When to speak: Hriscu et al., RO-MAN 2026, System 2.
     - Greet a person once when their level becomes engaged.
     - Do not greet that person again until their level is disengaged.
-    - Reply when the person speaks.
+    - Reply when someone speaks while a person in view is engaged (level engaged
+      or disengaging). In Hriscu et al., an LLM decides whether to answer; this
+      rule answers only people who are engaged with the robot. Speech while
+      nobody in view is engaged, for example two people with their backs to the
+      robot, gets no reply.
 
 Shi et al. measure with motion capture. The vision pipeline (hri_vision) gives
 the same four inputs from libraries, so this file adds no conversion of its own:
@@ -162,8 +166,10 @@ class Baseline:
         """
         out: List[Decision] = []
         size = int(round(self.cfg.window_s * self.cfg.rate_hz))
+        in_view = set()
         for person in (vision or {}).get("people", []):
             pid = person.get("id")
+            in_view.add(pid)
             now_in = participating(person, self.cfg)
             if pid is None or now_in is None:
                 continue
@@ -179,7 +185,11 @@ class Baseline:
             elif level != before:
                 out.append(("remain_silent", pid, "engagement " + level))
         if self._new_transcript(audio):
-            out.append(("respond", None, "person spoke"))
+            engaged = [pid for pid in in_view if self.level(pid) in (ENGAGED, DISENGAGING)]
+            if engaged:
+                out.append(("respond", engaged[0], "person spoke"))
+            else:
+                out.append(("remain_silent", None, "speech, but nobody engaged"))
         return out
 
     def _new_transcript(self, audio: Optional[Dict[str, Any]]) -> Optional[str]:

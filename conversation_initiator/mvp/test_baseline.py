@@ -185,16 +185,35 @@ class Decisions(unittest.TestCase):
         self.assertEqual(self.base.level(1), b.ENGAGED)
 
     def test_replies_once_to_each_new_sentence(self):
+        self.feed(2.0, person())
         said = {"stamp": 100.0, "transcript": "where is the lab", "transcript_age_s": 0.2}
-        self.assertEqual(self.base.step(None, said), [("respond", None, "person spoke")])
+        self.assertEqual(self.base.step(vision(person()), said), [("respond", 1, "person spoke")])
         again = {**said, "stamp": 101.0, "transcript_age_s": 1.2}
-        self.assertEqual(self.base.step(None, again), [])
+        self.assertEqual(self.base.step(vision(person()), again), [])
         new = {"stamp": 105.0, "transcript": "thanks", "transcript_age_s": 0.3}
-        self.assertEqual([a for a, _, _ in self.base.step(None, new)], ["respond"])
+        self.assertEqual([a for a, _, _ in self.base.step(vision(person()), new)], ["respond"])
+
+    def test_no_reply_when_nobody_in_view_is_engaged(self):
+        said = {"stamp": 100.0, "transcript": "hello", "transcript_age_s": 0.2}
+        self.assertEqual(self.base.step(None, said), [("remain_silent", None, "speech, but nobody engaged")])
+
+    def test_two_people_with_their_backs_turned_get_no_reply(self):
+        self.feed(2.0, person(pid=1), person(pid=2, side=15))
+        self.feed(3.0, person(pid=1, face=False), person(pid=2, side=15, face=False))
+        said = {"stamp": 100.0, "transcript": "did you see that", "transcript_age_s": 0.2}
+        actions = [a for a, _, _ in self.base.step(vision(person(pid=1, face=False),
+                                                          person(pid=2, side=15, face=False)), said)]
+        self.assertEqual(actions, ["remain_silent"])
+
+    def test_an_engaged_person_who_left_the_view_does_not_count(self):
+        self.feed(2.0, person())
+        said = {"stamp": 100.0, "transcript": "hello", "transcript_age_s": 0.2}
+        self.assertEqual([a for a, _, _ in self.base.step(vision(), said)], ["remain_silent"])
 
     def test_a_sentence_from_before_the_start_gets_no_reply(self):
         old = {"stamp": 100.0, "transcript": "hello", "transcript_age_s": 20.0}
-        self.assertEqual(self.base.step(None, old), [])
+        self.feed(2.0, person())
+        self.assertEqual(self.base.step(vision(person()), old), [])
 
     def test_a_transcript_with_no_words_is_not_speech(self):
         for text in (".", "...", " ", "?!"):

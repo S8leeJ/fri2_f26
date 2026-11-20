@@ -408,8 +408,10 @@ It uses only published rules, and none of our system. Three parts, in order:
    Webb et al., RO-MAN 2022.) The mean of the last 2 s of samples sets the
    level, with the ROS4HRI thresholds. Webb's score itself is not used.
 3. When to speak (Hriscu et al., RO-MAN 2026): greet a person once when their
-   level becomes engaged, and again only after it is disengaged. Reply when the
-   person speaks.
+   level becomes engaged, and again only after it is disengaged. Reply when
+   someone speaks while a person in view is engaged (level engaged or
+   disengaging). In Hriscu et al., an LLM decides whether to answer; this rule
+   answers only people engaged with the robot.
 
 It reads each `/social_context` message as fusion publishes it (the vision and
 audio messages) and decides at once, 10 times a second. It does not use the
@@ -428,9 +430,12 @@ from libraries, so the baseline has no conversion or constant of its own:
 `hri_vision/README.md` has the details. `baseline.py` lists the choices where
 Shi et al. are not clear.
 
-The microphone always listens with the baseline (`/engaged` stays true), so it
-replies to any sentence it hears, also between two other people. Our rule for
-when to listen (after the robot speaks, until the person leaves) is not used.
+The microphone always listens with the baseline (`/engaged` stays true), as in
+Hriscu et al. It replies to any sentence it hears while someone in view is
+engaged, also a sentence between two other people. When nobody in view is
+engaged, for example two people with their backs to the robot, it does not
+reply. Our rule for when to listen (after the robot speaks, until the person
+leaves) is not used.
 
 These stay the same as with Jev: the fixed greeting, the reply writers, and the
 voice. They come after the decision. The baseline needs no model key, but it
